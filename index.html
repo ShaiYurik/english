@@ -233,6 +233,27 @@ form.f{display:grid;gap:10px}
 .r2 .w.good{background:var(--kelp2);color:var(--kelp)}.r2 .w.miss{background:var(--redsoft);color:#a53a24}
 .exam{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--chart);background:var(--sea2);border-radius:10px;padding:6px 10px}
 .exam b{color:var(--brass2);font-variant-numeric:tabular-nums}
+/* captain's report & full reading */
+.conquer{text-align:center;align-items:center;background:linear-gradient(180deg,var(--brass2),var(--chart) 55%)}
+.conquer h2{font-size:28px}.flagrow{font-size:34px;letter-spacing:6px}
+.report-box{display:grid;gap:8px;width:100%;text-align:start}
+.reprow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;gap:8px;align-items:center;font-size:14px}
+.rn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rbar{height:8px;background:var(--chart2);border-radius:4px;overflow:hidden}
+.rbar i{display:block;height:100%;border-radius:4px}
+.rbar i.top{background:var(--kelp)}.rbar i.good{background:var(--brass)}.rbar i.low{background:var(--signal)}
+.rl{font-size:12px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rl.top{color:var(--kelp)}.rl.good{color:#9a6f14}.rl.low{color:var(--signal)}.rl.none{color:var(--ink2)}
+.tips{display:grid;gap:6px;width:100%;text-align:start;background:#fff;border-radius:12px;padding:10px 12px;font-size:15px}
+.tips p{margin:0}
+button.chip{border:0;cursor:pointer}
+.rtp{margin:0 0 12px;padding:6px 8px;border-radius:10px;transition:background .3s}
+.rtp.cur{background:#fff;box-shadow:0 0 0 2px var(--brass)}
+.rtp.next{opacity:.45}
+.rt .w.good{color:var(--kelp);background:var(--kelp2)}.rt .w.miss{color:#a53a24;background:var(--redsoft)}
+.rtctl{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--chart);padding:8px 0}
+.rfb{display:grid;gap:6px;text-align:start;width:100%;background:#fff;border-radius:12px;padding:12px;font-size:16px}
+.rfb p{margin:0}
 .gate{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
 .gate img{width:120px;height:120px;border-radius:28px}
 
@@ -575,6 +596,7 @@ function stationsOf(i){
   if(w.filter(x=>/^[a-z]{3,10}$/i.test(x.en)).length>=3)st.push({k:'spell',ic:I.spell,t:'בונים מילה',d:'שומעים ובונים את המילה מאותיות',m:pct('spell'),scored:1});
   if(w.length>=4)st.push({k:'quiz',ic:I.quiz,t:'משחק מילים',d:'תרגום והאזנה',m:pct('quiz'),scored:1});
   (i.games||[]).forEach((g,n)=>st.push({k:'g'+n,ic:GAME_IC[g.kind]||I.quiz,t:g.title||'תרגיל',d:GAME_DESC[g.kind]||'',m:pct('g'+n),scored:1}));
+  if(i.text&&readSR())st.push({k:'readtext',ic:I.mic2,t:'קוראת את האנסין בקול',d:'קוראים את כל הטקסט ומקבלים משוב',m:pct('readtext'),scored:1});
   if(readItems(i).length)st.push({k:'readaloud',ic:I.mouth,t:'קוראת בקול',d:readSR()?'הטלפון מקשיב ומסמן כל מילה':'קוראים ומשווים להקראה',m:pct('readaloud'),scored:1});
   if(i.mistakes&&i.mistakes.length)st.push({k:'fix',ic:I.fix,t:'מתקנים טעויות',d:'משפטים מהשיעור: איך אומרים נכון?',m:pct('fix'),scored:1});
   if(i.kind==='base')st.push({k:'sounds',ic:I.ear,t:'מה שמעת?',d:'להבדיל בין מילים שנשמעות דומה',m:pct('sounds'),scored:1});
@@ -606,7 +628,7 @@ function render(){
   else if(S.tab==='parent') v.innerHTML=viewParent();
   else{
     const sc=S.screen;
-    const map={game:viewGame,spell:viewSpell,karaoke:viewKaraoke,read2:viewRead2,island:()=>viewIsland(sc.id),learn:viewLearn,quiz:viewQuiz,sounds:viewQuiz,fix:viewQuiz,readaloud:viewRead,unseen:viewUnseen,result:viewResult};
+    const map={readtext:viewReadText,game:viewGame,spell:viewSpell,karaoke:viewKaraoke,read2:viewRead2,island:()=>viewIsland(sc.id),learn:viewLearn,quiz:viewQuiz,sounds:viewQuiz,fix:viewQuiz,readaloud:viewRead,unseen:viewUnseen,result:viewResult};
     v.innerHTML=(map[sc.name]||viewMap)();
   }
   updateMeter();refreshRecUI();setSync();
@@ -693,9 +715,10 @@ function viewMap(){
 
 function viewIsland(id){
   const i=islandById(id);if(!i){S.screen={name:'map'};return viewMap()}
-  const st=stationsOf(i);
+  const st=stationsOf(i);const anyScore=st.some(x=>x.scored&&(S.progress.best[id]||{})[x.k]!=null);
   return `<button class="back" data-act="home">${I.back} חזרה למפה</button>
   <div class="ihead">${i.en?`<span class="eyebrow en">${esc(i.en)}</span>`:''}<h2>${esc(i.name)}</h2><p>${esc(i.topic)}</p></div>
+  ${anyScore?`<section class="card rep-card"><h2>דוח קפטן</h2>${islandReportHTML(i)}</section>`:''}
   <div class="stations">${st.map(s=>`<button class="station" data-act="station" data-k="${s.k}" data-id="${esc(id)}"><span class="ic">${s.ic}</span><span class="tx"><b>${s.t}</b><span>${esc(s.d)}</span></span><span class="mark">${s.m}</span></button>`).join('')}</div>`;
 }
 
@@ -785,14 +808,17 @@ function viewUnseen(){
   </section>`;
 }
 function viewResult(){
-  const r=S.screen;const pct=r.total?Math.round(r.correct/r.total*100):100;const s=r.kind==='learn'||r.kind==='read'||r.kind==='story'?3:stars(pct);
+  const r=S.screen;const pct=r.total?Math.round(r.correct/r.total*100):100;const s=r.kind==='learn'||r.kind==='read'||r.kind==='story'?3:stars(pct);if(r.kind==='readtext')r.retry='readtext';
   const msg=r.unlocked?`פתחת את <b>${esc(r.unlocked)}</b>! הספינה מפליגה הלאה.`:(r.kind!=='learn'&&r.kind!=='story'&&pct<70?'מ־70% ומעלה זה נחשב הצלחה בתחנה. עוד ניסיון אחד?':'');
-  return `<section class="card result">
+  const isl=islandById(r.id);
+  const done=r.islandDone?`<section class="card conquer"><div class="flagrow">🏝️⚓🏝️</div><h2>${r.islandDone==='full'?'האי הושלם במלואו!':'כבשת את האי!'}</h2><p>${esc(isl?isl.name:'')}${r.unlocked?` · האי הבא נפתח: <b>${esc(r.unlocked)}</b>`:''}</p>${isl?islandReportHTML(isl):''}</section>`:'';
+  return done+`<section class="card result">
     <div class="stars">${[0,1,2].map(n=>I.star(n<s)).join('')}</div>
     <div class="big">${r.kind==='story'?'קראת את הטקסט!':r.kind==='learn'?'סיימת ללמוד!':r.kind==='read'?`${r.correct} / ${r.total} בלי עזרה`:pct+'%'}</div>
-    <p>${esc(r.title)}${r.kind!=='learn'&&r.kind!=='read'&&r.kind!=='story'?` · ${r.correct} מתוך ${r.total}`:''}</p>
-    ${msg?`<p>${msg}</p>`:''}
-    ${r.missed&&r.missed.length?`<p class="sub">לחזרה:</p><div class="chips">${[...new Set(r.missed)].map(m=>`<span class="chip">${esc(m)}</span>`).join('')}</div>`:''}
+    ${r.kind==='readtext'&&isl&&isl.text?`<p>קריאת אנסין: <span class="en">${esc(isl.text.title)}</span></p>`:`<p>${esc(r.title)}${r.kind!=='learn'&&r.kind!=='read'&&r.kind!=='story'?` · ${r.correct} מתוך ${r.total}`:''}</p>`}
+    ${msg&&!r.islandDone?`<p>${msg}</p>`:''}
+    ${r.kind==='readtext'&&r.extra?readFeedbackHTML(r):''}
+    ${r.missed&&r.missed.length&&r.kind!=='readtext'?`<p class="sub">לחזרה:</p><div class="chips">${[...new Set(r.missed)].map(m=>`<span class="chip">${esc(m)}</span>`).join('')}</div>`:''}
     <div class="btns" style="justify-content:center">
       ${r.retry?`<button class="btn ghost" data-act="station" data-k="${r.retry}" data-id="${esc(r.id)}">שוב</button>`:''}
       <button class="btn brass" data-act="island" data-id="${esc(r.id)}">להמשך באי</button>
@@ -800,22 +826,27 @@ function viewResult(){
     </div>
   </section>`;
 }
-function finishActivity(kind,title,correct,total,missed){
+function finishActivity(kind,title,correct,total,missed,extra){
   const i=islandById(S.screen.id);const id=i.id;const pct=total?Math.round(correct/total*100):100;
+  const ratioBefore=islandRatio(i);
   S.session.activities.push({kind,island:id,islandName:i.name,title,correct,total,at:Date.now()});
   if(missed&&missed.length)S.session.missed=[...new Set([...S.session.missed,...missed])].slice(-60);
   saveSession();
   const b=S.progress.best[id]||(S.progress.best[id]={});
-  if(kind==='learn')b.learn=true;else if(kind==='story')b.story=true;else if(kind==='read')b.read=true;else b[kind]=Math.max(b[kind]||0,pct);
+  if(kind==='learn')b.learn=true;else if(kind==='story')b.story=true;else if(kind==='read')b.read=true;else if(kind!=='drill')b[kind]=Math.max(b[kind]||0,pct);
+  if(missed&&missed.length)b.missed=[...new Set([...missed,...(b.missed||[])])].slice(0,24);
+  if(kind==='readtext'&&extra){b.readHist=[...(b.readHist||[]),{pct,wpm:extra.wpm,d:today()}].slice(-6)}
+  const ratioAfter=islandRatio(i);const hasScored=stationsOf(i).some(x=>x.scored);
+  const islandDone=!hasScored?null:(ratioAfter>=1&&ratioBefore<1)?'full':(ratioAfter>=.5&&ratioBefore<.5)?'pass':null;
   if(i.kind==='book'){const list=bookIslands();const k=list.findIndex(x=>x.id===id);const nx=list[k+1];
     if(nx&&!S.progress.best['_open_'+nx.id]&&isUnlocked({...nx,kind:'book'})){S.progress.best['_open_'+nx.id]={y:1};var bookUnlocked=nx.name}}
   S.progress.xp+=correct*10+(kind==='learn'?20:0);
   let unlocked=(typeof bookUnlocked!=='undefined'&&bookUnlocked)||null;const idx=ISLANDS.findIndex(x=>x.id===id);
   if(kind==='quiz'&&pct>=70&&idx>-1&&idx+1===S.progress.unlocked&&idx+1<ISLANDS.length){S.progress.unlocked++;unlocked=ISLANDS[idx+1].name}
   saveState('progress');
-  const retry=kind==='learn'?null:kind==='read'?'readaloud':kind;
-  S.screen={name:'result',id,kind,title,correct,total,missed,unlocked,retry};
-  if(unlocked){sfx.horn();setTimeout(()=>sfx.win(),700)}else if(pct>=70)sfx.win();
+  const retry=kind==='learn'||kind==='drill'?null:kind==='read'?'readaloud':kind;
+  S.screen={name:'result',id,kind,title,correct,total,missed,unlocked,retry,islandDone,extra};
+  if(unlocked||islandDone){sfx.horn();setTimeout(()=>sfx.win(),700)}else if(pct>=70)sfx.win();
   render();scrollTo({top:0});
 }
 
@@ -1003,6 +1034,108 @@ function srGo(){
   SR.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed')toast('צריך לאשר גישה למיקרופון');else if(e.error==='no-speech')toast('לא שמעתי. נסי לדבר קרוב יותר לטלפון');};
   SR.onend=()=>{sc.listening=false;if(S.screen===sc)render()};
   try{SR.start();sc.listening=true;sc.heard='';render()}catch(e){toast('לא הצלחתי להפעיל את המיקרופון')}
+}
+
+/* ============ CAPTAIN'S REPORT (feedback per island) ============ */
+function islandReportHTML(i){
+  const b=S.progress.best[i.id]||{};const st=stationsOf(i).filter(s=>s.scored);
+  const lvl=v=>v==null?['עוד לא','none']:v>=90?['מצוין','top']:v>=70?['טוב','good']:['לחזור','low'];
+  const rows=st.map(s=>{const v=b[s.k];const [t,c]=lvl(v);return `<div class="reprow"><span class="rn">${esc(s.t)}</span><span class="rbar"><i class="${c}" style="width:${v||0}%"></i></span><span class="rl ${c}">${v!=null?v+'%':''} ${t}</span></div>`}).join('');
+  const strong=st.filter(s=>(b[s.k]||0)>=90).map(s=>s.t);
+  const weak=st.filter(s=>b[s.k]!=null&&b[s.k]<70);
+  const todo=st.filter(s=>b[s.k]==null);
+  const tips=[];
+  if(strong.length)tips.push(`<b>חזקה ב:</b> ${strong.map(esc).join(', ')}.`);
+  if(weak.some(s=>s.k==='quiz'))tips.push('במשחק המילים: לעבור שוב על "כרטיסיות מילים" עם ההקראה, ואז לשחק שוב.');
+  if(weak.some(s=>s.k==='spell'))tips.push('האיות עוד מבלבל. שווה לשחק שוב ב"בונים מילה", ולהקשיב למילה לפני שבונים.');
+  if(weak.some(s=>s.k==='readaloud'||s.k==='readtext'))tips.push('בקריאה בקול כדאי קודם לשמוע את הטקסט ב"קוראים יחד", ואז לקרוא שוב לאט.');
+  if(weak.some(s=>/^g\d/.test(s.k)&&['tf','mc'].includes((i.games[+s.k.slice(1)]||{}).kind)))tips.push('בשאלות על הטקסט: לחזור לטקסט ולחפש את המשפט שעונה בדיוק על השאלה.');
+  if(weak.some(s=>/^g\d/.test(s.k)&&(i.games[+s.k.slice(1)]||{}).kind==='sort'))tips.push('במיון: שם עצם הוא דבר או אדם, פועל הוא משהו שעושים, ותואר מתאר איך משהו.');
+  if(!weak.length&&!todo.length)tips.push('כל התחנות הושלמו. אפשר להפליג לאי הבא!');
+  else if(todo.length)tips.push(`נשארו תחנות: ${todo.map(s=>esc(s.t)).join(', ')}.`);
+  const words=(b.missed||[]).filter(w=>w.split(' ').length<=3).slice(0,12);
+  const hist=b.readHist||[];
+  return `<div class="report-box">${rows}</div>
+  ${hist.length?`<p class="sub">קריאה בקול לאורך זמן: ${hist.map(h=>`<b>${h.pct}%</b>`).join(' ← ')}</p>`:''}
+  ${words.length?`<p class="sub">מילים שהתבלבלה בהן (לחיצה משמיעה):</p><div class="chips">${words.map(w=>`<button class="chip" data-act="say" data-text="${esc(w)}">${esc(w)}</button>`).join('')}</div>`:''}
+  <div class="tips">${tips.map(t=>`<p>${t}</p>`).join('')}</div>`;
+}
+
+/* ============ READ THE WHOLE TEXT ALOUD ============ */
+function rtWords(p){return p.split(' ')}
+function viewReadText(){
+  const sc=S.screen;const i=islandById(sc.id);const paras=i.text.paras;const cur=sc.pi;
+  let html=paras.map((p,pi)=>{const r=sc.res[pi];const words=rtWords(p);
+    return `<p class="rtp ${pi===cur?'cur':pi<cur?'done':'next'}" id="rtp${pi}">${words.map((w,k)=>`<span class="w ${r?(r[k]?'good':'miss'):''}" id="rw${pi}_${k}">${esc(w)}</span>`).join(' ')}</p>`}).join('');
+  const done=cur>=paras.length;
+  return `<button class="back" data-act="island" data-id="${esc(sc.id)}">${I.back} ${esc(i.name)}</button>
+  <section class="card">
+    <div class="qtop"><span>קוראת את האנסין בקול</span><span>פסקה ${Math.min(cur+1,paras.length)} מתוך ${paras.length}</span></div>
+    <div class="bar"><i style="width:${cur/paras.length*100}%"></i></div>
+    <h2 class="en" style="text-align:left">${esc(i.text.title)}</h2>
+    <p class="tip">לוחצים על המיקרופון וקוראים את הפסקה המסומנת. המילים נצבעות בירוק בזמן שקוראים. בסוף הפסקה לוחצים "סיימתי".</p>
+    <div class="read story rt">${html}</div>
+    ${done?'':`<div class="btns rtctl">
+      ${sc.listening?`<button class="btn red" data-act="rtStop">${I.stop} סיימתי את הפסקה</button>`:`<button class="btn brass" data-act="rtGo">${I.mic2} ${sc.res[cur]?'לקרוא שוב':'מתחילה לקרוא'}</button>`}
+      <button class="btn ghost small" data-act="say" data-text="${esc(paras[cur])}">${I.speaker} שמע את הפסקה</button>
+      ${sc.res[cur]&&!sc.listening?`<button class="btn small" data-act="rtNext">${cur===paras.length-1?'למשוב':'לפסקה הבאה'}</button>`:''}
+    </div>`}
+  </section>`;
+}
+let RT=null;
+function rtPaint(sc,pi,heard){
+  const m=matchWords(sc.__para,heard);m.forEach((ok,k)=>{const el=document.getElementById(`rw${pi}_${k}`);if(el){el.classList.toggle('good',ok)}});return m;
+}
+function rtGo(){
+  const sc=S.screen;const i=islandById(sc.id);const pi=sc.pi;const para=i.text.paras[pi];
+  hush();sc.__para=para;
+  let finals='',t0=0,t1=0,restarts=0,stopReq=false,best=null;
+  const start=()=>{
+    try{RT=new SRClass()}catch(e){toast('הזיהוי הקולי לא זמין בטלפון הזה');return}
+    RT.lang='en-US';RT.continuous=true;RT.interimResults=true;RT.maxAlternatives=1;
+    RT.onresult=e=>{
+      const now=Date.now();if(!t0)t0=now;t1=now;
+      let interim='';for(let k=e.resultIndex;k<e.results.length;k++){const tr=e.results[k][0].transcript;if(e.results[k].isFinal)finals+=' '+tr;else interim+=' '+tr}
+      const m=rtPaint(sc,pi,(finals+' '+interim).trim());
+      if(!best||m.filter(Boolean).length>=best.filter(Boolean).length)best=m;
+      if(m.every(Boolean)){stopReq=true;try{RT.stop()}catch(_){}}
+    };
+    RT.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){stopReq=true;toast('צריך לאשר גישה למיקרופון')}};
+    RT.onend=()=>{
+      if(!stopReq&&restarts<6&&S.screen===sc){restarts++;start();return}
+      sc.listening=false;
+      if(best){sc.res[pi]=best;sc.heard[pi]=finals.trim();sc.ms[pi]=Math.max(0,t1-t0)}
+      else toast('לא שמעתי. נסי לקרוא קרוב יותר לטלפון');
+      if(S.screen===sc)render();
+    };
+    try{RT.start()}catch(e){}
+  };
+  sc.stop=()=>{stopReq=true;try{RT&&RT.stop()}catch(_){}};
+  sc.listening=true;render();start();
+}
+const SMALLW=new Set(['a','an','the','is','are','i','to','of','and','in','on','at','it','he','she','we','they','you','my','his','her','for','with','but','so','be','was','do']);
+function rtFinish(){
+  const sc=S.screen;const i=islandById(sc.id);const paras=i.text.paras;
+  let total=0,ok=0,ms=0;const missed=[];
+  paras.forEach((p,pi)=>{const words=rtWords(p);const r=sc.res[pi];if(!r)return;total+=words.length;ok+=r.filter(Boolean).length;ms+=sc.ms[pi]||0;
+    r.forEach((g,k)=>{const w=words[k].replace(/[^A-Za-z'-]/g,'');if(!g&&w.length>=3&&!SMALLW.has(w.toLowerCase()))missed.push(w)})});
+  if(!total){toast('עוד לא קראת אף פסקה');return}
+  const wpm=ms>3000?Math.round(ok/(ms/60000)):null;
+  const prev=((S.progress.best[i.id]||{}).readHist||[]).slice(-1)[0]||null;
+  const pct=Math.round(ok/total*100);
+  S.session.readOk+=ok>=total*.8?1:0;
+  finishActivity('readtext',`קריאת אנסין: ${i.text.title}${wpm?` · ${wpm} מילים לדקה`:''}`,ok,total,[...new Set(missed)],{wpm,prev,pct,read:sc.res.filter(Boolean).length,paras:paras.length});
+}
+function readFeedbackHTML(r){
+  const x=r.extra;const pct=x.pct;const lines=[];
+  lines.push(pct>=90?'🌟 קריאה שוטפת ומדויקת. כל הכבוד!':pct>=75?'👍 קריאה טובה. נשארו כמה מילים לחזק.':'💪 התחלה טובה. כדאי לשמוע קודם את הטקסט ב"קוראים יחד", ואז לנסות שוב.');
+  lines.push(`קראת נכון <b>${r.correct}</b> מתוך <b>${r.total}</b> מילים${x.read<x.paras?` (${x.read} מתוך ${x.paras} פסקאות)`:''}.`);
+  if(x.wpm)lines.push(`קצב: <b>${x.wpm}</b> מילים לדקה. ${x.wpm<40?'קוראת לאט ובזהירות, וזה בסדר. הקצב יגיע עם התרגול.':x.wpm<=90?'קצב טוב ונוח.':'קצב מהיר! לשים לב לא לדלג על מילים.'}`);
+  if(x.prev){const d=pct-x.prev.pct;lines.push(d>0?`בפעם הקודמת: ${x.prev.pct}%. <b>שיפור של ${d}!</b>`:d===0?`כמו בפעם הקודמת (${x.prev.pct}%).`:`בפעם הקודמת: ${x.prev.pct}%. היום היה קשה יותר, וזה קורה.`)}
+  const words=[...new Set(r.missed||[])].slice(0,14);
+  return `<div class="rfb">${lines.map(l=>`<p>${l}</p>`).join('')}</div>
+  ${words.length?`<p class="sub">מילים שכדאי לחזק (לחיצה משמיעה):</p><div class="chips">${words.map(w=>`<button class="chip" data-act="say" data-text="${esc(w)}">${esc(w)}</button>`).join('')}</div>
+  <button class="btn brass" data-act="drill">${I.mic2} תרגול המילים הקשות</button>`:''}`;
 }
 
 /* ============ ZOOM + RECORDER ============ */
@@ -1255,10 +1388,14 @@ document.addEventListener('click',e=>{
     case 'kStop':kRun++;clearTimeout(kTimer);hush();kHighlight(-1);break;
     case 'kDone':{kRun++;hush();const i=islandById(sc.id);finishActivity('story','קוראים יחד: '+i.text.title,1,1,[]);break;}
     case 'srGo':srGo();break;
+    case 'rtGo':rtGo();break;
+    case 'rtStop':sc.stop&&sc.stop();break;
+    case 'rtNext':{const i=islandById(sc.id);if(sc.pi<i.text.paras.length-1){sc.pi++;render();const el=document.getElementById('rtp'+sc.pi);el&&el.scrollIntoView({block:'center',behavior:'smooth'})}else rtFinish();break;}
+    case 'drill':{const r=sc;const words=[...new Set(r.missed||[])].slice(0,10);if(!words.length)break;S.screen={name:'read2',id:r.id,items:words,idx:0,correct:0,res:null,listening:false,missed:[],drill:true};render();scrollTo({top:0});break;}
     case 'r2Next':case 'r2Self':{
       let ok;if(a==='r2Self')ok=el.dataset.v==='1';else{const r=sc.res||[];ok=r.length&&r.filter(Boolean).length/r.length>=.8}
       if(ok){sc.correct++;S.session.readOk++}else{S.session.readHelp++;sc.missed.push(sc.items[sc.idx].split(' ').slice(0,4).join(' ')+'…')}
-      if(sc.idx<sc.items.length-1){sc.idx++;sc.res=null;sc.heard='';render()}else finishActivity('readaloud','קוראת בקול',sc.correct,sc.items.length,[]);break;}
+      if(sc.idx<sc.items.length-1){sc.idx++;sc.res=null;sc.heard='';render()}else finishActivity(sc.drill?'drill':'readaloud',sc.drill?'תרגול מילים קשות':'קוראת בקול',sc.correct,sc.items.length,[]);break;}
     case 'tab':S.tab=el.dataset.tab;if(S.tab==='map'&&!['map','island'].includes(S.screen.name))S.screen={name:'map'};hush();render();scrollTo({top:0});break;
     case 'home':S.screen={name:'map'};S.tab='map';hush();render();break;
     case 'locked':sfx.bad();toast('האי עדיין נעול. 70% במשחק המילים של האי הקודם יפתחו אותו');break;
@@ -1269,6 +1406,7 @@ document.addEventListener('click',e=>{
       if(k==='story'){S.screen={name:'karaoke',id,slow:false}}
       else if(k==='spell'){const sp=buildSpell(i);S.screen=sp;setTimeout(()=>{if(S.screen===sp)say(sp.items[0].en)},350)}
       else if(/^g\d+$/.test(k)){S.screen=buildGame(i,+k.slice(1))}
+      else if(k==='readtext'){S.screen={name:'readtext',id,pi:0,res:[],heard:[],ms:[],listening:false}}
       else if(k==='readaloud'){const r=buildRead2(i);if(!r.items.length){toast('אין משפטים באי הזה');break}S.screen=r}
       else if(k==='learn'){S.screen={name:'learn',id,idx:0};say(i.words[0].en)}
       else if(k==='quiz'){S.screen={name:'quiz',id,idx:0,qs:buildVocabQuiz(i),correct:0,missed:[]}}
