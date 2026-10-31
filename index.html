@@ -76,7 +76,15 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance
 .card h2{font-size:22px;color:var(--ink)}
 .card p{margin:0}
 .sub{color:var(--ink2);font-size:14px}
-.back{align-self:flex-start;background:none;border:0;color:var(--foam);display:flex;align-items:center;gap:6px;padding:4px 0;font-weight:600}
+.back{align-self:flex-start;position:sticky;top:calc(6px + env(safe-area-inset-top,0px));z-index:4;background:var(--abyss);border:1px solid var(--swell);color:var(--foam);display:flex;align-items:center;gap:6px;padding:8px 14px 8px 16px;min-height:44px;border-radius:999px;font-weight:700;box-shadow:0 6px 16px -10px #000}
+.back svg{width:18px;height:18px}
+.cfwrap{position:fixed;inset:0;z-index:30;background:rgba(6,18,30,.62);display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(90px + env(safe-area-inset-bottom,0px))}
+.cfbox{background:var(--chart);color:var(--ink);border-radius:18px;padding:18px;max-width:420px;width:100%;display:grid;gap:12px;box-shadow:0 20px 40px -16px #000}
+.cfbox h3{margin:0;font-size:20px}.cfbox p{margin:0;color:var(--ink2)}
+.hearrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hearrow .lbl{font-size:14px;color:var(--ink2);font-weight:700}
+.the{color:var(--ink2);font-size:15px;margin-top:2px}
+.misslist{display:grid;gap:8px}
 .back svg{width:18px;height:18px}
 .ihead{display:flex;flex-direction:column;gap:4px}
 .ihead .eyebrow{font-size:12px;letter-spacing:1.2px;color:var(--brass2);text-transform:uppercase}
@@ -698,7 +706,8 @@ function render(){
     const map={readtext:viewReadText,game:viewGame,spell:viewSpell,karaoke:viewKaraoke,read2:viewRead2,island:()=>viewIsland(sc.id),learn:viewLearn,quiz:viewQuiz,sounds:viewQuiz,fix:viewQuiz,readaloud:viewRead,unseen:viewUnseen,result:viewResult};
     v.innerHTML=(map[sc.name]||viewMap)();
   }
-  updateMeter();refreshRecUI();setSync();
+  if(S.confirm&&S.tab==='map')v.insertAdjacentHTML('beforeend',confirmHTML());
+  updateMeter();refreshRecUI();setSync();armBack();
   if(S.tab==='map'&&S.screen.name==='map'){const c=document.querySelector('.isl.cur');if(c&&!S._scrolledMap){S._scrolledMap=true;c.scrollIntoView({block:'center'})}}else S._scrolledMap=false;
   const cb=$('#camBadge');const n=S.shots.filter(s=>s.status!=='ok').length;cb.hidden=!n;cb.textContent=n;
 }
@@ -1088,6 +1097,7 @@ function viewRead2(){
   </div>
   ${sc.heard?`<p class="sub">הטלפון שמע: <span class="en">${esc(sc.heard)}</span></p>`:''}
   ${pct!=null?`<p class="fb ${pct>=80?'ok':'bad'}">${pct>=80?'קריאה מצוינת!':'עוד ניסיון אחד?'} ${pct}% מהמילים</p>`:''}
+  ${res&&res.some(x=>!x)?`<div class="misslist"><span class="sub">מילים לתרגל. לחצי כדי לשמוע איך אומרים:</span><div class="hearrow">${[...new Set(words.filter((w,k)=>!res[k]).map(w=>w.replace(/[^A-Za-z'-]/g,'')).filter(Boolean))].map(w=>`<button class="chip" data-act="say" data-text="${esc(w)}">🔊 ${esc(w)}</button><button class="btn ghost small" data-act="saySlow" data-text="${esc(w)}" aria-label="לאט">🐢</button>`).join('')}</div></div>`:''}
   ${readSR()?(res?`<div class="btns"><button class="btn brass" data-act="r2Next">${sc.idx===sc.items.length-1?'לתוצאות':'הבא'}</button></div>`:''):
     `<div class="btns"><button class="btn brass" data-act="r2Self" data-v="1">קראתי נכון</button><button class="btn ghost" data-act="r2Self" data-v="0">נעזרתי בהקראה</button></div>`}
   </section>`;
@@ -1145,9 +1155,9 @@ function viewReadText(){
   let ctl='';
   if(!done&&sc.listening)ctl=`<div class="btns rtctl"><button class="btn red" data-act="rtStop">${I.stop} סיימתי את הפסקה</button><span class="sub">🎙 המורה מקשיב…</span></div>`;
   else if(!done&&co&&co.i<co.q.length){const w=rtWords(paras[cur])[co.q[co.i]].replace(/[^A-Za-z'-]/g,'');
-    ctl=`<div class="teacher rtctl"><div class="tbub"><span class="tav">🧑‍🏫</span><div><p>${co.i===0?`יפה! עכשיו נתקן ${co.q.length===1?'מילה אחת':co.q.length+' מילים'}.`:''} המילה ${co.i+1} מתוך ${co.q.length}:</p><b class="en tw">${esc(w)}</b>${co.msg?`<p class="tmsg">${co.msg}</p>`:''}</div></div>
-      <div class="btns"><button class="btn ghost small" data-act="coListen" data-w="${esc(w)}">${I.speaker} שמעי לאט</button>
-      <button class="btn ${co.listening?'red':'brass'}" data-act="coSay" data-w="${esc(w)}">${I.mic2} ${co.listening?'מקשיב…':'אני אומרת'}</button>
+    ctl=`<div class="teacher rtctl"><div class="tbub"><span class="tav">🧑‍🏫</span><div><p>${co.i===0?`יפה! עכשיו נתקן ${co.q.length===1?'מילה אחת':co.q.length+' מילים'}.`:''} המילה ${co.i+1} מתוך ${co.q.length}:</p><b class="en tw">${esc(w)}</b>${heOf(w)?`<div class="the">${esc(heOf(w))}</div>`:''}${co.msg?`<p class="tmsg">${co.msg}</p>`:''}</div></div>
+      <div class="hearrow"><span class="lbl">איך אומרים?</span><button class="btn small" data-act="coHear" data-w="${esc(w)}">${I.speaker} שמעי</button><button class="btn ghost small" data-act="coListen" data-w="${esc(w)}">🐢 לאט מאוד</button><button class="btn ghost small" data-act="coCtx" data-w="${esc(w)}">💬 במשפט</button></div>
+      <div class="btns"><button class="btn ${co.listening?'red':'brass'}" data-act="coSay" data-w="${esc(w)}">${I.mic2} ${co.listening?'מקשיב…':'עכשיו אני אומרת'}</button>
       <button class="btn ghost small" data-act="coSkip">דלגי</button></div></div>`}
   else if(!done&&co){const perfect=!co.q.length;
     ctl=`<div class="teacher rtctl"><div class="tbub"><span class="tav">🧑‍🏫</span><div><p>${perfect?'🌟 פסקה מושלמת! קראת כל מילה נכון.':`סיימנו לתקן${co.ok?`, ותיקנת ${co.ok} ${co.ok===1?'מילה':'מילים'}`:''}. רוצה לקרוא את הפסקה שוב, הפעם בלי עצירות?`}</p></div></div>
@@ -1158,7 +1168,7 @@ function viewReadText(){
     <div class="qtop"><span>קוראת עם המורה 🧑‍🏫</span><span>פסקה ${Math.min(cur+1,paras.length)} מתוך ${paras.length}</span></div>
     <div class="bar"><i style="width:${cur/paras.length*100}%"></i></div>
     <h2 class="en" style="text-align:left">${esc(i.text.title)}</h2>
-    <p class="tip">לוחצים "מתחילה לקרוא" וקוראים בקול את הפסקה המסומנת. ירוק: נכון. אדום: דילגת או שהמורה לא שמע נכון. בסוף הפסקה המורה עובר איתך על המילים האדומות.</p>
+    <p class="tip">לוחצים "מתחילה לקרוא" וקוראים בקול את הפסקה המסומנת. ירוק: נכון. אדום: דילגת או שהמורה לא שמע נכון. בסוף הפסקה המורה עובר איתך על המילים האדומות. לא בטוחה איך אומרים מילה? לחצי עליה ותשמעי.</p>
     <div class="read story rt">${html}</div>
     ${ctl}
   </section>`;
@@ -1200,16 +1210,19 @@ function rtGo(){
   sc.listening=true;render();start();
 }
 function coachHit(target,alts){const t=normW(target);return alts.some(a=>a.split(/\s+/).map(normW).some(h=>h===t||(t.length>=4&&lev(h,t)<=1)||(NUMW[h]===t)))}
+let CO_R=null;
+function heOf(w){const k=String(w).toLowerCase();for(const i of allIslands()){const g=i.text&&i.text.gloss;if(g)for(const e in g)if(e.toLowerCase()===k)return g[e];for(const x of (i.words||[]))if(String(x.en).toLowerCase()===k||String(x.form||'').toLowerCase()===k)return x.he}return ''}
+function sentenceWith(para,w){const re=new RegExp('\\b'+reEsc(w)+'\\b','i');return sentencesOf(para).find(x=>re.test(x))||para}
 function coSay(word){
   const sc=S.screen;const co=sc.coach;if(!co||co.listening)return;hush();
-  let R;try{R=new SRClass()}catch(e){toast('הזיהוי הקולי לא זמין');return}
+  let R;try{R=CO_R=new SRClass()}catch(e){toast('הזיהוי הקולי לא זמין');return}
   R.lang='en-US';R.interimResults=false;R.maxAlternatives=5;R.continuous=false;let got=false;
   R.onresult=e=>{if(got)return;got=true;const r=e.results[0];const alts=[];for(let k=0;k<r.length;k++)alts.push(r[k].transcript);
     const k=co.q[co.i];
     if(coachHit(word,alts)){sc.fixed[co.pi+'_'+k]=true;co.ok++;co.i++;co.tries=0;co.msg='';sfx.ok();toast(['מצוין!','יפה מאוד!','בדיוק ככה!'][co.ok%3])}
     else{co.tries++;sfx.bad();
       if(co.tries>=3){co.msg='';co.i++;co.tries=0;toast('נמשיך. נחזור למילה הזו בתרגול בסוף')}
-      else co.msg=`כמעט! שמעתי <span class="en">${esc(alts[0]||'')}</span>. הקשיבי שוב ונסי.`}
+      else co.msg=`כמעט! שמעתי <span class="en">${esc(alts[0]||'')}</span>. לחצי "שמעי", הקשיבי ונסי שוב.`}
     if(co.i<co.q.length&&co.tries===0)setTimeout(()=>{if(S.screen===sc&&co.i<co.q.length){const w=rtWords(islandById(sc.id).text.paras[co.pi])[co.q[co.i]].replace(/[^A-Za-z'-]/g,'');sayPaced(w,null,null,'x')}},700);
   };
   R.onerror=e=>{if(e.error==='no-speech')co.msg='לא שמעתי. נסי להגיד את המילה קרוב יותר לטלפון.'};
@@ -1554,6 +1567,10 @@ document.addEventListener('click',e=>{
     case 'rtGo':rtGo();break;
     case 'rtHear':{const i=islandById(sc.id);const pi=sc.pi;sayPaced(i.text.paras[pi],k=>{document.querySelectorAll('.rt .w.hl').forEach(x=>x.classList.remove('hl'));const el=document.getElementById(`rw${pi}_${k}`);if(el)el.classList.add('hl')});break;}
     case 'coListen':sayPaced(el.dataset.w,null,null,'x');break;
+    case 'coHear':say(el.dataset.w,.7);break;
+    case 'coCtx':{const i=islandById(sc.id);const co=sc.coach;if(!co)break;const para=i.text.paras[co.pi];const w=el.dataset.w;const st=sentenceWith(para,w);sayPaced(st,null,null,S.speed==='x'?'s':S.speed);break;}
+    case 'cfStay':S.confirm=null;render();break;
+    case 'cfGo':{const t=S.confirm;S.confirm=null;if(t)navTo(t,true);break;}
     case 'coSay':coSay(el.dataset.w);break;
     case 'coSkip':{const co=sc.coach;if(co){co.i++;co.tries=0;co.msg='';render()}break;}
     case 'rtStop':sc.stop&&sc.stop();break;
@@ -1563,10 +1580,10 @@ document.addEventListener('click',e=>{
       let ok;if(a==='r2Self')ok=el.dataset.v==='1';else{const r=sc.res||[];ok=r.length&&r.filter(Boolean).length/r.length>=.8}
       if(ok){sc.correct++;S.session.readOk++}else{S.session.readHelp++;sc.missed.push(sc.items[sc.idx].split(' ').slice(0,4).join(' ')+'…')}
       if(sc.idx<sc.items.length-1){sc.idx++;sc.res=null;sc.heard='';render()}else finishActivity(sc.drill?'drill':'readaloud',sc.drill?'תרגול מילים קשות':'קוראת בקול',sc.correct,sc.items.length,[]);break;}
-    case 'tab':S.tab=el.dataset.tab;if(S.tab==='map'&&!['map','island'].includes(S.screen.name))S.screen={name:'map'};hush();render();scrollTo({top:0});break;
-    case 'home':S.screen={name:'map'};S.tab='map';hush();render();break;
+    case 'tab':{const t=el.dataset.tab;if(t==='map'&&S.tab==='map'){if(S.screen.name!=='map')navTo({act:'home'})}else{stopAll();S.tab=t;render();scrollTo({top:0})}break;}
+    case 'home':navTo({act:'home'});break;
     case 'locked':sfx.bad();toast('האי עדיין נעול. 70% במשחק המילים של האי הקודם יפתחו אותו');break;
-    case 'island':S.tab='map';S.screen={name:'island',id:el.dataset.id};hush();render();scrollTo({top:0});break;
+    case 'island':navTo({act:'island',id:el.dataset.id});break;
     case 'station':{
       const id=el.dataset.id,k=el.dataset.k,i=islandById(id);if(!i)break;
       kRun++;clearTimeout(kTimer);
@@ -1613,6 +1630,35 @@ document.addEventListener('click',e=>{
     case 'reqProcess':{el.disabled=true;apiPost({action:'requestProcess',note:''}).then(()=>{sfx.ok();toast('הבקשה נשלחה לאבא במייל')}).catch(err=>{toast(err.message||'לא הצלחתי לשלוח, נסי שוב');el.disabled=false});break;}
   }
 });
+/* ============ NAVIGATION: back button, exit confirmation ============ */
+function stopAll(){kRun++;clearTimeout(kTimer);hush();const sc=S.screen;try{sc&&sc.stop&&sc.stop()}catch(e){}try{SR&&SR.stop()}catch(e){}try{CO_R&&CO_R.stop()}catch(e){}}
+function inProgress(sc){if(!sc||S.tab!=='map')return false;switch(sc.name){
+  case 'game':return sc.idx>0||!!sc.answered||sc.found>0||sc.mistakes>0||sc.next>0;
+  case 'spell':return sc.idx>0||sc.built.length>0;
+  case 'quiz':case 'sounds':case 'fix':return sc.idx>0||!!sc.answered;
+  case 'read2':return sc.idx>0||!!sc.res;
+  case 'readtext':return sc.res.some(Boolean)||!!sc.listening;
+  case 'unseen':return sc.answers.some(x=>x!=null);
+  case 'readaloud':return sc.idx>0;}return false}
+function navTo(t,force){
+  if(!force&&inProgress(S.screen)){S.confirm=t;render();return}
+  S.confirm=null;stopAll();
+  if(t.act==='home'){S.screen={name:'map'};S.tab='map'}
+  else if(t.act==='island'){const id=t.id||S.screen.id;S.tab='map';S.screen=id?{name:'island',id}:{name:'map'}}
+  render();scrollTo({top:0});
+}
+function confirmHTML(){return `<div class="cfwrap" role="dialog" aria-modal="true"><div class="cfbox"><h3>לצאת באמצע?</h3><p>ההתקדמות בתרגיל הזה לא תישמר. אפשר להמשיך מאיפה שהפסקת.</p><div class="btns"><button class="btn brass" data-act="cfStay">להמשיך לתרגל</button><button class="btn ghost" data-act="cfGo">לצאת</button></div></div></div>`}
+function goBack(){
+  if(S.confirm){S.confirm=null;render();return true}
+  if(S.relink&&KEY){S.relink=false;render();return true}
+  if(S.tab!=='map'){stopAll();S.tab='map';render();scrollTo({top:0});return true}
+  const sc=S.screen;if(!sc||sc.name==='map')return false;
+  if(sc.name==='island')navTo({act:'home'});else navTo({act:'island',id:sc.id});
+  return true;
+}
+const atRoot=()=>S.tab==='map'&&(!S.screen||S.screen.name==='map')&&!S.confirm&&!S.relink;
+function armBack(){if(!atRoot()&&!(history.state&&history.state.app)){try{history.pushState({app:1},'')}catch(e){}}}
+addEventListener('popstate',()=>{if(!goBack())return;armBack()});
 /* 5 לחיצות מהירות על האייקון שבכותרת: החלפת קישור (למשל מעבר לקישור הורה) */
 let logoTaps=[];document.querySelector('.brand img').addEventListener('click',()=>{const t=Date.now();logoTaps=logoTaps.filter(x=>t-x<2500);logoTaps.push(t);if(logoTaps.length>=5){logoTaps=[];S.relink=true;render()}});
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('isl')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
