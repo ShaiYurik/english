@@ -254,12 +254,42 @@ button.chip{border:0;cursor:pointer}
 .rtctl{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--chart);padding:8px 0}
 .rfb{display:grid;gap:6px;text-align:start;width:100%;background:#fff;border-radius:12px;padding:12px;font-size:16px}
 .rfb p{margin:0}
+/* timetable & exams */
+.nextex{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--sea);border:1px solid var(--swell);border-radius:var(--r);padding:14px;color:var(--chart);text-align:center}
+.nextex b{font-family:var(--f-display);font-weight:400;font-size:28px;color:var(--brass2)}
+.nextex span{font-size:14px;color:var(--muted)}
+.nextex.eng{border-color:var(--brass)}
+.daychips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.dchip{border:1.5px solid var(--chart2);background:#fff;border-radius:10px;padding:8px 2px;font-weight:700;font-size:14px;color:var(--ink);position:relative}
+.dchip.on{background:var(--sea);color:var(--chart);border-color:var(--sea)}
+.dchip.today::after{content:"";position:absolute;top:4px;inset-inline-end:4px;width:6px;height:6px;border-radius:50%;background:var(--signal)}
+.ttable{display:grid;gap:6px}
+.lrow{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:10px 12px;border:1.5px solid transparent}
+.lrow.free{background:transparent;border:1.5px dashed var(--chart2)}
+.lrow.eng{border-color:var(--brass);background:#fff8e6}
+.lrow.now{box-shadow:0 0 0 2px var(--kelp)}
+.lt{display:flex;flex-direction:column;align-items:center;min-width:64px;font-variant-numeric:tabular-nums}
+.lt b{font-size:18px}.lt small{font-size:12px;color:var(--ink2)}
+.ls{flex:1;min-width:0;display:flex;flex-direction:column}
+.ls b{font-size:16px}.ls small{font-size:13px;color:var(--ink2)}
+.eb{font-size:18px}.nowb{font-size:11px;font-weight:800;background:var(--kelp);color:#fff;border-radius:999px;padding:2px 8px}
+.lform{background:#fff;border-radius:12px;padding:10px}
+.exlist{display:grid;gap:6px}
+.exrow{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:8px 12px}
+.exrow.eng{background:#fff8e6;border:1.5px solid var(--brass)}
+.exrow.past{opacity:.55}
+.exd{display:flex;flex-direction:column;align-items:center;min-width:44px;font-variant-numeric:tabular-nums}
+.exd small{font-size:11px;color:var(--ink2)}
+.exs{flex:1;min-width:0;font-weight:700;display:flex;flex-direction:column}.exs small{font-weight:400;font-size:12px;color:var(--ink2)}
+.exn{font-size:13px;font-weight:700;color:var(--sea2);white-space:nowrap}
+.xbtn{border:0;background:var(--chart2);border-radius:50%;width:26px;height:26px;display:grid;place-items:center;color:var(--ink)}
+details summary{cursor:pointer;padding:6px 0}
 .gate{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
 .gate img{width:120px;height:120px;border-radius:28px}
 
 .tabs{position:fixed;inset:auto 0 0;z-index:5;background:var(--abyss);border-top:1px solid var(--swell);
   padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
 .tab{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:700;color:var(--muted);padding:4px;border-radius:10px;position:relative}
 .tab svg{width:24px;height:24px}
 .tab[aria-current="page"]{color:var(--brass2);background:var(--sea)}
@@ -291,6 +321,7 @@ button.chip{border:0;cursor:pointer}
   <div class="in">
     <button class="tab" data-act="tab" data-tab="map" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>מפה</button>
     <button class="tab" data-act="tab" data-tab="zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg>זום</button>
+    <button class="tab" data-act="tab" data-tab="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>לוח<span class="badge" id="calBadge" hidden></span></button>
     <button class="tab" data-act="tab" data-tab="camera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>צילום<span class="badge" id="camBadge" hidden></span></button>
     <button class="tab" data-act="tab" data-tab="parent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M9 9h7M9 13h7M9 17h4"/></svg>יומן הורה</button>
   </div>
@@ -444,11 +475,11 @@ function toast(msg){document.querySelectorAll('.toast').forEach(t=>t.remove());c
 /* ============ STATE ============ */
 const S={
   progress:{unlocked:1,best:{},xp:0}, session:null, sessions:[], classWords:[], zoom:[], lessons:[], pendingPhotos:0,
-  role:LS.get('role','child'), tab:LS.get('role','child')==='parent'?'parent':'map', screen:{name:'map'}, sound:LS.get('sound',true), loaded:false, online:null, badKey:false,
+  role:LS.get('role','child'), scheduleState:null,calDay:null,editLesson:null,tab:LS.get('role','child')==='parent'?'parent':'map', screen:{name:'map'}, sound:LS.get('sound',true), loaded:false, online:null, badKey:false,
   activeSec:0, lastInput:Date.now(), shots:[]
 };
 function newSession(){return {date:today(),minutes:0,activities:[],missed:[],readOk:0,readHelp:0,updatedAt:Date.now()}}
-function cache(){LS.set('cache',{progress:S.progress,sessions:[S.session,...S.sessions.filter(s=>s.date!==S.session.date)].slice(0,40),classwords:S.classWords,zoom:S.zoom,lessons:S.lessons,pendingPhotos:S.pendingPhotos})}
+function cache(){LS.set('cache',{schedule:S.scheduleState,progress:S.progress,sessions:[S.session,...S.sessions.filter(s=>s.date!==S.session.date)].slice(0,40),classwords:S.classWords,zoom:S.zoom,lessons:S.lessons,pendingPhotos:S.pendingPhotos})}
 const isParent=()=>S.role==='parent';
 function setRole(r){
   r=r==='parent'?'parent':'child';
@@ -457,7 +488,7 @@ function setRole(r){
   if(r==='parent'){S.tab='parent'}else if(S.tab==='parent'){S.tab='map'}
 }
 function saveSession(){if(isParent())return;S.session.updatedAt=Date.now();enqueue('session:'+S.session.date,{action:'saveSession',data:JSON.parse(JSON.stringify(S.session))});cache()}
-function saveState(name){if(isParent()&&name==='progress')return;const data={progress:S.progress,classwords:S.classWords,zoom:S.zoom}[name];enqueue('state:'+name,{action:'saveState',name,data:JSON.parse(JSON.stringify(data))});cache()}
+function saveState(name){if(isParent()&&name==='progress')return;const data={progress:S.progress,classwords:S.classWords,zoom:S.zoom,schedule:S.scheduleState}[name];enqueue('state:'+name,{action:'saveState',name,data:JSON.parse(JSON.stringify(data))});cache()}
 
 function applyState(st,fromServer){
   if(!st)return;
@@ -470,6 +501,7 @@ function applyState(st,fromServer){
   }
   if(st.classwords&&!pend('classwords'))S.classWords=st.classwords;
   if(st.zoom&&!pend('zoom'))S.zoom=st.zoom;
+  if(st.schedule!==undefined&&st.schedule&&!pend('schedule'))S.scheduleState=st.schedule;
   if(st.lessons)S.lessons=st.lessons;
   if(typeof st.pendingPhotos==='number')S.pendingPhotos=st.pendingPhotos;
   if(st.sessions){
@@ -584,7 +616,7 @@ function allIslands(){
   const book=bookIslands();
   const list=book.length?book:ISLANDS.map(i=>({...i,kind:'base'}));
   if(S.classWords.length>=4)list.push({id:'cove',kind:'class',name:'מפרץ המטמון',en:'Treasure Cove',topic:'מילים מהכיתה',words:S.classWords.map(w=>({en:w.en,he:w.he,ex:w.ex||''}))});
-  (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands))return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,mistakes:l.mistakes||[],source:l.source||''})});
+  (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,mistakes:l.mistakes||[],source:l.source||''})});
   return list;
 }
 function islandById(id){return allIslands().find(i=>i.id===id)}
@@ -620,10 +652,11 @@ function render(){
   if(!KEY||S.relink){v.innerHTML=viewGate();$('#tabs').hidden=true;return}
   $('#tabs').hidden=false;
   const pt=document.querySelector('.tab[data-tab="parent"]');pt.hidden=!isParent();
-  $('#tabs .in').style.gridTemplateColumns=`repeat(${isParent()?4:3},1fr)`;
+  $('#tabs .in').style.gridTemplateColumns=`repeat(${isParent()?5:4},1fr)`;
   if(S.tab==='parent'&&!isParent())S.tab='map';
   if(!S.loaded){v.innerHTML='<p class="maphint">מכינים את הספינה…</p>';return}
   if(S.tab==='zoom') v.innerHTML=viewZoom();
+  else if(S.tab==='cal') v.innerHTML=viewCal();
   else if(S.tab==='camera') v.innerHTML=viewCamera();
   else if(S.tab==='parent') v.innerHTML=viewParent();
   else{
@@ -654,7 +687,8 @@ function meterHTML(){
   </section>`;
 }
 function examHTML(){
-  const [y,m,d]=EXAM_DATE.split('-').map(Number);const ex=new Date(y,m-1,d);const t=new Date();t.setHours(0,0,0,0);
+  const ne=nextExams().find(e=>/אנגלית|english/i.test(e.subject));const ds=ne?ne.date:EXAM_DATE;
+  const [y,m,d]=ds.split('-').map(Number);const ex=new Date(y,m-1,d);const t=new Date();t.setHours(0,0,0,0);
   const days=Math.round((ex-t)/864e5);if(days<0)return '';
   return `<div class="exam">🧭 ${days===0?'<b>היום</b> מבחן באנגלית. בהצלחה!':`מבחן באנגלית בעוד <b>${days}</b> ימים (${d}.${m})`}</div>`;
 }
@@ -1138,6 +1172,59 @@ function readFeedbackHTML(r){
   <button class="btn brass" data-act="drill">${I.mic2} תרגול המילים הקשות</button>`:''}`;
 }
 
+/* ============ TIMETABLE & EXAM CALENDAR ============ */
+const DAY_NAMES=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+function getSchedule(){
+  const f=(S.lessons||[]).find(l=>l&&l.schedule);const a=f?f.schedule:null;const b=S.scheduleState;
+  if(a&&b)return (Date.parse(b.updated)||0)>(Date.parse(a.updated)||0)?b:a;return b||a||null;
+}
+function editableSchedule(){const s=getSchedule();const c=JSON.parse(JSON.stringify(s||{times:[],days:[],exams:[]}));c.updated=new Date().toISOString();S.scheduleState=c;return c}
+function saveSchedule(){S.scheduleState.updated=new Date().toISOString();saveState('schedule');render()}
+function daysUntil(ds){const [y,m,d]=ds.split('-').map(Number);const t=new Date();t.setHours(0,0,0,0);return Math.round((new Date(y,m-1,d)-t)/864e5)}
+function nextExams(){const s=getSchedule();return (s&&s.exams||[]).filter(e=>daysUntil(e.date)>=0).sort((a,b)=>a.date.localeCompare(b.date))}
+const isEng=x=>x&&/אנגלית|english/i.test(x.s||x.subject||'');
+function curLessonIdx(times){const n=new Date();const hm=hhmm(n);return times.findIndex(t=>hm>=t.from&&hm<=t.to)}
+function viewCal(){
+  const sc=getSchedule();const par=isParent();
+  if(!sc)return `<div class="ihead"><span class="eyebrow">Ship's Log</span><h2>לוח</h2><p>עוד אין מערכת שעות. צלמו אותה ונעדכן.</p></div>${calPhotoHTML()}`;
+  const todayIdx=new Date().getDay();const di=S.calDay!=null?S.calDay:(todayIdx<=4?todayIdx:0);
+  const day=sc.days[di]||{d:DAY_NAMES[di],l:[]};const times=sc.times||[];
+  const ci=di===todayIdx?curLessonIdx(times):-1;
+  const up=nextExams();const past=(sc.exams||[]).filter(e=>daysUntil(e.date)<0).sort((a,b)=>b.date.localeCompare(a.date));
+  const nx=up[0];
+  const tomorrow=(todayIdx+1)%7;const tmr=sc.days[tomorrow];const engTmr=tmr&&tmr.l.some(isEng);
+  const exRow=e=>{const n=daysUntil(e.date);const [y,m,d]=e.date.split('-').map(Number);
+    return `<div class="exrow ${isEng(e)?'eng':''} ${n<0?'past':''}"><span class="exd"><b>${d}.${m}</b><small>${dayName(e.date)}</small></span><span class="exs">${esc(e.subject)}${e.note?`<small>${esc(e.note)}</small>`:''}</span><span class="exn">${n<0?'עבר':n===0?'היום!':n===1?'מחר':`בעוד ${n} ימים`}</span>${par?`<button class="xbtn" data-act="exDel" data-id="${esc(e.id)}" aria-label="מחק">${I.x}</button>`:''}</div>`};
+  return `<div class="ihead"><span class="eyebrow">Ship's Log</span><h2>לוח</h2><p>${sc.class?`כיתה ${esc(sc.class)} · `:''}עודכן ${fmtDate((sc.updated||'').slice(0,10))}</p></div>
+  ${nx?`<section class="nextex ${isEng(nx)?'eng':''}"><span>המבחן הבא</span><b>${esc(nx.subject)}</b><span>יום ${dayName(nx.date)} ${fmtDate(nx.date)} · ${daysUntil(nx.date)===0?'היום!':daysUntil(nx.date)===1?'מחר':'בעוד '+daysUntil(nx.date)+' ימים'}</span></section>`:''}
+  ${engTmr&&!isParent()?`<p class="maphint">⚓ מחר יש אנגלית. זה זמן טוב לעבור על המילים של האי האחרון.</p>`:''}
+  <section class="card">
+    <h2>מערכת שעות</h2>
+    <div class="daychips">${sc.days.map((d,k)=>`<button class="dchip ${k===di?'on':''} ${k===todayIdx?'today':''}" data-act="calDay" data-k="${k}">${esc(d.d)}</button>`).join('')}</div>
+    <div class="ttable">${times.map((t,k)=>{const l=day.l[k];const ed=par&&S.editLesson===k;
+      if(ed)return `<form class="f lform" data-form="lesson" data-k="${k}"><div class="lt"><b>${t.n}</b><small>${t.from}–${t.to}</small></div><div class="two"><label>מקצוע<input id="lsS" value="${esc(l?l.s:'')}"></label><label>מורה<input id="lsT" value="${esc(l?l.t:'')}"></label></div><label>חדר<input id="lsR" value="${esc(l?l.r:'')}"></label><div class="btns"><button class="btn brass small" type="submit">שמור</button><button class="btn ghost small" type="button" data-act="lsCancel">ביטול</button></div></form>`;
+      return `<div class="lrow ${l?'':'free'} ${isEng(l)?'eng':''} ${k===ci?'now':''}" ${par?`data-act="lsEdit" data-k="${k}"`:''}><div class="lt"><b>${t.n}</b><small>${t.from}–${t.to}</small></div><div class="ls">${l?`<b>${esc(l.s)}</b><small>${esc([l.t,l.r&&('חדר '+l.r)].filter(Boolean).join(' · '))}</small>`:'<small>אין שיעור</small>'}</div>${isEng(l)?'<span class="eb">⚓</span>':''}${k===ci?'<span class="nowb">עכשיו</span>':''}</div>`}).join('')}</div>
+    ${par?'<p class="sub">לחיצה על שיעור פותחת עריכה.</p>':''}
+  </section>
+  <section class="card">
+    <h2>לוח מבחנים</h2>
+    <div class="exlist">${up.length?up.map(exRow).join(''):'<div class="empty">אין מבחנים קרובים.</div>'}</div>
+    ${par?`<form class="f" data-form="exam"><div class="two"><label>תאריך<input id="exD" type="date" required value="${today()}"></label><label>מקצוע<input id="exS" required autocomplete="off" placeholder="אנגלית"></label></div><label>הערה (לא חובה)<input id="exN" autocomplete="off" placeholder="יחידות 1–3"></label><button class="btn brass small" type="submit">הוסף מבחן</button></form>`:''}
+    ${past.length?`<details><summary class="sub">מבחנים שעברו (${past.length})</summary><div class="exlist">${past.map(exRow).join('')}</div></details>`:''}
+  </section>
+  ${calPhotoHTML()}`;
+}
+function calPhotoHTML(){
+  return `<section class="card"><h2>יש מערכת או לוח מבחנים חדשים?</h2><p>מצלמים, והלוח מתעדכן אחרי עיבוד. ${isParent()?'':'אבא יקבל הודעה.'}</p>
+  <div class="shoot"><label class="main" for="calTT">${I.camera}מערכת שעות חדשה<input id="calTT" type="file" accept="image/*" data-note="מערכת שעות"></label><label for="calEX">${I.camera}לוח מבחנים חדש<input id="calEX" type="file" accept="image/*" data-note="לוח מבחנים"></label></div></section>`;
+}
+async function calPhoto(file,note){
+  const blob=await compress(file);sfx.shutter();
+  const id=uid('p');S.shots.push({id,blob,url:URL.createObjectURL(blob),status:'wait'});
+  await queueUpload({id,kind:'photo',blob,meta:{note}});
+  setTimeout(()=>apiPost({action:'requestProcess',note:note+' לעדכון הלוח'}).then(()=>toast('הצילום נשלח לעיבוד. הלוח יתעדכן בקרוב')).catch(()=>toast('הצילום נשמר. הבקשה לעיבוד תישלח בהמשך')),2500);
+}
+
 /* ============ ZOOM + RECORDER ============ */
 const REC={stream:null,rec:null,chunks:[],part:0,recId:null,zoomId:null,start:0,segStart:0,tick:null,analyser:null,buf:null,wake:null,mime:'',saved:0,pending:0};
 function pickMime(){const c=['audio/webm;codecs=opus','audio/webm','audio/mp4;codecs=mp4a.40.2','audio/mp4','audio/aac'];for(const m of c){try{if(window.MediaRecorder&&MediaRecorder.isTypeSupported(m))return m}catch(e){}}return ''}
@@ -1388,6 +1475,10 @@ document.addEventListener('click',e=>{
     case 'kStop':kRun++;clearTimeout(kTimer);hush();kHighlight(-1);break;
     case 'kDone':{kRun++;hush();const i=islandById(sc.id);finishActivity('story','קוראים יחד: '+i.text.title,1,1,[]);break;}
     case 'srGo':srGo();break;
+    case 'calDay':S.calDay=+el.dataset.k;S.editLesson=null;render();break;
+    case 'lsEdit':if(isParent()){S.editLesson=+el.dataset.k;render()}break;
+    case 'lsCancel':S.editLesson=null;render();break;
+    case 'exDel':{if(!isParent())break;const c=editableSchedule();c.exams=c.exams.filter(e=>e.id!==el.dataset.id);saveSchedule();toast('המבחן נמחק');break;}
     case 'rtGo':rtGo();break;
     case 'rtStop':sc.stop&&sc.stop();break;
     case 'rtNext':{const i=islandById(sc.id);if(sc.pi<i.text.paras.length-1){sc.pi++;render();const el=document.getElementById('rtp'+sc.pi);el&&el.scrollIntoView({block:'center',behavior:'smooth'})}else rtFinish();break;}
@@ -1448,13 +1539,24 @@ document.addEventListener('click',e=>{
 /* 5 לחיצות מהירות על האייקון שבכותרת: החלפת קישור (למשל מעבר לקישור הורה) */
 let logoTaps=[];document.querySelector('.brand img').addEventListener('click',()=>{const t=Date.now();logoTaps=logoTaps.filter(x=>t-x<2500);logoTaps.push(t);if(logoTaps.length>=5){logoTaps=[];S.relink=true;render()}});
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('isl')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
-document.addEventListener('change',e=>{if(e.target.id==='camIn'||e.target.id==='galIn'){const files=[...e.target.files];e.target.value='';if(files.length)addShots(files)}});
+document.addEventListener('change',e=>{if(e.target.id==='calTT'||e.target.id==='calEX'){const f=e.target.files[0];const note=e.target.dataset.note;e.target.value='';if(f)calPhoto(f,note);return}
+  if(e.target.id==='camIn'||e.target.id==='galIn'){const files=[...e.target.files];e.target.value='';if(files.length)addShots(files)}});
 document.addEventListener('submit',e=>{
   const f=e.target;if(!f.dataset.form)return;e.preventDefault();
   if(f.dataset.form==='key'){
     const k=keyFromText($('#keyIn').value);if(!k){toast('הקישור לא נראה נכון. העתיקי את כולו, כולל הסוף אחרי #k=');return}
     KEY=k;LS.set('key',KEY);S.badKey=false;S.relink=false;outbox={};LS.set('outbox',outbox);
     render();loadAll();return;
+  }
+  if(f.dataset.form==='exam'){
+    const date=$('#exD').value,subject=$('#exS').value.trim(),note=$('#exN').value.trim();if(!date||!subject)return;
+    const c=editableSchedule();c.exams=c.exams||[];c.exams.push({id:uid('e'),date,subject,note});saveSchedule();sfx.ok();toast('המבחן נוסף');return;
+  }
+  if(f.dataset.form==='lesson'){
+    const k=+f.dataset.k;const c=editableSchedule();const di=S.calDay!=null?S.calDay:(new Date().getDay()<=4?new Date().getDay():0);
+    while(c.days.length<=di)c.days.push({d:DAY_NAMES[c.days.length],l:[]});
+    const subj=$('#lsS').value.trim();c.days[di].l[k]=subj?{s:subj,t:$('#lsT').value.trim(),r:$('#lsR').value.trim()}:null;
+    S.editLesson=null;saveSchedule();toast('השיעור עודכן');return;
   }
   if(f.dataset.form==='word'){
     const en=$('#wEn').value.trim(),he=$('#wHe').value.trim(),ex=$('#wEx').value.trim();if(!en||!he)return;
