@@ -247,6 +247,14 @@ form.f{display:grid;gap:10px}
 .tips{display:grid;gap:6px;width:100%;text-align:start;background:#fff;border-radius:12px;padding:10px 12px;font-size:15px}
 .tips p{margin:0}
 button.chip{border:0;cursor:pointer}
+.rt .w.fixed{color:#1b6fa3;background:#dcebf7}
+.rt .w.focus{outline:3px solid var(--brass);outline-offset:1px}
+.rt .w.hl{background:var(--brass2)}
+.teacher{display:grid;gap:10px;background:var(--chart);padding:10px 0}
+.tbub{display:flex;gap:10px;align-items:flex-start;background:#fff;border-radius:14px;padding:12px;border:2px solid var(--brass)}
+.tbub p{margin:0}.tav{font-size:34px;line-height:1}
+.tw{display:block;font-size:34px;direction:ltr;text-align:left;margin:4px 0}
+.tmsg{color:var(--signal);font-weight:700}
 .rtp{margin:0 0 12px;padding:6px 8px;border-radius:10px;transition:background .3s}
 .rtp.cur{background:#fff;box-shadow:0 0 0 2px var(--brass)}
 .rtp.next{opacity:.45}
@@ -302,7 +310,7 @@ details summary{cursor:pointer;padding:6px 0}
 .tab svg{width:24px;height:24px}
 .tab[aria-current="page"]{color:var(--brass2);background:var(--sea)}
 .tab .badge{position:absolute;top:0;inset-inline-end:14%;min-width:18px;height:18px;border-radius:9px;background:var(--signal);color:#fff;font-size:11px;display:grid;place-items:center;padding:0 4px}
-.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--chart);color:var(--ink);padding:10px 16px;border-radius:999px;font-weight:700;z-index:20;box-shadow:0 8px 24px -10px #000;max-width:90vw;text-align:center}
+.toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--chart);color:var(--ink);padding:10px 16px;border-radius:999px;font-weight:700;z-index:20;box-shadow:0 8px 24px -10px #000;max-width:90vw;text-align:center}
 @keyframes bob{0%,100%{transform:translateX(50%) translateY(0)}50%{transform:translateX(50%) translateY(-3px)}}
 .track .ship{animation:bob 2.6s ease-in-out infinite}
 @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -483,7 +491,7 @@ function toast(msg){document.querySelectorAll('.toast').forEach(t=>t.remove());c
 /* ============ STATE ============ */
 const S={
   progress:{unlocked:1,best:{},xp:0}, session:null, sessions:[], classWords:[], zoom:[], lessons:[], pendingPhotos:0,
-  role:LS.get('role','child'), scheduleState:null,calDay:null,editLesson:null,tab:LS.get('role','child')==='parent'?'parent':'map', screen:{name:'map'}, sound:LS.get('sound',true), loaded:false, online:null, badKey:false,
+  speed:LS.get('speed','n'),role:LS.get('role','child'), scheduleState:null,calDay:null,editLesson:null,tab:LS.get('role','child')==='parent'?'parent':'map', screen:{name:'map'}, sound:LS.get('sound',true), loaded:false, online:null, badKey:false,
   activeSec:0, lastInput:Date.now(), shots:[]
 };
 function newSession(){return {date:today(),minutes:0,activities:[],missed:[],readOk:0,readHelp:0,updatedAt:Date.now()}}
@@ -581,7 +589,22 @@ function say(text,rate=.85){
   if(!('speechSynthesis' in window)){toast('הטלפון לא תומך בהקראה');return}
   speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=rate;if(enVoice)u.voice=enVoice;speechSynthesis.speak(u);
 }
-const hush=()=>{try{speechSynthesis.cancel()}catch(e){}};
+let paceRun=0;
+const hush=()=>{paceRun++;try{speechSynthesis.cancel()}catch(e){}};
+const SPEEDS={n:{label:'רגיל',rate:.85},s:{label:'לאט',rate:.6},x:{label:'סופר איטי',rate:.5,wbw:true,gap:550}};
+const SPEED_ORDER=['n','s','x'];
+function utter(t,rate){const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=rate;if(enVoice)u.voice=enVoice;return u}
+function sayPaced(text,onWord,onEnd,sp){
+  if(!('speechSynthesis' in window)){toast('הטלפון לא תומך בהקראה');return}
+  const cfg=SPEEDS[sp||S.speed]||SPEEDS.n;hush();const run=++paceRun;
+  const words=String(text).split(' ');
+  if(!cfg.wbw||words.length===1){const u=utter(text,cfg.wbw?.35:cfg.rate);u.onend=()=>{if(run===paceRun)onEnd&&onEnd()};speechSynthesis.speak(u);return}
+  let k=0;const next=()=>{if(run!==paceRun)return;if(k>=words.length){onWord&&onWord(-1);onEnd&&onEnd();return}
+    onWord&&onWord(k);const w=words[k].replace(/[^A-Za-z0-9'-]/g,'')||words[k];const u=utter(w,cfg.rate);
+    let done=false;const fin=()=>{if(done)return;done=true;k++;setTimeout(next,cfg.gap)};u.onend=fin;u.onerror=fin;speechSynthesis.speak(u)};
+  next();
+}
+const speedBtn=()=>`<button class="btn ghost small" data-act="speed">🐢 ${SPEEDS[S.speed].label}</button>`;
 
 /* ============ ICONS ============ */
 const I={
@@ -632,11 +655,12 @@ function stationsOf(i){
   const st=[];const b=S.progress.best[i.id]||{};const w=i.words||[];
   const pct=k=>b[k]!=null?b[k]+'%':'';
   if(i.text)st.push({k:'story',ic:I.book,t:'קוראים יחד',d:i.text.title+' · הקראה עם מילים מודגשות',m:b.story?'נקרא':''});
+  if(i.text)st.push({k:'readtext',ic:I.mic2,t:'קוראת עם המורה 🧑‍🏫',d:readSR()?'את קוראת, המורה מסמן ועוזר לתקן':'עובד בטלפון עם כרום (אנדרואיד)',m:pct('readtext'),scored:readSR()?1:0});
   if(w.length)st.push({k:'learn',ic:I.cards,t:'כרטיסיות מילים',d:`${w.length} מילים עם הקראה`,m:b.learn?'נלמד':''});
   if(w.filter(x=>/^[a-z]{3,10}$/i.test(x.en)).length>=3)st.push({k:'spell',ic:I.spell,t:'בונים מילה',d:'שומעים ובונים את המילה מאותיות',m:pct('spell'),scored:1});
   if(w.length>=4)st.push({k:'quiz',ic:I.quiz,t:'משחק מילים',d:'תרגום והאזנה',m:pct('quiz'),scored:1});
   (i.games||[]).forEach((g,n)=>st.push({k:'g'+n,ic:GAME_IC[g.kind]||I.quiz,t:g.title||'תרגיל',d:GAME_DESC[g.kind]||'',m:pct('g'+n),scored:1}));
-  if(i.text&&readSR())st.push({k:'readtext',ic:I.mic2,t:'קוראת את האנסין בקול',d:'קוראים את כל הטקסט ומקבלים משוב',m:pct('readtext'),scored:1});
+
   if(readItems(i).length)st.push({k:'readaloud',ic:I.mouth,t:'קוראת בקול',d:readSR()?'הטלפון מקשיב ומסמן כל מילה':'קוראים ומשווים להקראה',m:pct('readaloud'),scored:1});
   if(i.mistakes&&i.mistakes.length)st.push({k:'fix',ic:I.fix,t:'מתקנים טעויות',d:'משפטים מהשיעור: איך אומרים נכון?',m:pct('fix'),scored:1});
   if(i.kind==='base')st.push({k:'sounds',ic:I.ear,t:'מה שמעת?',d:'להבדיל בין מילים שנשמעות דומה',m:pct('sounds'),scored:1});
@@ -834,7 +858,7 @@ function viewRead(){
     <div class="bar"><i style="width:${sc.idx/sc.items.length*100}%"></i></div>
     <p><b>1.</b> קרא את המשפט בקול רם. <b>2.</b> לחץ על הרמקול והשווה. מילה קשה? לחץ עליה לשמוע רק אותה.</p>
     <div class="read">${wordsHTML(s)}</div>
-    <div class="btns"><button class="btn" data-act="say" data-text="${esc(s)}">${I.speaker} השמע</button><button class="btn ghost small" data-act="saySlow" data-text="${esc(s)}">לאט</button></div>
+    <div class="btns"><button class="btn" data-act="say" data-text="${esc(s)}">${I.speaker} השמע</button><button class="btn ghost small" data-act="saySlow" data-text="${esc(s)}">🐢 סופר איטי</button></div>
     <p class="sub">איך הלך?</p>
     <div class="btns"><button class="btn brass" data-act="readMark" data-v="ok">קראתי נכון</button><button class="btn ghost" data-act="readMark" data-v="help">נעזרתי בהקראה</button></div>
   </section>`;
@@ -1012,7 +1036,7 @@ function viewKaraoke(){
   <section class="card">
     <h2 class="en" style="text-align:left">${esc(t.title)}</h2>
     <p class="tip">לוחצים "הקראה" ועוקבים אחרי המילה הצבועה. לחיצה על מילה משמיעה רק אותה.</p>
-    <div class="btns"><button class="btn brass small" data-act="kPlay">${I.play} הקראה</button><button class="btn ghost small" data-act="kSpeed">${sc.slow?'מהירות: לאט':'מהירות: רגיל'}</button><button class="btn ghost small" data-act="kStop">עצור</button></div>
+    <div class="btns"><button class="btn brass small" data-act="kPlay">${I.play} הקראה</button>${speedBtn()}<button class="btn ghost small" data-act="kStop">עצור</button></div>
     <div class="read story kara">${paras}</div>
     ${gl.length?`<div class="gloss"><p class="sub">מילים שהחוברת מתרגמת:</p>${gl.map(([e,h])=>`<span class="wtag"><span class="en">${esc(e)}</span> ${esc(h)}</span>`).join('')}</div>`:''}
     <button class="btn" data-act="kDone">קראתי את הטקסט</button>
@@ -1023,10 +1047,11 @@ function kHighlight(n){document.querySelectorAll('.kara .w.hl').forEach(x=>x.cla
 function kPlay(){
   if(!('speechSynthesis' in window)){toast('הטלפון לא תומך בהקראה');return}
   const sc=S.screen;const i=islandById(sc.id);const paras=i.text.paras;
-  hush();clearTimeout(kTimer);const run=++kRun;const rate=sc.slow?.6:.85;
+  hush();clearTimeout(kTimer);const run=++kRun;const rate=SPEEDS[S.speed].rate;
   let base=0;const offsets=paras.map(p=>{const o=base;base+=p.split(' ').length;return o});
   const playPara=pi=>{
     if(run!==kRun||pi>=paras.length){kHighlight(-1);return}
+    if(SPEEDS[S.speed].wbw){sayPaced(paras[pi],k=>{if(run===kRun&&k>=0)kHighlight(offsets[pi]+k)},()=>{if(run===kRun)setTimeout(()=>playPara(pi+1),500)});return}
     const words=paras[pi].split(' ');const starts=[];let c=0;words.forEach(w=>{starts.push(c);c+=w.length+1});
     const u=new SpeechSynthesisUtterance(paras[pi]);u.lang='en-US';u.rate=rate;if(enVoice)u.voice=enVoice;
     let gotB=false,wk=0;
@@ -1056,7 +1081,7 @@ function viewRead2(){
   <div class="read r2">${words.map((w,k)=>`<span class="w ${res?(res[k]?'good':'miss'):''}" data-act="sayw" data-text="${esc(w.replace(/[^A-Za-z'-]/g,''))}">${esc(w)}</span>`).join(' ')}</div>
   <div class="btns">
     <button class="btn ghost small" data-act="say" data-text="${esc(s)}">${I.speaker} הקראה</button>
-    <button class="btn ghost small" data-act="saySlow" data-text="${esc(s)}">לאט</button>
+    <button class="btn ghost small" data-act="saySlow" data-text="${esc(s)}">🐢 סופר איטי</button>
     ${readSR()?`<button class="btn ${sc.listening?'red':'brass'}" data-act="srGo">${I.mic2} ${sc.listening?'מקשיב…':res?'לנסות שוב':'אני קוראת'}</button>`:''}
   </div>
   ${sc.heard?`<p class="sub">הטלפון שמע: <span class="en">${esc(sc.heard)}</span></p>`:''}
@@ -1109,30 +1134,42 @@ function islandReportHTML(i){
 function rtWords(p){return p.split(' ')}
 function viewReadText(){
   const sc=S.screen;const i=islandById(sc.id);const paras=i.text.paras;const cur=sc.pi;
-  let html=paras.map((p,pi)=>{const r=sc.res[pi];const words=rtWords(p);
-    return `<p class="rtp ${pi===cur?'cur':pi<cur?'done':'next'}" id="rtp${pi}">${words.map((w,k)=>`<span class="w ${r?(r[k]?'good':'miss'):''}" id="rw${pi}_${k}">${esc(w)}</span>`).join(' ')}</p>`}).join('');
-  const done=cur>=paras.length;
+  if(!readSR())return `<button class="back" data-act="island" data-id="${esc(sc.id)}">${I.back} ${esc(i.name)}</button>
+  <section class="card"><h2>קוראת עם המורה</h2><p>בטלפון הזה אין זיהוי דיבור בתוך הדפדפן, ולכן המורה לא יכול להקשיב.</p><p class="sub">בטלפון אנדרואיד עם כרום זה עובד. בינתיים אפשר לתרגל ב"קוראים יחד".</p></section>`;
+  sc.fixed=sc.fixed||{};
+  const html=paras.map((p,pi)=>{const r=sc.res[pi];const words=rtWords(p);const coachK=sc.coach&&sc.coach.pi===pi&&sc.coach.i<sc.coach.q.length?sc.coach.q[sc.coach.i]:-1;
+    return `<p class="rtp ${pi===cur?'cur':pi<cur?'done':'next'}" id="rtp${pi}">${words.map((w,k)=>{let c='';if(r)c=r[k]?'good':sc.fixed[pi+'_'+k]?'fixed':'miss';if(k===coachK)c+=' focus';return `<span class="w ${c}" id="rw${pi}_${k}" data-act="sayw" data-text="${esc(w.replace(/[^A-Za-z'-]/g,''))}">${esc(w)}</span>`}).join(' ')}</p>`}).join('');
+  const done=cur>=paras.length;const co=sc.coach&&sc.coach.pi===cur?sc.coach:null;
+  let ctl='';
+  if(!done&&sc.listening)ctl=`<div class="btns rtctl"><button class="btn red" data-act="rtStop">${I.stop} סיימתי את הפסקה</button><span class="sub">🎙 המורה מקשיב…</span></div>`;
+  else if(!done&&co&&co.i<co.q.length){const w=rtWords(paras[cur])[co.q[co.i]].replace(/[^A-Za-z'-]/g,'');
+    ctl=`<div class="teacher rtctl"><div class="tbub"><span class="tav">🧑‍🏫</span><div><p>${co.i===0?`יפה! עכשיו נתקן ${co.q.length===1?'מילה אחת':co.q.length+' מילים'}.`:''} המילה ${co.i+1} מתוך ${co.q.length}:</p><b class="en tw">${esc(w)}</b>${co.msg?`<p class="tmsg">${co.msg}</p>`:''}</div></div>
+      <div class="btns"><button class="btn ghost small" data-act="coListen" data-w="${esc(w)}">${I.speaker} שמעי לאט</button>
+      <button class="btn ${co.listening?'red':'brass'}" data-act="coSay" data-w="${esc(w)}">${I.mic2} ${co.listening?'מקשיב…':'אני אומרת'}</button>
+      <button class="btn ghost small" data-act="coSkip">דלגי</button></div></div>`}
+  else if(!done&&co){const perfect=!co.q.length;
+    ctl=`<div class="teacher rtctl"><div class="tbub"><span class="tav">🧑‍🏫</span><div><p>${perfect?'🌟 פסקה מושלמת! קראת כל מילה נכון.':`סיימנו לתקן${co.ok?`, ותיקנת ${co.ok} ${co.ok===1?'מילה':'מילים'}`:''}. רוצה לקרוא את הפסקה שוב, הפעם בלי עצירות?`}</p></div></div>
+      <div class="btns">${perfect?'':`<button class="btn ghost" data-act="rtGo">${I.mic2} לקרוא שוב</button>`}<button class="btn brass" data-act="rtNext">${cur===paras.length-1?'למשוב':'לפסקה הבאה'}</button></div></div>`}
+  else if(!done)ctl=`<div class="btns rtctl"><button class="btn brass" data-act="rtGo">${I.mic2} ${sc.res[cur]?'לקרוא שוב':'מתחילה לקרוא'}</button><button class="btn ghost small" data-act="rtHear">${I.speaker} שמעי את הפסקה</button>${speedBtn()}</div>`;
   return `<button class="back" data-act="island" data-id="${esc(sc.id)}">${I.back} ${esc(i.name)}</button>
   <section class="card">
-    <div class="qtop"><span>קוראת את האנסין בקול</span><span>פסקה ${Math.min(cur+1,paras.length)} מתוך ${paras.length}</span></div>
+    <div class="qtop"><span>קוראת עם המורה 🧑‍🏫</span><span>פסקה ${Math.min(cur+1,paras.length)} מתוך ${paras.length}</span></div>
     <div class="bar"><i style="width:${cur/paras.length*100}%"></i></div>
     <h2 class="en" style="text-align:left">${esc(i.text.title)}</h2>
-    <p class="tip">לוחצים על המיקרופון וקוראים את הפסקה המסומנת. המילים נצבעות בירוק בזמן שקוראים. בסוף הפסקה לוחצים "סיימתי".</p>
+    <p class="tip">לוחצים "מתחילה לקרוא" וקוראים בקול את הפסקה המסומנת. ירוק: נכון. אדום: דילגת או שהמורה לא שמע נכון. בסוף הפסקה המורה עובר איתך על המילים האדומות.</p>
     <div class="read story rt">${html}</div>
-    ${done?'':`<div class="btns rtctl">
-      ${sc.listening?`<button class="btn red" data-act="rtStop">${I.stop} סיימתי את הפסקה</button>`:`<button class="btn brass" data-act="rtGo">${I.mic2} ${sc.res[cur]?'לקרוא שוב':'מתחילה לקרוא'}</button>`}
-      <button class="btn ghost small" data-act="say" data-text="${esc(paras[cur])}">${I.speaker} שמע את הפסקה</button>
-      ${sc.res[cur]&&!sc.listening?`<button class="btn small" data-act="rtNext">${cur===paras.length-1?'למשוב':'לפסקה הבאה'}</button>`:''}
-    </div>`}
+    ${ctl}
   </section>`;
 }
 let RT=null;
 function rtPaint(sc,pi,heard){
-  const m=matchWords(sc.__para,heard);m.forEach((ok,k)=>{const el=document.getElementById(`rw${pi}_${k}`);if(el){el.classList.toggle('good',ok)}});return m;
+  const m=matchWords(sc.__para,heard);let last=-1;m.forEach((ok,k)=>{if(ok)last=k});
+  m.forEach((ok,k)=>{const el=document.getElementById(`rw${pi}_${k}`);if(el){el.classList.toggle('good',ok);el.classList.toggle('miss',!ok&&k<last)}});return m;
 }
+function coachQueue(para,res){const words=rtWords(para);const q=[];res.forEach((ok,k)=>{const w=words[k].replace(/[^A-Za-z'-]/g,'');if(!ok&&w.length>=2)q.push(k)});return q.slice(0,8)}
 function rtGo(){
   const sc=S.screen;const i=islandById(sc.id);const pi=sc.pi;const para=i.text.paras[pi];
-  hush();sc.__para=para;
+  hush();sc.__para=para;sc.coach=null;
   let finals='',t0=0,t1=0,restarts=0,stopReq=false,best=null;
   const start=()=>{
     try{RT=new SRClass()}catch(e){toast('הזיהוי הקולי לא זמין בטלפון הזה');return}
@@ -1148,7 +1185,10 @@ function rtGo(){
     RT.onend=()=>{
       if(!stopReq&&restarts<6&&S.screen===sc){restarts++;start();return}
       sc.listening=false;
-      if(best){sc.res[pi]=best;sc.heard[pi]=finals.trim();sc.ms[pi]=Math.max(0,t1-t0)}
+      if(best){sc.res[pi]=best;sc.heard[pi]=finals.trim();sc.ms[pi]=Math.max(0,t1-t0);
+        const q=coachQueue(para,best);sc.coach={pi,q,i:0,ok:0,tries:0,msg:''};
+        if(!q.length){sfx.win()}else sfx.tap();
+        if(q.length)setTimeout(()=>{if(S.screen===sc&&sc.coach&&sc.coach.i===0){const w=rtWords(para)[q[0]].replace(/[^A-Za-z'-]/g,'');sayPaced(w,null,null,'x')}},600);}
       else toast('לא שמעתי. נסי לקרוא קרוב יותר לטלפון');
       if(S.screen===sc)render();
     };
@@ -1157,23 +1197,42 @@ function rtGo(){
   sc.stop=()=>{stopReq=true;try{RT&&RT.stop()}catch(_){}};
   sc.listening=true;render();start();
 }
+function coachHit(target,alts){const t=normW(target);return alts.some(a=>a.split(/\s+/).map(normW).some(h=>h===t||(t.length>=4&&lev(h,t)<=1)||(NUMW[h]===t)))}
+function coSay(word){
+  const sc=S.screen;const co=sc.coach;if(!co||co.listening)return;hush();
+  let R;try{R=new SRClass()}catch(e){toast('הזיהוי הקולי לא זמין');return}
+  R.lang='en-US';R.interimResults=false;R.maxAlternatives=5;R.continuous=false;let got=false;
+  R.onresult=e=>{if(got)return;got=true;const r=e.results[0];const alts=[];for(let k=0;k<r.length;k++)alts.push(r[k].transcript);
+    const k=co.q[co.i];
+    if(coachHit(word,alts)){sc.fixed[co.pi+'_'+k]=true;co.ok++;co.i++;co.tries=0;co.msg='';sfx.ok();toast(['מצוין!','יפה מאוד!','בדיוק ככה!'][co.ok%3])}
+    else{co.tries++;sfx.bad();
+      if(co.tries>=3){co.msg='';co.i++;co.tries=0;toast('נמשיך. נחזור למילה הזו בתרגול בסוף')}
+      else co.msg=`כמעט! שמעתי <span class="en">${esc(alts[0]||'')}</span>. הקשיבי שוב ונסי.`}
+    if(co.i<co.q.length&&co.tries===0)setTimeout(()=>{if(S.screen===sc&&co.i<co.q.length){const w=rtWords(islandById(sc.id).text.paras[co.pi])[co.q[co.i]].replace(/[^A-Za-z'-]/g,'');sayPaced(w,null,null,'x')}},700);
+  };
+  R.onerror=e=>{if(e.error==='no-speech')co.msg='לא שמעתי. נסי להגיד את המילה קרוב יותר לטלפון.'};
+  R.onend=()=>{co.listening=false;if(S.screen===sc)render()};
+  co.listening=true;try{R.start();render()}catch(e){co.listening=false}
+}
 const SMALLW=new Set(['a','an','the','is','are','i','to','of','and','in','on','at','it','he','she','we','they','you','my','his','her','for','with','but','so','be','was','do']);
 function rtFinish(){
   const sc=S.screen;const i=islandById(sc.id);const paras=i.text.paras;
   let total=0,ok=0,ms=0;const missed=[];
   paras.forEach((p,pi)=>{const words=rtWords(p);const r=sc.res[pi];if(!r)return;total+=words.length;ok+=r.filter(Boolean).length;ms+=sc.ms[pi]||0;
-    r.forEach((g,k)=>{const w=words[k].replace(/[^A-Za-z'-]/g,'');if(!g&&w.length>=3&&!SMALLW.has(w.toLowerCase()))missed.push(w)})});
+    r.forEach((g,k)=>{const w=words[k].replace(/[^A-Za-z'-]/g,'');if(!g&&!(sc.fixed||{})[pi+'_'+k]&&w.length>=3&&!SMALLW.has(w.toLowerCase()))missed.push(w)})});
+  const fixedN=Object.keys(sc.fixed||{}).length;
   if(!total){toast('עוד לא קראת אף פסקה');return}
   const wpm=ms>3000?Math.round(ok/(ms/60000)):null;
   const prev=((S.progress.best[i.id]||{}).readHist||[]).slice(-1)[0]||null;
   const pct=Math.round(ok/total*100);
   S.session.readOk+=ok>=total*.8?1:0;
-  finishActivity('readtext',`קריאת אנסין: ${i.text.title}${wpm?` · ${wpm} מילים לדקה`:''}`,ok,total,[...new Set(missed)],{wpm,prev,pct,read:sc.res.filter(Boolean).length,paras:paras.length});
+  finishActivity('readtext',`קריאת אנסין: ${i.text.title}${wpm?` · ${wpm} מילים לדקה`:''}`,ok,total,[...new Set(missed)],{wpm,prev,pct,fixed:fixedN,read:sc.res.filter(Boolean).length,paras:paras.length});
 }
 function readFeedbackHTML(r){
   const x=r.extra;const pct=x.pct;const lines=[];
   lines.push(pct>=90?'🌟 קריאה שוטפת ומדויקת. כל הכבוד!':pct>=75?'👍 קריאה טובה. נשארו כמה מילים לחזק.':'💪 התחלה טובה. כדאי לשמוע קודם את הטקסט ב"קוראים יחד", ואז לנסות שוב.');
   lines.push(`קראת נכון <b>${r.correct}</b> מתוך <b>${r.total}</b> מילים${x.read<x.paras?` (${x.read} מתוך ${x.paras} פסקאות)`:''}.`);
+  if(x.fixed)lines.push(`🧑‍🏫 עם המורה תיקנת <b>${x.fixed}</b> ${x.fixed===1?'מילה':'מילים'}.`);
   if(x.wpm)lines.push(`קצב: <b>${x.wpm}</b> מילים לדקה. ${x.wpm<40?'קוראת לאט ובזהירות, וזה בסדר. הקצב יגיע עם התרגול.':x.wpm<=90?'קצב טוב ונוח.':'קצב מהיר! לשים לב לא לדלג על מילים.'}`);
   if(x.prev){const d=pct-x.prev.pct;lines.push(d>0?`בפעם הקודמת: ${x.prev.pct}%. <b>שיפור של ${d}!</b>`:d===0?`כמו בפעם הקודמת (${x.prev.pct}%).`:`בפעם הקודמת: ${x.prev.pct}%. היום היה קשה יותר, וזה קורה.`)}
   const words=[...new Set(r.missed||[])].slice(0,14);
@@ -1491,6 +1550,10 @@ document.addEventListener('click',e=>{
     case 'lsCancel':S.editLesson=null;render();break;
     case 'exDel':{if(!isParent())break;const c=editableSchedule();c.exams=c.exams.filter(e=>e.id!==el.dataset.id);saveSchedule();toast('המבחן נמחק');break;}
     case 'rtGo':rtGo();break;
+    case 'rtHear':{const i=islandById(sc.id);const pi=sc.pi;sayPaced(i.text.paras[pi],k=>{document.querySelectorAll('.rt .w.hl').forEach(x=>x.classList.remove('hl'));const el=document.getElementById(`rw${pi}_${k}`);if(el)el.classList.add('hl')});break;}
+    case 'coListen':sayPaced(el.dataset.w,null,null,'x');break;
+    case 'coSay':coSay(el.dataset.w);break;
+    case 'coSkip':{const co=sc.coach;if(co){co.i++;co.tries=0;co.msg='';render()}break;}
     case 'rtStop':sc.stop&&sc.stop();break;
     case 'rtNext':{const i=islandById(sc.id);if(sc.pi<i.text.paras.length-1){sc.pi++;render();const el=document.getElementById('rtp'+sc.pi);el&&el.scrollIntoView({block:'center',behavior:'smooth'})}else rtFinish();break;}
     case 'drill':{const r=sc;const words=[...new Set(r.missed||[])].slice(0,10);if(!words.length)break;S.screen={name:'read2',id:r.id,items:words,idx:0,correct:0,res:null,listening:false,missed:[],drill:true};render();scrollTo({top:0});break;}
@@ -1519,8 +1582,9 @@ document.addEventListener('click',e=>{
       render();scrollTo({top:0});
       const q=S.screen.qs&&S.screen.qs[0];if(q&&q.autoSay)setTimeout(()=>say(q.say),350);
       break;}
-    case 'say':say(el.dataset.text);break;
-    case 'saySlow':say(el.dataset.text,.6);break;
+    case 'say':{const t=el.dataset.text||'';if(t.includes(' ')&&S.speed!=='n')sayPaced(t);else say(t,S.speed==='x'?.45:S.speed==='s'?.6:.85);break;}
+    case 'speed':{const k=SPEED_ORDER[(SPEED_ORDER.indexOf(S.speed)+1)%3];S.speed=k;LS.set('speed',k);kRun++;hush();toast('מהירות: '+SPEEDS[k].label);render();break;}
+    case 'saySlow':sayPaced(el.dataset.text,null,null,'x');break;
     case 'stopSay':hush();break;
     case 'sayw':{const t=el.dataset.text;if(t){document.querySelectorAll('.w.hl').forEach(x=>x.classList.remove('hl'));el.classList.add('hl');say(t,.75)}break;}
     case 'learnNext':{const i=islandById(sc.id);sfx.flip();if(sc.idx<i.words.length-1){sc.idx++;render();say(i.words[sc.idx].en)}else finishActivity('learn','כרטיסיות מילים',i.words.length,i.words.length,[]);break;}
