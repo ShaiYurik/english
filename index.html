@@ -243,7 +243,10 @@ form.f{display:grid;gap:10px}
 const API='https://script.google.com/macros/s/AKfycbxLlbEJozfMjmGyQZeeJm0lXCW-NhjTsNaQ7UPCaaQ8qAqmo_yee2h7FEY4LW1IIXWJ4g/exec';
 const LS={get(k,d){try{const v=localStorage.getItem('voy:'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('voy:'+k,JSON.stringify(v))}catch(e){}}};
 let KEY=LS.get('key','');
-function readKey(){const m=location.hash.match(/k=([A-Za-z0-9_-]+)/);if(m){KEY=m[1];LS.set('key',KEY);history.replaceState(null,'',location.pathname+location.search);return true}return false}
+const STANDALONE=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+// בדפדפן משאירים את המפתח בכתובת, כדי ש"הוסף למסך הבית" באייפון ישמור אותו גם לאפליקציה
+function readKey(){const m=location.hash.match(/k=([A-Za-z0-9_-]+)/);if(m){KEY=m[1];LS.set('key',KEY);if(STANDALONE)history.replaceState(null,'',location.pathname+location.search);return true}return false}
+function keyFromText(t){const m=String(t||'').match(/k=([A-Za-z0-9_-]{10,})/)||String(t||'').trim().match(/^([A-Za-z0-9_-]{10,})$/);return m?m[1]:''}
 readKey();
 addEventListener('hashchange',()=>{if(readKey()){S.badKey=false;loadAll()}});
 
@@ -524,7 +527,8 @@ function render(){
 }
 function viewGate(){
   return `<div class="gate"><img src="icon-512.png" alt=""><h2 style="color:var(--chart);font-size:28px">מסע האנגלית</h2>
-  <p style="color:var(--muted);max-width:30ch;margin:0">כדי להתחיל, צריך לפתוח את קישור ההפעלה שההורה שלח. הקישור מחבר את האפליקציה לתיקייה המשפחתית.</p></div>`;
+  <p style="color:var(--muted);max-width:30ch;margin:0">כדי להתחיל, מדביקים כאן את קישור ההפעלה שההורה שלח. הקישור מחבר את האפליקציה לתיקייה המשפחתית.</p>
+  <form class="f" data-form="key" style="width:100%;max-width:340px"><input id="keyIn" dir="ltr" autocomplete="off" placeholder="https://shaiyurik.github.io/english/#k=..." aria-label="קישור הפעלה"><button class="btn brass" type="submit">התחברות</button></form></div>`;
 }
 
 function meterHTML(){
@@ -982,6 +986,10 @@ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.tar
 document.addEventListener('change',e=>{if(e.target.id==='camIn'||e.target.id==='galIn'){const files=[...e.target.files];e.target.value='';if(files.length)addShots(files)}});
 document.addEventListener('submit',e=>{
   const f=e.target;if(!f.dataset.form)return;e.preventDefault();
+  if(f.dataset.form==='key'){
+    const k=keyFromText($('#keyIn').value);if(!k){toast('הקישור לא נראה נכון. העתיקי את כולו, כולל הסוף אחרי #k=');return}
+    KEY=k;LS.set('key',KEY);S.badKey=false;render();loadAll();return;
+  }
   if(f.dataset.form==='word'){
     const en=$('#wEn').value.trim(),he=$('#wHe').value.trim(),ex=$('#wEx').value.trim();if(!en||!he)return;
     S.classWords.push({id:uid('w'),en,he,ex,added:Date.now()});saveState('classwords');sfx.ok();toast('המילה נוספה');render();

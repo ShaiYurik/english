@@ -1,6 +1,6 @@
 // מסע האנגלית: שומר את האפליקציה בטלפון כדי שתיפתח גם בלי אינטרנט.
 // נתונים והעלאות לא עוברים כאן, רק קבצי האפליקציה עצמה.
-const CACHE = 'voyage-v1';
+const CACHE = 'voyage-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon-32.png'];
 
 self.addEventListener('install', e => {
