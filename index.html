@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>מסע האנגלית</title>
+<title>האפליקציה של יוביק</title>
 <meta name="theme-color" content="#0a1a29">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="מסע האנגלית">
+<meta name="apple-mobile-web-app-title" content="יוביק">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -46,7 +46,7 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .brand{display:flex;align-items:center;gap:10px}
 .brand img{width:42px;height:42px;border-radius:12px}
-.brand h1{font-size:24px;color:var(--chart)}
+.brand h1{font-size:22px;color:var(--chart)}
 .brand small{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);letter-spacing:.4px}
 .sync{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
 .sync.ok{background:#4fd18f}.sync.wait{background:var(--brass2)}.sync.off{background:var(--signal)}
@@ -284,6 +284,14 @@ button.chip{border:0;cursor:pointer}
 .exn{font-size:13px;font-weight:700;color:var(--sea2);white-space:nowrap}
 .xbtn{border:0;background:var(--chart2);border-radius:50%;width:26px;height:26px;display:grid;place-items:center;color:var(--ink)}
 details summary{cursor:pointer;padding:6px 0}
+.shelf{background:var(--sea);border:1px solid var(--swell);border-radius:var(--r);padding:10px 14px;color:var(--chart)}
+.shelf summary{cursor:pointer;font-family:var(--f-display);font-size:17px;list-style-position:inside}
+.shelf summary small{font-family:var(--f-body);font-size:13px;color:var(--muted);margin-inline-start:6px}
+.shelfl{display:grid;gap:6px;margin-top:10px}
+.shelfi{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:10px;text-align:start;background:var(--chart);color:var(--ink);border:0;border-radius:10px;padding:8px 12px}
+.shelfi .en{font-weight:700;font-size:16px;text-align:left}
+.shelfi span:nth-child(2){font-size:12px;color:var(--ink2);grid-row:2}
+.shelfi b{grid-row:1/3;grid-column:2;align-self:center;color:var(--kelp);font-size:14px}
 .gate{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
 .gate img{width:120px;height:120px;border-radius:28px}
 
@@ -308,7 +316,7 @@ details summary{cursor:pointer;padding:6px 0}
   <header class="top">
     <div class="brand">
       <img src="icon-192.png" alt="">
-      <div><h1>מסע האנגלית</h1><small><i class="sync" id="sync"></i><span id="syncTxt">אנגלית לכיתה ז׳</span></small></div>
+      <div><h1>האפליקציה של יוביק</h1><small><i class="sync" id="sync"></i><span id="syncTxt">אנגלית לכיתה ז׳</span></small></div>
     </div>
     <button class="iconbtn" id="soundBtn" data-act="sound" aria-pressed="true" aria-label="צלילים">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
@@ -637,7 +645,7 @@ function stationsOf(i){
 }
 function islandRatio(i){const st=stationsOf(i).filter(s=>s.scored);if(!st.length)return 1;const b=S.progress.best[i.id]||{};return st.filter(s=>(b[s.k]||0)>=70).length/st.length}
 function isUnlocked(i){
-  if(i.kind==='book'){const list=bookIslands();const idx=list.findIndex(x=>x.id===i.id);if(idx<=0)return true;return islandRatio(list[idx-1])>=.5}
+  if(i.kind==='book'){if(i.text)return true;const list=bookIslands().filter(x=>!x.text);const idx=list.findIndex(x=>x.id===i.id);if(idx<=0)return true;return islandRatio(list[idx-1])>=.5}
   const idx=ISLANDS.findIndex(x=>x.id===i.id);return idx===-1?true:idx<S.progress.unlocked;
 }
 function stars(pct){return pct>=90?3:pct>=70?2:pct>=50?1:0}
@@ -669,7 +677,7 @@ function render(){
   const cb=$('#camBadge');const n=S.shots.filter(s=>s.status!=='ok').length;cb.hidden=!n;cb.textContent=n;
 }
 function viewGate(){
-  return `<div class="gate"><img src="icon-512.png" alt=""><h2 style="color:var(--chart);font-size:28px">מסע האנגלית</h2>
+  return `<div class="gate"><img src="icon-512.png" alt=""><h2 style="color:var(--chart);font-size:28px">האפליקציה של יוביק</h2>
   <p style="color:var(--muted);max-width:30ch;margin:0">כדי להתחיל, מדביקים כאן את קישור ההפעלה שההורה שלח. הקישור מחבר את האפליקציה לתיקייה המשפחתית.</p>
   <form class="f" data-form="key" style="width:100%;max-width:340px"><input id="keyIn" dir="ltr" autocomplete="off" placeholder="https://shaiyurik.github.io/english/#k=..." aria-label="קישור הפעלה">
   <button class="btn brass" type="submit">התחברות</button>
@@ -717,7 +725,7 @@ function viewMap(){
   const route=pos.map(p=>`${p.x},${p.y}`).join(' ');
   const depths=Array.from({length:Math.ceil(H/70)},(_,k)=>[[40,320,180,30,330,200][k%6],k*70+40,String(5+(k*7)%27)]).map(([x,y,t])=>`<text x="${x}" y="${y}" font-size="10" fill="#5f84a0" font-family="Assistant" font-style="italic">${t}</text>`).join('');
   const lastOpenBase=ISLANDS.length-1-[...ISLANDS].reverse().findIndex(i=>isUnlocked(i));
-  const bl=isl.filter(x=>x.kind==='book');const curB=bl.find(x=>isUnlocked(x)&&islandRatio(x)<.5)||bl[bl.length-1];const curId=curB?curB.id:null;
+  const bl=isl.filter(x=>x.kind==='book');const curB=bl.find(x=>!x.text&&isUnlocked(x)&&islandRatio(x)<.5)||bl.find(x=>x.text&&islandRatio(x)<.5)||bl[bl.length-1];const curId=curB?curB.id:null;
   const nodes=isl.map((i,k)=>{
     const {x,y}=pos[k];const open=isUnlocked(i);const st=islandStars(i.id);
     const here=(i.kind==='base'&&ISLANDS.findIndex(b=>b.id===i.id)===lastOpenBase)||i.id===curId;
@@ -734,7 +742,9 @@ function viewMap(){
       ${open&&i.kind!=='class'?`<g transform="translate(-27,52)">${[0,1,2].map(n=>`<path transform="translate(${n*18},0) scale(.62)" d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" fill="${n<st?'#d6a64a':'#2a5878'}"/>`).join('')}</g>`:''}
       ${here?`<g transform="translate(30,-30)"><svg width="30" height="30" viewBox="0 0 30 30">${I.ship.replace(/^<svg[^>]*>|<\/svg>$/g,'')}</svg></g>`:''}
     </g>`}).join('');
-  return meterHTML()+`<section class="map" aria-label="מפת האיים">
+  const texts=isl.filter(x=>x.kind==='book'&&x.text);
+  const shelf=texts.length?`<details class="shelf" ${LS.get('shelfOpen',false)?'open':''}><summary data-act="shelfTog">📖 אנסינים <small>${texts.length} טקסטים, תמיד פתוחים</small></summary><div class="shelfl">${texts.map(t=>{const b=S.progress.best[t.id]||{};const sc=b.readtext!=null?b.readtext+'%':b.story?'נקרא':'';return `<button class="shelfi" data-act="island" data-id="${esc(t.id)}"><span class="en">${esc(t.text.title)}</span><span>${esc(t.name)}</span><b>${sc}</b></button>`}).join('')}</div></details>`:'';
+  return meterHTML()+shelf+`<section class="map" aria-label="מפת האיים">
     <svg viewBox="0 0 ${W} ${H}" role="group">
       <defs><pattern id="wv" width="40" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="#174260" stroke-width="1.2"/></pattern></defs>
       <rect width="${W}" height="${H}" fill="#10304a"/><rect width="${W}" height="${H}" fill="url(#wv)"/>
@@ -744,7 +754,7 @@ function viewMap(){
       <g transform="translate(320,${H-45})" opacity=".85"><circle r="22" fill="none" stroke="#5f84a0"/><path d="M0 -20 L4 0 L0 20 L-4 0Z" fill="#d6a64a"/><path d="M-20 0 L0 -4 L20 0 L0 4Z" fill="#5f84a0"/><text y="-26" text-anchor="middle" font-size="10" fill="#d6a64a" font-family="Assistant" font-weight="700">N</text></g>
       ${nodes}
     </svg></section>
-    <p class="maphint">כל אי הוא יחידה מהחוברת. הצלחה של 70% בחצי מהתחנות פותחת את האי הבא.</p>`;
+    <p class="maphint">איי המילים נפתחים לפי הסדר: 70% בחצי מהתחנות פותחים את הבא. האנסינים פתוחים תמיד.</p>`;
 }
 
 function viewIsland(id){
@@ -872,7 +882,7 @@ function finishActivity(kind,title,correct,total,missed,extra){
   if(kind==='readtext'&&extra){b.readHist=[...(b.readHist||[]),{pct,wpm:extra.wpm,d:today()}].slice(-6)}
   const ratioAfter=islandRatio(i);const hasScored=stationsOf(i).some(x=>x.scored);
   const islandDone=!hasScored?null:(ratioAfter>=1&&ratioBefore<1)?'full':(ratioAfter>=.5&&ratioBefore<.5)?'pass':null;
-  if(i.kind==='book'){const list=bookIslands();const k=list.findIndex(x=>x.id===id);const nx=list[k+1];
+  if(i.kind==='book'&&!i.text){const list=bookIslands().filter(x=>!x.text);const k=list.findIndex(x=>x.id===id);const nx=list[k+1];
     if(nx&&!S.progress.best['_open_'+nx.id]&&isUnlocked({...nx,kind:'book'})){S.progress.best['_open_'+nx.id]={y:1};var bookUnlocked=nx.name}}
   S.progress.xp+=correct*10+(kind==='learn'?20:0);
   let unlocked=(typeof bookUnlocked!=='undefined'&&bookUnlocked)||null;const idx=ISLANDS.findIndex(x=>x.id===id);
@@ -1387,7 +1397,7 @@ function viewCamera(){
 function sessSummary(s){const acts=s.activities||[];const q=acts.filter(a=>a.total&&a.kind!=='read');const c=q.reduce((n,a)=>n+a.correct,0),t=q.reduce((n,a)=>n+a.total,0);return {acts,pct:t?Math.round(c/t*100):null}}
 function buildReport(){
   const s=S.session;const {acts,pct}=sessSummary(s);
-  const lines=[`דוח יומי · מסע האנגלית · ${fmtDate(s.date)}`,`זמן תרגול: ${s.minutes} מתוך ${GOAL_MIN} דקות`];
+  const lines=[`דוח יומי · האפליקציה של יוביק · ${fmtDate(s.date)}`,`זמן תרגול: ${s.minutes} מתוך ${GOAL_MIN} דקות`];
   if(pct!=null)lines.push(`הצלחה בתרגילים: ${pct}%`);
   if(s.readOk+s.readHelp)lines.push(`קריאה בקול: ${s.readOk} משפטים לבד, ${s.readHelp} עם עזרה`);
   if(acts.length){lines.push('','מה נעשה:');acts.forEach(a=>lines.push(`• ${a.islandName} · ${a.title}${a.total&&a.kind!=='read'?` · ${a.correct}/${a.total}`:''}`))}
@@ -1437,6 +1447,7 @@ document.addEventListener('click',e=>{
   switch(a){
     case 'sound':S.sound=!S.sound;LS.set('sound',S.sound);render();break;
     case 'relinkCancel':S.relink=false;render();break;
+    case 'shelfTog':setTimeout(()=>{const d=document.querySelector('.shelf');if(d)LS.set('shelfOpen',d.open)},0);break;
     /* book games */
     case 'gAns':{if(sc.answered)break;const q=sc.items[sc.idx];const k=+el.dataset.k;
       if(q.a.length>1){if(sc.picked.includes(k)){sc.picked=sc.picked.filter(x=>x!==k);render();break}sc.picked.push(k);if(sc.picked.length<q.a.length){render();break}}
