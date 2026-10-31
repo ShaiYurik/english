@@ -384,13 +384,14 @@ function toast(msg){document.querySelectorAll('.toast').forEach(t=>t.remove());c
 /* ============ STATE ============ */
 const S={
   progress:{unlocked:1,best:{},xp:0}, session:null, sessions:[], classWords:[], zoom:[], lessons:[], pendingPhotos:0,
-  tab:'map', screen:{name:'map'}, sound:LS.get('sound',true), loaded:false, online:null, badKey:false,
+  role:LS.get('role','child'), tab:LS.get('role','child')==='parent'?'parent':'map', screen:{name:'map'}, sound:LS.get('sound',true), loaded:false, online:null, badKey:false,
   activeSec:0, lastInput:Date.now(), shots:[]
 };
 function newSession(){return {date:today(),minutes:0,activities:[],missed:[],readOk:0,readHelp:0,updatedAt:Date.now()}}
 function cache(){LS.set('cache',{progress:S.progress,sessions:[S.session,...S.sessions.filter(s=>s.date!==S.session.date)].slice(0,40),classwords:S.classWords,zoom:S.zoom,lessons:S.lessons,pendingPhotos:S.pendingPhotos})}
-function saveSession(){S.session.updatedAt=Date.now();enqueue('session:'+S.session.date,{action:'saveSession',data:JSON.parse(JSON.stringify(S.session))});cache()}
-function saveState(name){const data={progress:S.progress,classwords:S.classWords,zoom:S.zoom}[name];enqueue('state:'+name,{action:'saveState',name,data:JSON.parse(JSON.stringify(data))});cache()}
+const isParent=()=>S.role==='parent';
+function saveSession(){if(isParent())return;S.session.updatedAt=Date.now();enqueue('session:'+S.session.date,{action:'saveSession',data:JSON.parse(JSON.stringify(S.session))});cache()}
+function saveState(name){if(isParent()&&name==='progress')return;const data={progress:S.progress,classwords:S.classWords,zoom:S.zoom}[name];enqueue('state:'+name,{action:'saveState',name,data:JSON.parse(JSON.stringify(data))});cache()}
 
 function applyState(st,fromServer){
   if(!st)return;
@@ -410,7 +411,8 @@ function applyState(st,fromServer){
     S.sessions=st.sessions.filter(s=>s&&s.date!==t).sort((a,b)=>b.date.localeCompare(a.date));
     const local=S.session&&S.session.date===t?S.session:null;
     let cur=local;
-    if(remoteToday&&(!local||(remoteToday.minutes||0)>(local.minutes||0)||((remoteToday.activities||[]).length>(local.activities||[]).length)))cur={...newSession(),...remoteToday};
+    if(fromServer&&isParent())cur=remoteToday?{...newSession(),...remoteToday}:newSession();
+    else if(remoteToday&&(!local||(remoteToday.minutes||0)>(local.minutes||0)||((remoteToday.activities||[]).length>(local.activities||[]).length)))cur={...newSession(),...remoteToday};
     S.session=cur||newSession();
     S.activeSec=Math.max(S.activeSec,(S.session.minutes||0)*60);
   }
@@ -432,13 +434,13 @@ function setSync(){
   if(S.badKey){d.className='sync off';t.textContent='קישור לא תקין';return}
   if(S.online===false&&!navigator.onLine){d.className='sync off';t.textContent='אין אינטרנט, שומר בטלפון';return}
   if(pend||upBusy){d.className='sync wait';t.textContent='שומר בדרייב…';return}
-  d.className='sync ok';t.textContent='הכל שמור';
+  d.className='sync ok';t.textContent=isParent()?'הכל שמור · מצב הורה':'הכל שמור';
 }
 
 /* ============ TIMER ============ */
 ['pointerdown','keydown','touchstart'].forEach(ev=>addEventListener(ev,()=>{S.lastInput=Date.now()},{passive:true}));
 setInterval(()=>{
-  if(!S.loaded||!S.session)return;
+  if(!S.loaded||!S.session||isParent())return;
   if(S.session.date!==today()){S.sessions.unshift(S.session);S.session=newSession();S.activeSec=0}
   const recording=!!REC.rec;
   if(!recording&&(document.hidden||Date.now()-S.lastInput>90000))return;
@@ -528,7 +530,9 @@ function render(){
 function viewGate(){
   return `<div class="gate"><img src="icon-512.png" alt=""><h2 style="color:var(--chart);font-size:28px">מסע האנגלית</h2>
   <p style="color:var(--muted);max-width:30ch;margin:0">כדי להתחיל, מדביקים כאן את קישור ההפעלה שההורה שלח. הקישור מחבר את האפליקציה לתיקייה המשפחתית.</p>
-  <form class="f" data-form="key" style="width:100%;max-width:340px"><input id="keyIn" dir="ltr" autocomplete="off" placeholder="https://shaiyurik.github.io/english/#k=..." aria-label="קישור הפעלה"><button class="btn brass" type="submit">התחברות</button></form></div>`;
+  <form class="f" data-form="key" style="width:100%;max-width:340px"><input id="keyIn" dir="ltr" autocomplete="off" placeholder="https://shaiyurik.github.io/english/#k=..." aria-label="קישור הפעלה">
+  <label style="flex-direction:row;align-items:center;gap:8px;color:var(--muted);font-weight:600;font-size:15px"><input id="isParentIn" type="checkbox" style="width:20px;height:20px"> זה הטלפון של ההורה</label>
+  <button class="btn brass" type="submit">התחברות</button></form></div>`;
 }
 
 function meterHTML(){
@@ -905,6 +909,11 @@ function viewParent(){
   const week=all.filter(x=>(Date.now()-new Date(x.date))/864e5<7).reduce((n,x)=>n+(x.minutes||0),0);
   return `<div class="ihead"><span class="eyebrow">Captain's Log</span><h2>יומן הורה</h2><p>דוח מלא נשלח במייל בכל ערב ב־20:00.</p></div>
   <section class="card">
+    <h2>המכשיר הזה</h2>
+    <p>${isParent()?'<b>מצב הורה פעיל.</b> מה שעושים כאן לא נספר כזמן תרגול שלה ולא משנה את ההתקדמות שלה. מתעדכן מהטלפון שלה בכל פתיחה.':'זה הטלפון של הילדה: הזמן והתרגולים כאן נספרים.'}</p>
+    <button class="btn ${isParent()?'ghost':'brass'} small" data-act="role">${isParent()?'זה בעצם הטלפון של הילדה':'זה הטלפון של ההורה'}</button>
+  </section>
+  <section class="card">
     <h2>היום</h2>
     <div class="stats">
       <div class="stat"><b>${s.minutes}<small style="font-size:14px"> / ${GOAL_MIN}</small></b><span>דקות תרגול</span></div>
@@ -939,6 +948,7 @@ document.addEventListener('click',e=>{
   if(a!=='answer')sfx.tap();
   switch(a){
     case 'sound':S.sound=!S.sound;LS.set('sound',S.sound);render();break;
+    case 'role':S.role=isParent()?'child':'parent';LS.set('role',S.role);toast(isParent()?'מצב הורה הופעל':'מצב ילדה הופעל');loadAll();break;
     case 'tab':S.tab=el.dataset.tab;if(S.tab==='map'&&!['map','island'].includes(S.screen.name))S.screen={name:'map'};hush();render();scrollTo({top:0});break;
     case 'home':S.screen={name:'map'};S.tab='map';hush();render();break;
     case 'locked':sfx.bad();toast('האי עדיין נעול. 70% במשחק המילים של האי הקודם יפתחו אותו');break;
@@ -988,7 +998,9 @@ document.addEventListener('submit',e=>{
   const f=e.target;if(!f.dataset.form)return;e.preventDefault();
   if(f.dataset.form==='key'){
     const k=keyFromText($('#keyIn').value);if(!k){toast('הקישור לא נראה נכון. העתיקי את כולו, כולל הסוף אחרי #k=');return}
-    KEY=k;LS.set('key',KEY);S.badKey=false;render();loadAll();return;
+    KEY=k;LS.set('key',KEY);S.badKey=false;
+    if($('#isParentIn')?.checked){S.role='parent';LS.set('role','parent');S.tab='parent'}
+    render();loadAll();return;
   }
   if(f.dataset.form==='word'){
     const en=$('#wEn').value.trim(),he=$('#wHe').value.trim(),ex=$('#wEx').value.trim();if(!en||!he)return;
