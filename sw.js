@@ -1,5 +1,5 @@
-const CACHE = 'voyage-v16';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './manifest-gil.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'voyage-v17';
+const SHELL = ['./', './index.html', './manifest.webmanifest', './manifest-gil.webmanifest', './manifest-boss.webmanifest', './icon-gil-512.png', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {}));

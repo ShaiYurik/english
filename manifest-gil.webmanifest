@@ -1,29 +1,29 @@
 {
-  "name": "האפליקציה של גיל",
-  "short_name": "גיל",
-  "description": "אנגלית לכיתה ה׳: איים, מילים, קריאה ואנסינים",
+  "name": "לומדים בכיף",
+  "short_name": "GilGul",
+  "description": "לומדים בכיף: אנגלית עם איים, מילים וקריאה",
   "lang": "he",
   "dir": "rtl",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0a1a29",
-  "theme_color": "#0a1a29",
+  "background_color": "#0b2147",
+  "theme_color": "#0b2147",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "icon-gil-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon-gil-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon-gil-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
