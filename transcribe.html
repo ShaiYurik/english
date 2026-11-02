@@ -67,7 +67,7 @@ let asr=null,asrModel='';
 async function getASR(model){
   if(asr&&asrModel===model)return asr;
   status('טוען את מודל התמלול… (בפעם הראשונה זה לוקח כמה דקות)');
-  const T=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5/dist/transformers.web.min.js');
+  const T=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5/dist/transformers.min.js');
   const files={};
   const cb=p=>{if(p.status==='progress'&&p.total){files[p.file]=[p.loaded,p.total];const L=Object.values(files).reduce((a,b)=>a+b[0],0),Tt=Object.values(files).reduce((a,b)=>a+b[1],0);prog(L,Tt);status(`מוריד מודל: ${Math.round(L/1048576)} מתוך ${Math.round(Tt/1048576)}MB`)}};
   const tries=navigator.gpu?[{device:'webgpu',dtype:{encoder_model:'fp32',decoder_model_merged:'q4'}},{device:'wasm',dtype:'q8'}]:[{device:'wasm',dtype:'q8'}];
