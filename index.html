@@ -198,6 +198,11 @@ form.f{display:grid;gap:10px}
 .shoot label.main{background:var(--brass);color:var(--ink)}
 .shoot svg{width:34px;height:34px}
 .shoot input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.shoot label.wide{grid-column:1/-1;flex-direction:row;padding:14px 10px;background:var(--swell)}
+.shoot label.wide span{font-size:26px}
+.thumb .doc{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#fff;color:var(--ink);font-size:11px;padding:6px;text-align:center;word-break:break-all;overflow:hidden}
+.thumb .doc b{font-size:28px}
+textarea.paste{width:100%;min-height:80px;border-radius:12px;border:1px solid var(--swell);padding:10px;font:inherit}
 .thumbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .thumb{position:relative;aspect-ratio:3/4;border-radius:10px;overflow:hidden;background:var(--chart2)}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -405,13 +410,13 @@ async function flushUploads(){
       upStatus[it.id]='up';refreshUploadUI();
       try{
         const b64=await blobToB64(it.blob);
-        const res=await apiPost({action:it.kind==='rec'?'uploadRec':'uploadPhoto',b64,mime:it.blob.type,...it.meta});
+        const res=await apiPost({action:it.kind==='rec'?'uploadRec':it.kind==='file'?'uploadFile':'uploadPhoto',b64,mime:it.blob.type||'application/octet-stream',...it.meta});
         await IDB.del(it.id);upStatus[it.id]='ok';
         if(it.kind==='rec')onRecUploaded(it,res.file);
-        if(it.kind==='photo'){S.pendingPhotos=(S.pendingPhotos||0)+1;cache()}
+        if(it.kind==='photo'||it.kind==='file'){S.pendingPhotos=(S.pendingPhotos||0)+1;cache()}
       }catch(e){
         console.warn('upload',e);upStatus[it.id]='err';
-        if(/גדול|מגבלה|מקום|רק תמונות/.test(e.message)){await IDB.del(it.id);toast(e.message)}
+        if(/גדול|מגבלה|מקום|רק תמונות|סוג קובץ/.test(e.message)){await IDB.del(it.id);toast(e.message)}
         break;
       }
       refreshUploadUI();
@@ -1430,6 +1435,19 @@ async function compress(file){
     return await new Promise(res=>c.toBlob(b=>res(b||file),'image/jpeg',.85));
   }catch(e){return file}finally{URL.revokeObjectURL(url)}
 }
+const FILE_OK=/^(application\/(pdf|msword|rtf|vnd\.openxmlformats-officedocument\.wordprocessingml\.document|vnd\.oasis\.opendocument\.text)|text\/(plain|html|rtf)|message\/rfc822)$/;
+const FILE_EXT=/\.(pdf|docx?|odt|rtf|txt|html?|eml)$/i;
+const MAX_FILE=10*1024*1024;
+function addFiles(files){
+  let n=0;const imgs=[];
+  for(const f of files){
+    if(/^image\//.test(f.type)){imgs.push(f);continue}
+    if(!FILE_OK.test(f.type)&&!FILE_EXT.test(f.name)){toast('סוג קובץ לא נתמך: '+f.name);continue}
+    if(f.size>MAX_FILE){toast('הקובץ גדול מ־10MB: '+f.name);continue}
+    S.shots.push({id:uid('f'),blob:f,name:f.name,file:true,status:'new'});n++;
+  }
+  if(imgs.length)addShots(imgs);else if(n){sfx.tap();render()}
+}
 async function addShots(files){
   for(const f of files){
     if(!/^image\//.test(f.type))continue;
@@ -1452,13 +1470,19 @@ function viewCamera(){
   <div class="shoot">
     <label class="main" for="camIn">${I.camera}צלם עכשיו<input id="camIn" type="file" accept="image/*" capture="environment"></label>
     <label for="galIn">${I.gallery}בחר מהגלריה<input id="galIn" type="file" accept="image/*" multiple></label>
+    <label class="wide" for="fileIn"><span>📎</span>העלאת קובץ (PDF, Word, צילום מסך)<input id="fileIn" type="file" accept="application/pdf,.pdf,.doc,.docx,.odt,.rtf,.txt,.html,.htm,.eml,image/*" multiple></label>
   </div>
   ${S.shots.length?`<section class="card">
-    <h2>הצילומים שלך</h2>
-    <div class="thumbs">${S.shots.map(s=>`<div class="thumb"><img src="${s.url}" alt="צילום">${s.status==='new'?`<button data-act="delShot" data-id="${s.id}" aria-label="הסר">${I.x}</button>`:''}<span class="${s.status==='ok'?'ok':s.status==='err'?'err':''}">${label[s.status]||''}</span></div>`).join('')}</div>
+    <h2>מה שהעלית</h2>
+    <div class="thumbs">${S.shots.map(s=>`<div class="thumb">${s.file?`<div class="doc"><b>📄</b>${esc(s.name)}</div>`:`<img src="${s.url}" alt="צילום">`}${s.status==='new'?`<button data-act="delShot" data-id="${s.id}" aria-label="הסר">${I.x}</button>`:''}<span class="${s.status==='ok'?'ok':s.status==='err'?'err':''}">${label[s.status]||''}</span></div>`).join('')}</div>
     ${fresh.length?`<form class="f" data-form="shots"><label>מה זה? (לא חובה)<input id="shotNote" autocomplete="off" placeholder="למשל: מילים למבחן ביום שלישי"></label>
-      <button class="btn brass" type="submit">שלח ${fresh.length} ${fresh.length===1?'צילום':'צילומים'} לדרייב</button></form>`:''}
+      <button class="btn brass" type="submit">שלח ${fresh.length} ${fresh.length===1?'פריט':'פריטים'} לדרייב</button></form>`:''}
   </section>`:''}
+  <section class="card">
+    <h2>יש קישור או טקסט?</h2>
+    <p class="sub">למשל סיכום שיעור שהמורה שלחה בוואטסאפ: מעתיקים ומדביקים כאן.</p>
+    <form class="f" data-form="paste"><textarea class="paste" id="pasteIn" dir="auto" placeholder="מדביקים כאן טקסט או קישור"></textarea><button class="btn brass small" type="submit">שלח לדרייב</button></form>
+  </section>
   <section class="card">
     <h2>מתי זה הופך לתרגול?</h2>
     <p>כל ערב החומר החדש עובר עיבוד, ולמחרת מחכה לך אי חדש במפה. רוצה מוקדם יותר? אפשר לבקש מאבא לעבד עכשיו.</p>
@@ -1663,6 +1687,7 @@ addEventListener('popstate',()=>{if(!goBack())return;armBack()});
 let logoTaps=[];document.querySelector('.brand img').addEventListener('click',()=>{const t=Date.now();logoTaps=logoTaps.filter(x=>t-x<2500);logoTaps.push(t);if(logoTaps.length>=5){logoTaps=[];S.relink=true;render()}});
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('isl')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
 document.addEventListener('change',e=>{if(e.target.id==='calTT'||e.target.id==='calEX'){const f=e.target.files[0];const note=e.target.dataset.note;e.target.value='';if(f)calPhoto(f,note);return}
+  if(e.target.id==='fileIn'){const files=[...e.target.files];e.target.value='';if(files.length)addFiles(files);return}
   if(e.target.id==='camIn'||e.target.id==='galIn'){const files=[...e.target.files];e.target.value='';if(files.length)addShots(files)}});
 document.addEventListener('submit',e=>{
   const f=e.target;if(!f.dataset.form)return;e.preventDefault();
@@ -1689,9 +1714,14 @@ document.addEventListener('submit',e=>{
     if(!z.date)return;S.zoom.push(z);saveState('zoom');sfx.ok();toast('השיעור נשמר');render();
   }else if(f.dataset.form==='znotes'){
     const z=S.zoom.find(x=>x.id===f.dataset.id);if(!z)return;z.notes=(f.querySelector('input').value||'').trim();if(!z.notes)return;saveState('zoom');toast('נשמר');render();
+  }else if(f.dataset.form==='paste'){
+    const t=($('#pasteIn').value||'').trim();if(!t){toast('אין מה לשלוח');return}
+    const blob=new Blob([t],{type:'text/plain'});const id=uid('f');
+    S.shots.push({id,blob,name:'טקסט שהודבק.txt',file:true,status:'wait'});queueUpload({id,kind:'file',blob,meta:{note:'טקסט שהודבק',name:'טקסט שהודבק.txt'}});
+    sfx.ok();toast('נשלח לדרייב');render();
   }else if(f.dataset.form==='shots'){
     const note=($('#shotNote')?.value||'').trim();
-    S.shots.filter(s=>s.status==='new').forEach(s=>{s.status='wait';queueUpload({id:s.id,kind:'photo',blob:s.blob,meta:{note}})});
+    S.shots.filter(s=>s.status==='new').forEach(s=>{s.status='wait';queueUpload({id:s.id,kind:s.file?'file':'photo',blob:s.blob,meta:s.file?{note,name:s.name}:{note}})});
     sfx.ok();toast('הצילומים נשלחים לדרייב');render();
   }
 });
