@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>תמלול הקלטות</title>
+<style>
+:root{--bg:#0d2436;--card:#eef2ea;--ink:#13202b;--muted:#5d6b75;--brass:#d6a64a;--ok:#2f8f6b;--bad:#c2452f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,"Segoe UI",Arial,sans-serif;padding:16px}
+main{max-width:760px;margin:0 auto;display:grid;gap:14px}
+h1{color:#eef2ea;margin:0;font-size:24px}
+.card{background:var(--card);border-radius:16px;padding:16px;display:grid;gap:10px}
+.card h2{margin:0;font-size:18px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;border-top:1px solid #d4dbd0;padding-top:10px}
+button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:10px 18px;background:var(--brass);color:#1a1206;cursor:pointer}
+button[disabled]{opacity:.5;cursor:default}
+.muted{color:var(--muted);font-size:14px}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}
+progress{width:100%;height:12px}
+pre{white-space:pre-wrap;direction:ltr;text-align:left;background:#fff;border-radius:10px;padding:10px;max-height:320px;overflow:auto;font-size:13px;margin:0}
+select{font:inherit;padding:6px;border-radius:8px}
+</style>
+</head>
+<body>
+<main>
+  <h1>תמלול הקלטות זום</h1>
+  <div class="card">
+    <p class="muted" style="margin:0">הדף מתמלל את הקלטות השיעור כאן במחשב, ושומר את הטקסט בדרייב כדי שאפשר יהיה לבנות ממנו אי. בפעם הראשונה יורד מודל תמלול (כ־150MB). אפשר להשאיר את הלשונית פתוחה ולעבוד במקביל.</p>
+    <label class="muted">איכות: <select id="model">
+      <option value="onnx-community/whisper-base">רגילה (מהיר)</option>
+      <option value="onnx-community/whisper-small">גבוהה (איטי יותר)</option>
+    </select></label>
+    <div id="status" class="muted">טוען רשימת הקלטות…</div>
+    <progress id="prog" max="1" value="0" hidden></progress>
+  </div>
+  <div class="card" id="list"><h2>שיעורים</h2></div>
+  <div class="card" id="outCard" hidden><h2>תמלול</h2><pre id="out"></pre></div>
+</main>
+<script type="module">
+const API='https://script.google.com/macros/s/AKfycbxLlbEJozfMjmGyQZeeJm0lXCW-NhjTsNaQ7UPCaaQ8qAqmo_yee2h7FEY4LW1IIXWJ4g/exec';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function readKey(){const m=location.hash.match(/k=([A-Za-z0-9_-]+)/);if(m)return m[1];try{const v=localStorage.getItem('voy:key');return v?JSON.parse(v):''}catch(e){return ''}}
+const KEY=readKey();
+const status=(t,cls='muted')=>{const s=$('#status');s.className=cls;s.textContent=t};
+const prog=(v,max=1)=>{const p=$('#prog');p.hidden=v==null;if(v!=null){p.max=max;p.value=v}};
+async function apiGet(params){const u=new URL(API);u.searchParams.set('key',KEY);for(const k in params)u.searchParams.set(k,params[k]);const r=await fetch(u);const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
+async function apiPost(body){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,...body})});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
+
+let groups=[];
+async function load(){
+  if(!KEY){status('חסר מפתח הורה. פותחים את הדף מהקישור של ההורה.','bad');return}
+  try{
+    const {recs}=await apiGet({action:'listRecs'});
+    const st=await apiGet({});const tr=new Set(st.state.transcripts||[]);
+    const by={};recs.forEach(r=>{const m=r.name.match(/(\d{4}-\d{2}-\d{2})/);const d=m?m[1]:'ללא תאריך';(by[d]=by[d]||[]).push(r)});
+    groups=Object.entries(by).sort((a,b)=>b[0].localeCompare(a[0])).map(([date,files])=>({date,files:files.sort((a,b)=>partOf(a)-partOf(b)),done:tr.has('זום '+date)}));
+    $('#list').innerHTML='<h2>שיעורים</h2>'+(groups.length?groups.map((g,k)=>`<div class="row"><div><b>זום ${esc(g.date.split('-').reverse().join('.'))}</b><div class="muted">${g.files.length} חלקים · כ־${g.files.length*5} דקות ${g.done?'· <span class="ok">כבר תומלל</span>':''}</div></div><button data-k="${k}">${g.done?'תמלל שוב':'תמלל'}</button></div>`).join(''):'<p class="muted">אין הקלטות.</p>');
+    status('בוחרים שיעור ולוחצים "תמלל".');
+  }catch(e){status('לא הצלחתי לטעון: '+e.message,'bad')}
+}
+const partOf=f=>{const m=f.name.match(/חלק (\d+)/);return m?+m[1]:0};
+
+let asr=null,asrModel='';
+async function getASR(model){
+  if(asr&&asrModel===model)return asr;
+  status('טוען את מודל התמלול… (בפעם הראשונה זה לוקח כמה דקות)');
+  const T=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5/dist/transformers.web.min.js');
+  const files={};
+  const cb=p=>{if(p.status==='progress'&&p.total){files[p.file]=[p.loaded,p.total];const L=Object.values(files).reduce((a,b)=>a+b[0],0),Tt=Object.values(files).reduce((a,b)=>a+b[1],0);prog(L,Tt);status(`מוריד מודל: ${Math.round(L/1048576)} מתוך ${Math.round(Tt/1048576)}MB`)}};
+  const tries=navigator.gpu?[{device:'webgpu',dtype:{encoder_model:'fp32',decoder_model_merged:'q4'}},{device:'wasm',dtype:'q8'}]:[{device:'wasm',dtype:'q8'}];
+  let last;
+  for(const o of tries){try{asr=await T.pipeline('automatic-speech-recognition',model,{...o,progress_callback:cb});asrModel=model;window.__asrDevice=o.device;return asr}catch(e){last=e;console.warn('ASR init failed on',o.device,e)}}
+  throw last;
+}
+async function decode(b64){
+  const bin=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+  const ctx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+  try{const buf=await ctx.decodeAudioData(bin.buffer);
+    if(buf.numberOfChannels===1)return buf.getChannelData(0);
+    const a=buf.getChannelData(0),b=buf.getChannelData(1),m=new Float32Array(a.length);for(let i=0;i<a.length;i++)m[i]=(a[i]+b[i])/2;return m}
+  finally{ctx.close()}
+}
+const mmss=s=>{s=Math.max(0,Math.round(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+
+async function run(g){
+  document.querySelectorAll('#list button').forEach(b=>b.disabled=true);
+  $('#outCard').hidden=false;const out=$('#out');out.textContent='';
+  const t0=Date.now();
+  try{
+    const model=$('#model').value;const tr=await getASR(model);
+    const lines=[`Zoom lesson ${g.date} · ${g.files.length} parts · model ${model.split('/')[1]} (${window.__asrDevice})`,''];
+    for(let k=0;k<g.files.length;k++){
+      const f=g.files[k];const part=partOf(f)||k+1;const off=(part-1)*300;
+      status(`חלק ${part} מתוך ${g.files.length}: מוריד מהדרייב…`);prog(k,g.files.length);
+      const r=await apiGet({action:'getRec',id:f.id});
+      status(`חלק ${part} מתוך ${g.files.length}: מתמלל…`);
+      let audio;try{audio=await decode(r.b64)}catch(e){lines.push(`[part ${part}: could not decode audio]`);continue}
+      if(!audio.length){lines.push(`[part ${part}: empty]`);continue}
+      const res=await tr(audio,{language:'english',task:'transcribe',chunk_length_s:30,stride_length_s:5,return_timestamps:true});
+      lines.push(`--- part ${part} (${mmss(off)}) ---`);
+      (res.chunks&&res.chunks.length?res.chunks:[{timestamp:[0],text:res.text}]).forEach(c=>{const t=(c.text||'').trim();if(t)lines.push(`[${mmss(off+(c.timestamp&&c.timestamp[0]||0))}] ${t}`)});
+      lines.push('');out.textContent=lines.join('\n');out.scrollTop=out.scrollHeight;
+    }
+    prog(g.files.length,g.files.length);
+    status('שומר את התמלול בדרייב…');
+    await apiPost({action:'saveTranscript',name:'זום '+g.date,text:lines.join('\n')});
+    status(`התמלול נשמר בדרייב (${Math.round((Date.now()-t0)/60000)} דקות). אפשר לסגור את הדף.`,'ok');
+    window.__done=true;await load();
+  }catch(e){console.error(e);status('משהו נכשל: '+(e.message||e),'bad');window.__err=String(e.message||e)}
+  finally{document.querySelectorAll('#list button').forEach(b=>b.disabled=false)}
+}
+$('#list').addEventListener('click',e=>{const b=e.target.closest('button[data-k]');if(b)run(groups[+b.dataset.k])});
+load();
+</script>
+</body>
+</html>

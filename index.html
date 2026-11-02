@@ -68,6 +68,18 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance
 .map{background:var(--sea);border-radius:var(--r);overflow:hidden;border:1px solid var(--swell)}
 .map svg{display:block;width:100%;height:auto}
 .isl{cursor:pointer}
+.isl .glow{animation:glow 1.6s ease-in-out infinite;transform-origin:0 4px}
+@keyframes glow{0%,100%{opacity:.35;transform:scale(.92)}50%{opacity:1;transform:scale(1.12)}}
+.isl .spark{animation:twinkle 1.4s ease-in-out infinite}
+.isl .spark.b{animation-delay:.45s}.isl .spark.c{animation-delay:.9s}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:1;transform:scale(1)}}
+.newbanner{display:flex;align-items:center;gap:12px;width:100%;border:0;text-align:start;background:linear-gradient(135deg,#f0c35e,#e2553b);color:#1a1206;border-radius:var(--r);padding:12px 14px;font:inherit;font-weight:700;box-shadow:0 10px 24px -14px #000;animation:pop .4s ease-out}
+.newbanner .gift{font-size:32px;animation:bobg 1.2s ease-in-out infinite}
+@keyframes bobg{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-4px) rotate(6deg)}}
+.newbanner small{display:block;font-weight:600;opacity:.85}
+.newbanner .go{margin-inline-start:auto;background:#1a1206;color:#f0c35e;border-radius:999px;padding:8px 14px;white-space:nowrap}
+.zbadge{display:inline-flex;align-items:center;gap:6px;background:#dcebff;color:#1d4f8a;border-radius:999px;padding:4px 12px;font-weight:800;font-size:14px}
+.zstat{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
 .isl:focus{outline:none}
 .isl:focus-visible .ring{stroke:var(--brass2);stroke-width:3}
 .maphint{font-size:13px;color:var(--muted);text-align:center;margin:0}
@@ -510,7 +522,7 @@ const S={
   activeSec:0, lastInput:Date.now(), shots:[]
 };
 function newSession(){return {date:today(),minutes:0,activities:[],missed:[],readOk:0,readHelp:0,updatedAt:Date.now()}}
-function cache(){LS.set('cache',{schedule:S.scheduleState,progress:S.progress,sessions:[S.session,...S.sessions.filter(s=>s.date!==S.session.date)].slice(0,40),classwords:S.classWords,zoom:S.zoom,lessons:S.lessons,pendingPhotos:S.pendingPhotos})}
+function cache(){LS.set('cache',{schedule:S.scheduleState,progress:S.progress,sessions:[S.session,...S.sessions.filter(s=>s.date!==S.session.date)].slice(0,40),classwords:S.classWords,zoom:S.zoom,lessons:S.lessons,pendingPhotos:S.pendingPhotos,transcripts:S.transcripts||[]})}
 const isParent=()=>S.role==='parent';
 function setRole(r){
   r=r==='parent'?'parent':'child';
@@ -535,6 +547,7 @@ function applyState(st,fromServer){
   if(st.schedule!==undefined&&st.schedule&&!pend('schedule'))S.scheduleState=st.schedule;
   if(st.lessons)S.lessons=st.lessons;
   if(typeof st.pendingPhotos==='number')S.pendingPhotos=st.pendingPhotos;
+  if(Array.isArray(st.transcripts))S.transcripts=st.transcripts;
   if(st.sessions){
     const t=today();const remoteToday=st.sessions.find(s=>s&&s.date===t);
     S.sessions=st.sessions.filter(s=>s&&s.date!==t).sort((a,b)=>b.date.localeCompare(a.date));
@@ -662,10 +675,20 @@ function allIslands(){
   const book=bookIslands();
   const list=book.length?book:ISLANDS.map(i=>({...i,kind:'base'}));
   if(S.classWords.length>=4)list.push({id:'cove',kind:'class',name:'מפרץ המטמון',en:'Treasure Cove',topic:'מילים מהכיתה',words:S.classWords.map(w=>({en:w.en,he:w.he,ex:w.ex||''}))});
-  (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,mistakes:l.mistakes||[],source:l.source||''})});
+  (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],zoomId:l.zoomId||'',zoomDate:l.zoomDate||'',created:l.created||''})});
   return list;
 }
 function islandById(id){return allIslands().find(i=>i.id===id)}
+function isNewIsland(i){const p=S.progress;if((p.seen||{})[i.id]||p.best[i.id])return false;
+  if(i.kind==='lesson'||i.kind==='class')return true;
+  if(i.kind==='book'&&!i.text)return !!p.best['_open_'+i.id];
+  return false}
+function markSeen(id){if(isParent()||!id)return;const p=S.progress;p.seen=p.seen||{};if(p.seen[id])return;p.seen[id]=1;saveState('progress')}
+function zoomIsland(z){return allIslands().find(i=>i.kind==='lesson'&&(i.zoomId===z.id||(i.source==='זום'&&i.zoomDate===z.date)))}
+function zoomStatusHTML(z){const n=(z.recs||[]).length;if(!n&&!zoomIsland(z))return '';
+  const isl=zoomIsland(z);const tr=(S.transcripts||[]).some(t=>t.includes(z.date));
+  const st=isl?`<span class="pill ok">🏝 נפתח אי: ${esc(isl.name)}</span>`:tr?'<span class="pill">📝 תומלל · האי בהכנה</span>':'<span class="pill warn">⏳ ממתין לעיבוד</span>';
+  return `<div class="zstat">${n?`<span>🎙 הוקלטו כ־${n*5} דקות (${n} חלקים)</span>`:''}${st}</div>`}
 function stationsOf(i){
   const st=[];const b=S.progress.best[i.id]||{};const w=i.words||[];
   const pct=k=>b[k]!=null?b[k]+'%':'';
@@ -769,22 +792,26 @@ function viewMap(){
   const nodes=isl.map((i,k)=>{
     const {x,y}=pos[k];const open=isUnlocked(i);const st=islandStars(i.id);
     const here=(i.kind==='base'&&ISLANDS.findIndex(b=>b.id===i.id)===lastOpenBase)||i.id===curId;
-    const fresh=i.kind==='lesson'&&!(S.progress.best[i.id]);
+    const fresh=open&&isNewIsland(i);
     const sand=open?(i.kind==='lesson'?'#f2dfae':'#e8d6a4'):'#5d7486',green=open?(i.kind==='lesson'?'#2f9f8a':'#3f8f6b'):'#4b6273';
     const flag=i.kind==='class'?'#d6a64a':i.kind==='lesson'?(i.source==='זום'?'#7fb7ff':'#2fbf8f'):'#e2553b';
     return `<g class="isl${here?' cur':''}" tabindex="0" role="button" aria-label="${esc(i.name)}${open?'':' (נעול)'}" data-act="${open?'island':'locked'}" data-id="${esc(i.id)}" transform="translate(${x},${y})">
+      ${fresh?`<ellipse class="glow" cx="0" cy="4" rx="52" ry="31" fill="rgba(240,195,94,.18)" stroke="#f0c35e" stroke-width="2.5"/>`:''}
       <ellipse class="ring" cx="0" cy="4" rx="46" ry="26" fill="none" stroke="#2a6a92" stroke-width="1" stroke-dasharray="3 4"/>
       <path d="M-34 6 C-30 -14 -8 -20 6 -16 C26 -12 38 -2 32 10 C24 22 -22 24 -34 6Z" fill="${sand}"/>
       <path d="M-22 2 C-18 -12 -2 -14 8 -10 C20 -6 22 4 14 8 C2 14 -18 12 -22 2Z" fill="${green}"/>
       ${open?`<path d="M6 -10 v-22" stroke="#0f2233" stroke-width="1.6"/><path d="M6 -32 l14 5 -14 5z" fill="${flag}"/>`:`<g transform="translate(0,-4)"><rect x="-7" y="-2" width="14" height="11" rx="2" fill="#0f2233"/><path d="M-4 -2 v-4 a4 4 0 0 1 8 0 v4" stroke="#0f2233" stroke-width="2" fill="none"/></g>`}
+      ${fresh?`<text class="spark" x="38" y="-14" font-size="16">✨</text><text class="spark b" x="-50" y="-2" font-size="13">✨</text><text class="spark c" x="22" y="26" font-size="12">✨</text>`:''}
       ${fresh?`<g transform="translate(-30,-26)"><rect x="-18" y="-10" width="36" height="18" rx="9" fill="#e2553b"/><text x="0" y="3" text-anchor="middle" font-size="11" font-family="Assistant" font-weight="800" fill="#fff">חדש</text></g>`:''}
-      <text x="0" y="44" text-anchor="middle" font-family="Secular One, Assistant" font-size="15" fill="${open?'#eef2ea':'#86a2b6'}">${esc(i.name)}</text>
+      <text x="0" y="44" text-anchor="middle" font-family="Secular One, Assistant" font-size="15" fill="${open?'#eef2ea':'#86a2b6'}">${i.source==='זום'?'💻 ':''}${esc(i.name)}</text>
       ${open&&i.kind!=='class'?`<g transform="translate(-27,52)">${[0,1,2].map(n=>`<path transform="translate(${n*18},0) scale(.62)" d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" fill="${n<st?'#d6a64a':'#2a5878'}"/>`).join('')}</g>`:''}
       ${here?`<g transform="translate(30,-30)"><svg width="30" height="30" viewBox="0 0 30 30">${I.ship.replace(/^<svg[^>]*>|<\/svg>$/g,'')}</svg></g>`:''}
     </g>`}).join('');
   const texts=isl.filter(x=>x.kind==='book'&&x.text);
   const shelf=texts.length?`<details class="shelf" ${LS.get('shelfOpen',false)?'open':''}><summary data-act="shelfTog">📖 אנסינים <small>${texts.length} טקסטים, תמיד פתוחים</small></summary><div class="shelfl">${texts.map(t=>{const b=S.progress.best[t.id]||{};const sc=b.readtext!=null?b.readtext+'%':b.story?'נקרא':'';return `<button class="shelfi" data-act="island" data-id="${esc(t.id)}"><span class="en">${esc(t.text.title)}</span><span>${esc(t.name)}</span><b>${sc}</b></button>`}).join('')}</div></details>`:'';
-  return meterHTML()+shelf+`<section class="map" aria-label="מפת האיים">
+  const nw=isl.filter(i=>isUnlocked(i)&&isNewIsland(i)).sort((a,b)=>String(b.created||'').localeCompare(String(a.created||'')))[0];
+  const banner=nw?`<button class="newbanner" data-act="island" data-id="${esc(nw.id)}"><span class="gift">🎁</span><span>אי חדש מחכה לך!<small>${esc(nw.name)}${nw.source==='זום'?' · מהשיעור בזום':''}</small></span><span class="go">להפליג ⛵</span></button>`:'';
+  return meterHTML()+banner+shelf+`<section class="map" aria-label="מפת האיים">
     <svg viewBox="0 0 ${W} ${H}" role="group">
       <defs><pattern id="wv" width="40" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="#174260" stroke-width="1.2"/></pattern></defs>
       <rect width="${W}" height="${H}" fill="#10304a"/><rect width="${W}" height="${H}" fill="url(#wv)"/>
@@ -800,7 +827,9 @@ function viewMap(){
 function viewIsland(id){
   const i=islandById(id);if(!i){S.screen={name:'map'};return viewMap()}
   const st=stationsOf(i);const anyScore=st.some(x=>x.scored&&(S.progress.best[id]||{})[x.k]!=null);
+  const zl=i.kind==='lesson'&&i.source==='זום'?S.zoom.find(z=>z.id===i.zoomId)||S.zoom.find(z=>z.date===i.zoomDate):null;
   return `<button class="back" data-act="home">${I.back} חזרה למפה</button>
+  ${i.kind==='lesson'&&i.source==='זום'?`<span class="zbadge">💻 מהשיעור בזום${i.zoomDate?' · '+dayName(i.zoomDate)+' '+fmtDate(i.zoomDate):''}${zl&&zl.teacher?' · עם '+esc(zl.teacher):''}</span>`:''}
   <div class="ihead">${i.en?`<span class="eyebrow en">${esc(i.en)}</span>`:''}<h2>${esc(i.name)}</h2><p>${esc(i.topic)}</p></div>
   ${anyScore?`<section class="card rep-card"><h2>דוח קפטן</h2>${islandReportHTML(i)}</section>`:''}
   <div class="stations">${st.map(s=>`<button class="station" data-act="station" data-k="${s.k}" data-id="${esc(id)}"><span class="ic">${s.ic}</span><span class="tx"><b>${s.t}</b><span>${esc(s.d)}</span></span><span class="mark">${s.m}</span></button>`).join('')}</div>`;
@@ -1406,7 +1435,7 @@ function viewZoom(){
     <span>${esc(z.teacher||'מורה לאנגלית')}</span>
     ${z.link&&!z.done?`<a href="${esc(z.link)}" target="_blank" rel="noopener">כניסה לשיעור בזום</a>`:''}
     ${z.notes?`<span class="sub">מה למדנו: ${esc(z.notes)}</span>`:''}
-    ${(z.recs||[]).length?`<span class="sub">הקלטה: ${(z.recs||[]).map(r=>`<a href="${esc(r.url)}" target="_blank" rel="noopener">חלק ${r.part}</a>`).join(' · ')}</span>`:''}
+    ${zoomStatusHTML(z)}
     ${z.done?(z.notes?'':`<form class="f" data-form="znotes" data-id="${esc(z.id)}"><label>מה למדנו בשיעור?<input id="zn-${esc(z.id)}" autocomplete="off" placeholder="דיברנו על תחביבים, מילים חדשות…"></label><button class="btn ghost small" type="submit">שמור</button></form>`)
       :`<div class="btns"><button class="btn red small" data-act="recStart" data-id="${esc(z.id)}">${I.mic} התחל הקלטה</button><button class="btn ghost small" data-act="delZoom" data-id="${esc(z.id)}">מחק</button></div>`}
   </div>`;
@@ -1463,6 +1492,9 @@ function refreshUploadUI(){
   if(changed){const cb=$('#camBadge');const n=S.shots.filter(s=>s.status!=='ok').length;cb.hidden=!n;cb.textContent=n}
   setSync();
 }
+function belongHTML(id){const zs=S.zoom.filter(z=>z.done||(z.recs||[]).length).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||''))).slice(0,6);
+  return `<label>שייך ל:<select id="${id}"><option value="">חומר מהכיתה / כללי</option>${zs.map((z,k)=>`<option value="${esc(z.id)}" ${k===0&&(Date.now()-new Date(z.date))/864e5<3?'selected':''}>💻 שיעור זום ${dayName(z.date)} ${fmtDate(z.date)}${z.teacher?' · '+esc(z.teacher):''}</option>`).join('')}</select></label>`}
+function zoomMeta(selId){const v=($('#'+selId)||{}).value||'';const z=S.zoom.find(x=>x.id===v);return z?{zoomId:z.id,zoomDate:z.date}:{}}
 function viewCamera(){
   const fresh=S.shots.filter(s=>s.status==='new');
   const label={new:'חדש',wait:'ממתין',up:'עולה…',ok:'נשמר',err:'ינסה שוב'};
@@ -1475,13 +1507,13 @@ function viewCamera(){
   ${S.shots.length?`<section class="card">
     <h2>מה שהעלית</h2>
     <div class="thumbs">${S.shots.map(s=>`<div class="thumb">${s.file?`<div class="doc"><b>📄</b>${esc(s.name)}</div>`:`<img src="${s.url}" alt="צילום">`}${s.status==='new'?`<button data-act="delShot" data-id="${s.id}" aria-label="הסר">${I.x}</button>`:''}<span class="${s.status==='ok'?'ok':s.status==='err'?'err':''}">${label[s.status]||''}</span></div>`).join('')}</div>
-    ${fresh.length?`<form class="f" data-form="shots"><label>מה זה? (לא חובה)<input id="shotNote" autocomplete="off" placeholder="למשל: מילים למבחן ביום שלישי"></label>
+    ${fresh.length?`<form class="f" data-form="shots">${belongHTML('shotZoom')}<label>מה זה? (לא חובה)<input id="shotNote" autocomplete="off" placeholder="למשל: סיכום שיעור Talking"></label>
       <button class="btn brass" type="submit">שלח ${fresh.length} ${fresh.length===1?'פריט':'פריטים'} לדרייב</button></form>`:''}
   </section>`:''}
   <section class="card">
     <h2>יש קישור או טקסט?</h2>
     <p class="sub">למשל סיכום שיעור שהמורה שלחה בוואטסאפ: מעתיקים ומדביקים כאן.</p>
-    <form class="f" data-form="paste"><textarea class="paste" id="pasteIn" dir="auto" placeholder="מדביקים כאן טקסט או קישור"></textarea><button class="btn brass small" type="submit">שלח לדרייב</button></form>
+    <form class="f" data-form="paste">${belongHTML('pasteZoom')}<textarea class="paste" id="pasteIn" dir="auto" placeholder="מדביקים כאן טקסט או קישור"></textarea><button class="btn brass small" type="submit">שלח לדרייב</button></form>
   </section>
   <section class="card">
     <h2>מתי זה הופך לתרגול?</h2>
@@ -1501,6 +1533,7 @@ function buildReport(){
   if(acts.length){lines.push('','מה נעשה:');acts.forEach(a=>lines.push(`• ${a.islandName} · ${a.title}${a.total&&a.kind!=='read'?` · ${a.correct}/${a.total}`:''}`))}
   else lines.push('','עוד לא תרגלו היום.');
   if(s.missed.length)lines.push('',`מילים לחזרה: ${s.missed.slice(-12).join(', ')}`);
+  S.zoom.filter(z=>(z.recs||[]).length&&(Date.now()-new Date(z.date))/864e5<8).forEach(z=>{const isl=zoomIsland(z);const tr=(S.transcripts||[]).some(t=>t.includes(z.date));lines.push('',`שיעור זום ${fmtDate(z.date)}: הוקלטו כ־${z.recs.length*5} דק׳ · ${isl?'נפתח אי: '+isl.name:tr?'תומלל, האי בהכנה':'ממתין לעיבוד'}`)});
   return lines.join('\n');
 }
 function viewParent(){
@@ -1521,6 +1554,11 @@ function viewParent(){
     <div class="report" id="rep">${esc(buildReport())}</div>
     <div class="btns"><button class="btn brass small" data-act="copyRep">העתק דוח</button></div>
   </section>
+  ${S.zoom.filter(z=>z.done||(z.recs||[]).length).length?`<section class="card">
+    <h2>שיעורי זום</h2>
+    <p class="sub">מה קרה עם כל הקלטה: מוקלטת, מתומללת, ואיזה אי נפתח ממנה.</p>
+    ${S.zoom.filter(z=>z.done||(z.recs||[]).length).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).slice(0,6).map(z=>{const isl=zoomIsland(z);const l=isl&&(S.lessons||[]).find(x=>'L-'+x.id===isl.id);return `<div class="zitem"><div class="zt"><b>${dayName(z.date)} ${fmtDate(z.date)}</b><span>${esc(z.teacher||'')}</span></div>${zoomStatusHTML(z)}${l&&l.parentSummary?`<p class="sub" style="margin:4px 0 0">${esc(l.parentSummary)}</p>`:''}${isl?`<p class="sub" style="margin:4px 0 0">באי: ${[isl.words.length?isl.words.length+' מילים':'',isl.games.length?isl.games.length+' משחקים':'',isl.mistakes.length?isl.mistakes.length+' תיקוני טעויות':'',isl.text?'טקסט לקריאה':''].filter(Boolean).join(' · ')}${S.progress.best[isl.id]?` · התחילה לתרגל`:(S.progress.seen||{})[isl.id]?' · נכנסה לאי':' · עוד לא נכנסה'}</p>`:''}</div>`}).join('')}
+  </section>`:''}
   <section class="card">
     <h2>יומן מסעות</h2>
     <div class="log">${all.map(x=>{const sm=sessSummary(x);const ok=(x.minutes||0)>=GOAL_MIN;return `<div class="logrow"><span class="d">${dayName(x.date)} ${fmtDate(x.date)}</span><span class="m">${sm.acts.length?sm.acts.map(a=>esc(a.title)).slice(0,4).join(' · '):'לא תורגל'}${x.missed&&x.missed.length?`<br>לחזרה: <span class="en">${esc(x.missed.slice(-5).join(', '))}</span>`:''}</span><span class="s"><span class="pill ${ok?'ok':(x.minutes||0)<10?'warn':''}">${x.minutes||0} דק׳</span>${sm.pct!=null?`<br><small>${sm.pct}%</small>`:''}</span></div>`}).join('')}</div>
@@ -1668,7 +1706,7 @@ function navTo(t,force){
   if(!force&&inProgress(S.screen)){S.confirm=t;render();return}
   S.confirm=null;stopAll();
   if(t.act==='home'){S.screen={name:'map'};S.tab='map'}
-  else if(t.act==='island'){const id=t.id||S.screen.id;S.tab='map';S.screen=id?{name:'island',id}:{name:'map'}}
+  else if(t.act==='island'){const id=t.id||S.screen.id;S.tab='map';S.screen=id?{name:'island',id}:{name:'map'};markSeen(id)}
   render();scrollTo({top:0});
 }
 function confirmHTML(){return `<div class="cfwrap" role="dialog" aria-modal="true"><div class="cfbox"><h3>לצאת באמצע?</h3><p>ההתקדמות בתרגיל הזה לא תישמר. אפשר להמשיך מאיפה שהפסקת.</p><div class="btns"><button class="btn brass" data-act="cfStay">להמשיך לתרגל</button><button class="btn ghost" data-act="cfGo">לצאת</button></div></div></div>`}
@@ -1715,13 +1753,13 @@ document.addEventListener('submit',e=>{
   }else if(f.dataset.form==='znotes'){
     const z=S.zoom.find(x=>x.id===f.dataset.id);if(!z)return;z.notes=(f.querySelector('input').value||'').trim();if(!z.notes)return;saveState('zoom');toast('נשמר');render();
   }else if(f.dataset.form==='paste'){
-    const t=($('#pasteIn').value||'').trim();if(!t){toast('אין מה לשלוח');return}
+    const t=($('#pasteIn').value||'').trim();if(!t){toast('אין מה לשלוח');return}const zm=zoomMeta('pasteZoom');
     const blob=new Blob([t],{type:'text/plain'});const id=uid('f');
-    S.shots.push({id,blob,name:'טקסט שהודבק.txt',file:true,status:'wait'});queueUpload({id,kind:'file',blob,meta:{note:'טקסט שהודבק',name:'טקסט שהודבק.txt'}});
+    S.shots.push({id,blob,name:'טקסט שהודבק.txt',file:true,status:'wait'});queueUpload({id,kind:'file',blob,meta:{note:'טקסט שהודבק',name:'טקסט שהודבק.txt',...zm}});
     sfx.ok();toast('נשלח לדרייב');render();
   }else if(f.dataset.form==='shots'){
-    const note=($('#shotNote')?.value||'').trim();
-    S.shots.filter(s=>s.status==='new').forEach(s=>{s.status='wait';queueUpload({id:s.id,kind:s.file?'file':'photo',blob:s.blob,meta:s.file?{note,name:s.name}:{note}})});
+    const note=($('#shotNote')?.value||'').trim();const zm=zoomMeta('shotZoom');
+    S.shots.filter(s=>s.status==='new').forEach(s=>{s.status='wait';queueUpload({id:s.id,kind:s.file?'file':'photo',blob:s.blob,meta:s.file?{note,name:s.name,...zm}:{note,...zm}})});
     sfx.ok();toast('הצילומים נשלחים לדרייב');render();
   }
 });
