@@ -175,6 +175,7 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance
 .logrow .d{font-variant-numeric:tabular-nums;font-weight:700;color:var(--sea2);min-width:58px}
 .logrow .m{min-width:0;font-size:14px;color:var(--ink2)}
 .logrow .s{font-weight:700;font-variant-numeric:tabular-nums;text-align:end}
+.kidsw{display:flex;gap:4px;margin:2px 0}.kidsw button{font:inherit;font-size:13px;font-weight:800;border:1px solid var(--swell);background:transparent;color:var(--foam);border-radius:999px;padding:2px 12px}.kidsw button[aria-pressed="true"]{background:var(--brass);color:#1a1206;border-color:var(--brass)}
 .pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--chart2);color:var(--ink)}
 .pill.ok{background:var(--kelp2);color:var(--kelp)} .pill.warn{background:var(--redsoft);color:#a53a24}
 form.f{display:grid;gap:10px}
@@ -352,7 +353,7 @@ details summary{cursor:pointer;padding:6px 0}
   <header class="top">
     <div class="brand">
       <img src="icon-192.png" alt="">
-      <div><h1>האפליקציה של יוביק</h1><small><i class="sync" id="sync"></i><span id="syncTxt">אנגלית לכיתה ז׳</span></small></div>
+      <div><h1>האפליקציה של יוביק</h1><div class="kidsw" id="kidSwitch" hidden></div><small><i class="sync" id="sync"></i><span id="syncTxt">אנגלית לכיתה ז׳</span></small></div>
     </div>
     <button class="iconbtn" id="soundBtn" data-act="sound" aria-pressed="true" aria-label="צלילים">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
@@ -383,12 +384,14 @@ function keyFromText(t){const m=String(t||'').match(/k=([A-Za-z0-9_-]{10,})/)||S
 readKey();
 addEventListener('hashchange',()=>{if(readKey()){S.badKey=false;loadAll()}});
 
-async function apiGet(){const r=await fetch(API+'?key='+encodeURIComponent(KEY),{cache:'no-store'});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
-async function apiPost(body){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,...body})});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
+let CHILD=LS.get('child','');
+const cacheKey=()=>CHILD&&CHILD!=='yuvik'?'cache:'+CHILD:'cache';
+async function apiGet(){const r=await fetch(API+'?key='+encodeURIComponent(KEY)+(CHILD?'&c='+encodeURIComponent(CHILD):''),{cache:'no-store'});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
+async function apiPost(body){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,c:CHILD||undefined,...body})});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
 
 /* outbox: latest version of each state doc, sent when online */
 let outbox=LS.get('outbox',{});let flushing=false,flushTimer=null;
-function enqueue(id,body){outbox[id]=body;LS.set('outbox',outbox);setSync();clearTimeout(flushTimer);flushTimer=setTimeout(flush,1500)}
+function enqueue(id,body){body={c:CHILD||undefined,...body};id=(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+id;outbox[id]=body;LS.set('outbox',outbox);setSync();clearTimeout(flushTimer);flushTimer=setTimeout(flush,1500)}
 async function flush(){
   if(flushing||!KEY)return;flushing=true;
   try{
@@ -414,7 +417,7 @@ const IDB={db:null,
 };
 let upBusy=false;const upStatus={};
 function blobToB64(b){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=()=>rej(fr.error);fr.readAsDataURL(b)})}
-async function queueUpload(item){try{await IDB.put(item)}catch(e){console.warn(e)}upStatus[item.id]='wait';flushUploads()}
+async function queueUpload(item){item.meta={c:CHILD||undefined,...(item.meta||{})};try{await IDB.put(item)}catch(e){console.warn(e)}upStatus[item.id]='wait';flushUploads()}
 async function flushUploads(){
   if(upBusy||!KEY)return;upBusy=true;
   try{
@@ -523,8 +526,17 @@ const S={
   activeSec:0, lastInput:Date.now(), shots:[]
 };
 function newSession(){return {date:today(),minutes:0,activities:[],missed:[],readOk:0,readHelp:0,updatedAt:Date.now()}}
-function cache(){LS.set('cache',{schedule:S.scheduleState,progress:S.progress,sessions:[S.session,...S.sessions.filter(s=>s.date!==S.session.date)].slice(0,40),classwords:S.classWords,zoom:S.zoom,lessons:S.lessons,pendingPhotos:S.pendingPhotos,transcripts:S.transcripts||[]})}
+function cache(){LS.set(cacheKey(),{schedule:S.scheduleState,progress:S.progress,sessions:[S.session,...S.sessions.filter(s=>s.date!==S.session.date)].slice(0,40),classwords:S.classWords,zoom:S.zoom,lessons:S.lessons,pendingPhotos:S.pendingPhotos,transcripts:S.transcripts||[]})}
 const isParent=()=>S.role==='parent';
+S.profile=LS.get('profile',null);S.children=LS.get('children',null);
+const feat=k=>!S.profile||!S.profile.features||S.profile.features[k]!==false;
+const kidName=()=>S.profile?S.profile.name:'יוביק';
+function applyProfile(){
+  const n=kidName();document.title='האפליקציה של '+n;const h=document.querySelector('.brand h1');if(h)h.textContent='האפליקציה של '+n;
+  const m=document.querySelector('link[rel="manifest"]');if(m){const want=S.profile&&S.profile.child&&S.profile.child!=='yuvik'?'manifest-'+S.profile.child+'.webmanifest':'manifest.webmanifest';if(m.getAttribute('href')!==want)m.setAttribute('href',want)}
+}
+function resetChildState(){Object.assign(S,{progress:{unlocked:1,best:{},xp:0},session:newSession(),sessions:[],classWords:[],zoom:[],lessons:[],pendingPhotos:0,scheduleState:null,transcripts:[],screen:{name:'map'},calDay:null,editLesson:null,shots:[]});_trk=null}
+function switchChild(id){if(!isParent()||id===CHILD)return;CHILD=id;LS.set('child',id);const ch=(S.children||[]).find(c=>c.id===id);if(ch){S.profile={...(S.profile||{}),child:id,name:ch.name,grade:ch.grade}}resetChildState();applyProfile();S.loaded=false;render();loadAll()}
 function setRole(r){
   r=r==='parent'?'parent':'child';
   if(r===S.role)return;
@@ -536,7 +548,7 @@ function saveState(name){if(isParent()&&name==='progress')return;const data={pro
 
 function applyState(st,fromServer){
   if(!st)return;
-  const pend=k=>fromServer&&outbox['state:'+k];
+  const pend=k=>fromServer&&outbox[(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+'state:'+k];
   if(st.progress&&!pend('progress')){
     const p={unlocked:1,best:{},xp:0,...st.progress};
     if(fromServer&&S.progress){p.unlocked=Math.max(p.unlocked,S.progress.unlocked||1);p.xp=Math.max(p.xp||0,S.progress.xp||0);
@@ -561,13 +573,17 @@ function applyState(st,fromServer){
   }
 }
 async function loadAll(){
-  const c=LS.get('cache',null);
+  applyProfile();const c=LS.get(cacheKey(),null);
   if(c)applyState(c,false);
   if(!S.session||S.session.date!==today())S.session=newSession();
   S.activeSec=(S.session.minutes||0)*60;
   S.loaded=true;render();
   if(!KEY)return;
-  try{const j=await apiGet();S.online=true;setRole(j.role);applyState(j.state,true);cache();render()}
+  try{const j=await apiGet();S.online=true;setRole(j.role);
+    if(j.profile){const was=CHILD;S.profile=j.profile;S.children=j.children||null;LS.set('profile',j.profile);if(j.children)LS.set('children',j.children);
+      if(!CHILD||j.role!=='parent'){CHILD=j.profile.child;LS.set('child',CHILD)}
+      if(was&&was!==CHILD)resetChildState();applyProfile()}
+    applyState(j.state,true);cache();render()}
   catch(e){console.warn(e);S.online=false;if(/bad key/.test(e.message))S.badKey=true;render()}
   setSync();flush();flushUploads();
 }
@@ -578,6 +594,7 @@ function setSync(){
   if(S.online===false&&!navigator.onLine){d.className='sync off';t.textContent='אין אינטרנט, שומר בטלפון';return}
   if(pend||upBusy){d.className='sync wait';t.textContent='שומר בדרייב…';return}
   d.className='sync ok';t.textContent=isParent()?'הכל שמור · מצב הורה':'הכל שמור';
+  const sw=$('#kidSwitch');if(sw){const kids=isParent()&&S.children&&S.children.length>1?S.children:null;sw.hidden=!kids;if(kids)sw.innerHTML=kids.map(c=>`<button data-act="kid" data-id="${esc(c.id)}" aria-pressed="${c.id===CHILD}">${esc(c.name)}</button>`).join('')}
 }
 
 /* ============ TIMER ============ */
@@ -674,30 +691,31 @@ function bookIslands(){
 }
 function allIslands(){
   const book=bookIslands();
-  const list=book.length?book:ISLANDS.map(i=>({...i,kind:'base'}));
+  const legacy=!S.profile||S.profile.child==='yuvik';
+  const list=book.length?book:legacy?ISLANDS.map(i=>({...i,kind:'base'})):[];
   if(S.classWords.length>=4)list.push({id:'cove',kind:'class',name:'מפרץ המטמון',en:'Treasure Cove',topic:'מילים מהכיתה',words:S.classWords.map(w=>({en:w.en,he:w.he,ex:w.ex||''}))});
   (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],zoomId:l.zoomId||'',zoomDate:l.zoomDate||'',created:l.created||''})});
   return list;
 }
 function islandById(id){return allIslands().find(i=>i.id===id)}
 /* ---- three tracks: class / zoom / unseen. one active island each ---- */
-const TRACKS=[{k:'class',t:'מהכיתה',ic:'🏫',flag:'#2fbf8f',none:'אין כרגע חומר מהכיתה'},{k:'zoom',t:'שיעור זום',ic:'💻',flag:'#7fb7ff',none:'האי יופיע אחרי שיעור הזום'},{k:'unseen',t:'אנסין',ic:'📖',flag:'#e2553b',none:'סיימת את כל האנסינים!'}];
+const TRACKS=[{k:'class',t:'מהכיתה',ic:'🏫',flag:'#2fbf8f',none:'כל האיים נכבשו!',empty:'יופיע כשיעלה חומר מהכיתה'},{k:'zoom',t:'שיעור זום',ic:'💻',flag:'#7fb7ff',none:'האי יופיע אחרי שיעור הזום',empty:'האי יופיע אחרי שיעור הזום'},{k:'unseen',t:'אנסין',ic:'📖',flag:'#e2553b',none:'סיימת את כל האנסינים!',empty:'עוד אין אנסינים'}];
 function trackOf(i){if(i.kind==='lesson'&&i.source==='זום')return 'zoom';if(i.kind==='book'&&i.text)return 'unseen';return 'class'}
 function isDone(i){const st=stationsOf(i);if(st.some(s=>s.scored))return islandRatio(i)>=.5;const b=S.progress.best[i.id]||{};return !!(b.learn||b.story||b.read)}
 let _trk=null;
 function tracks(){
   if(_trk)return _trk;
   const all=allIslands();const book=all.filter(i=>i.kind==='book');
-  if(!book.length){_trk=null;return null}
+  if(!book.length&&(!S.profile||S.profile.child==='yuvik')){_trk=null;return null}
   const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));
   const lists={
     class:[...all.filter(i=>i.kind==='lesson'&&i.source!=='זום').sort(byC),...all.filter(i=>i.kind==='class'),...book.filter(i=>!i.text)],
     zoom:all.filter(i=>i.kind==='lesson'&&i.source==='זום').sort(byC),
     unseen:book.filter(i=>i.text)};
-  _trk=TRACKS.map(t=>{const list=lists[t.k];const active=list.find(i=>!isDone(i))||null;
+  _trk=TRACKS.filter(t=>t.k!=='zoom'||feat('zoom')).map(t=>{const list=lists[t.k];const active=list.find(i=>!isDone(i))||null;
     const done=list.filter(isDone);const started=list.filter(i=>i!==active&&!isDone(i)&&S.progress.best[i.id]);
     const queue=list.filter(i=>i!==active&&!isDone(i)&&!S.progress.best[i.id]);
-    return {...t,active,done,started,queue}});
+    return {...t,active,done,started,queue,none:list.length?t.none:t.empty}});
   return _trk;
 }
 const activeIds=()=>{const T=tracks();return T?T.filter(t=>t.active).map(t=>t.active.id):[]};
@@ -755,7 +773,9 @@ function render(){
   if(!KEY||S.relink){v.innerHTML=viewGate();$('#tabs').hidden=true;return}
   $('#tabs').hidden=false;
   const pt=document.querySelector('.tab[data-tab="parent"]');pt.hidden=!isParent();
-  $('#tabs .in').style.gridTemplateColumns=`repeat(${isParent()?5:4},1fr)`;
+  ['zoom','cal','camera'].forEach(k=>{document.querySelector(`.tab[data-tab="${k}"]`).hidden=!feat(k)});
+  if(['zoom','cal','camera'].includes(S.tab)&&!feat(S.tab))S.tab='map';
+  $('#tabs .in').style.gridTemplateColumns=`repeat(${[...document.querySelectorAll('#tabs .tab')].filter(t=>!t.hidden).length},1fr)`;
   if(S.tab==='parent'&&!isParent())S.tab='map';
   if(!S.loaded){v.innerHTML='<p class="maphint">מכינים את הספינה…</p>';return}
   if(S.tab==='zoom') v.innerHTML=viewZoom();
@@ -791,7 +811,7 @@ function meterHTML(){
   </section>`;
 }
 function examHTML(){
-  const ne=nextExams().find(e=>/אנגלית|english/i.test(e.subject));const ds=ne?ne.date:EXAM_DATE;
+  const ne=nextExams().find(e=>/אנגלית|english/i.test(e.subject));if(!ne&&S.profile&&S.profile.child!=='yuvik')return '';const ds=ne?ne.date:EXAM_DATE;
   const [y,m,d]=ds.split('-').map(Number);const ex=new Date(y,m-1,d);const t=new Date();t.setHours(0,0,0,0);
   const days=Math.round((ex-t)/864e5);if(days<0)return '';
   return `<div class="exam">🧭 ${days===0?'<b>היום</b> מבחן באנגלית. בהצלחה!':`מבחן באנגלית בעוד <b>${days}</b> ימים (${d}.${m})`}</div>`;
@@ -816,7 +836,7 @@ function updateMeter(){
 function viewMap(){
   const T=tracks();if(!T)return viewMapLegacy();
   updateAlerts();
-  const W=360,H=470;const pos=[{x:248,y:385},{x:110,y:235},{x:250,y:95}];
+  const W=360,H=T.length===2?330:470;const pos=T.length===2?[{x:240,y:240},{x:120,y:95}]:[{x:248,y:385},{x:110,y:235},{x:250,y:95}];
   const depths=Array.from({length:7},(_,k)=>[[40,320,180,30,330,200][k%6],k*70+40,String(5+(k*7)%27)]).map(([x,y,t])=>`<text x="${x}" y="${y}" font-size="10" fill="#5f84a0" font-family="Assistant" font-style="italic">${t}</text>`).join('');
   const nodes=T.map((t,k)=>{const {x,y}=pos[k];const i=t.active;
     if(!i)return `<g transform="translate(${x},${y})" opacity=".75"><text x="0" y="-44" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="#c9d6de">${t.ic} ${t.t}</text>
@@ -848,12 +868,12 @@ function viewMap(){
       <rect width="${W}" height="${H}" fill="#10304a"/><rect width="${W}" height="${H}" fill="url(#wv)"/>
       <g stroke="#1d4a6a" stroke-width=".6">${[60,120,180,240,300].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="${H}"/>`).join('')}${[100,200,300,400].map(y=>`<line x1="0" y1="${y}" x2="${W}" y2="${y}"/>`).join('')}</g>
       ${depths}
-      <polyline points="${pos.map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#d6a64a" stroke-width="2" stroke-dasharray="6 6" opacity=".5"/>
+      <polyline points="${pos.slice(0,T.length).map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#d6a64a" stroke-width="2" stroke-dasharray="6 6" opacity=".5"/>
       <g transform="translate(40,${H-40})" opacity=".85"><circle r="22" fill="none" stroke="#5f84a0"/><path d="M0 -20 L4 0 L0 20 L-4 0Z" fill="#d6a64a"/><path d="M-20 0 L0 -4 L20 0 L0 4Z" fill="#5f84a0"/><text y="-26" text-anchor="middle" font-size="10" fill="#d6a64a" font-family="Assistant" font-weight="700">N</text></g>
       ${nodes}
     </svg></section>
     ${archive}
-    <p class="maphint">בכל מסלול יש אי אחד פעיל. כשכובשים אותו (70% ברוב התחנות) נפתח הבא בתור.</p>`;
+    <p class="maphint">${T.some(t=>t.active||t.done.length)?'בכל מסלול יש אי אחד פעיל. כשכובשים אותו (70% ברוב התחנות) נפתח הבא בתור.':'עוד אין איים. כשאבא יעלה חומר מהכיתה, האי הראשון יופיע כאן.'}</p>`;
 }
 function trackLabel(i){const t=TRACKS.find(x=>x.k===trackOf(i));return t?t.ic+' '+t.t:''}
 function viewMapLegacy(){
@@ -1569,7 +1589,7 @@ function refreshUploadUI(){
   if(changed){const cb=$('#camBadge');const n=S.shots.filter(s=>s.status!=='ok').length;cb.hidden=!n;cb.textContent=n}
   setSync();
 }
-function belongHTML(id){const zs=S.zoom.filter(z=>z.done||(z.recs||[]).length).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||''))).slice(0,4);
+function belongHTML(id){const zs=(feat('zoom')?S.zoom:[]).filter(z=>z.done||(z.recs||[]).length).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||''))).slice(0,4);
   const T=tracks();const cur=T&&T[0].active;
   return `<label>למה זה שייך? <b style="color:var(--signal)">*</b><select id="${id}" required><option value="" selected disabled>בחרי…</option>
     ${zs.map(z=>`<option value="zoom:${esc(z.id)}">💻 שיעור זום ${dayName(z.date)} ${fmtDate(z.date)}${z.teacher?' · '+esc(z.teacher):''}</option>`).join('')}
@@ -1737,6 +1757,7 @@ document.addEventListener('click',e=>{
       if(sc.idx<sc.items.length-1){sc.idx++;sc.res=null;sc.heard='';render()}else finishActivity(sc.drill?'drill':'readaloud',sc.drill?'תרגול מילים קשות':'קוראת בקול',sc.correct,sc.items.length,[]);break;}
     case 'tab':{const t=el.dataset.tab;if(t==='map'&&S.tab==='map'){if(S.screen.name!=='map')navTo({act:'home'})}else{stopAll();S.tab=t;render();scrollTo({top:0})}break;}
     case 'home':navTo({act:'home'});break;
+    case 'kid':switchChild(el.dataset.id);break;
     case 'locked':sfx.bad();toast('האי עדיין נעול. 70% במשחק המילים של האי הקודם יפתחו אותו');break;
     case 'island':navTo({act:'island',id:el.dataset.id});break;
     case 'station':{
