@@ -80,6 +80,18 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance
 .isl .spark{animation:twinkle 1.4s ease-in-out infinite}
 .isl .spark.b{animation-delay:.45s}.isl .spark.c{animation-delay:.9s}
 @keyframes twinkle{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:1;transform:scale(1)}}
+.fleetcard{display:flex;align-items:center;gap:12px;width:100%;border:1px solid var(--swell);background:linear-gradient(135deg,var(--sea),var(--abyss));color:var(--foam);border-radius:var(--r);padding:8px 12px;font:inherit;text-align:start}
+.fleetcard .ft{display:grid;gap:2px;flex:1}.fleetcard .ft b{color:var(--brass2);font-size:17px}.fleetcard small{color:var(--muted);font-weight:600}
+.fdots{display:flex;gap:5px;margin-top:2px}.fdots i{width:12px;height:12px;border-radius:50%;border:2px solid var(--brass);display:block}.fdots i.on{background:var(--brass)}
+.flv{font-weight:800;color:var(--brass);font-size:14px}
+.boatbox{text-align:center;max-height:86vh;overflow:auto}.boatbox p{color:var(--ink);text-align:start}
+.bpop{animation:pop .6s cubic-bezier(.2,1.6,.4,1) both;display:flex;justify-content:center}.bpop svg{max-width:100%}
+.confetti{font-size:34px;animation:pop .5s ease-out}
+.bm{align-items:center;padding-bottom:16px}
+.fleetgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.fitem{display:grid;justify-items:center;gap:0;background:var(--chart2);border-radius:10px;padding:4px 2px;font-size:11px;color:var(--ink)}
+.fitem svg{width:100%;height:auto}.fitem small{color:var(--ink2)}
+.fitem.lock svg{filter:grayscale(1) brightness(.35);opacity:.6}.fitem.cur{outline:3px solid var(--brass);background:#fff6dc}
 .newbanner{display:flex;align-items:center;gap:12px;width:100%;border:0;text-align:start;background:linear-gradient(135deg,#f0c35e,#e2553b);color:#1a1206;border-radius:var(--r);padding:12px 14px;font:inherit;font-weight:700;box-shadow:0 10px 24px -14px #000;animation:pop .4s ease-out}
 .newbanner .gift{font-size:32px;animation:bobg 1.2s ease-in-out infinite}
 @keyframes bobg{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-4px) rotate(6deg)}}
@@ -808,6 +820,7 @@ function render(){
     v.innerHTML=(map[sc.name]||viewMap)();
   }
   if(S.confirm&&S.tab==='map')v.insertAdjacentHTML('beforeend',confirmHTML());
+  if(S.tab==='map'&&!S.confirm&&(S.screen.name==='map'||S.screen.name==='result')){checkFleet();if(S.boatModal)v.insertAdjacentHTML('beforeend',boatModalHTML())}
   updateMeter();refreshRecUI();setSync();armBack();
   if(S.tab==='map'&&S.screen.name==='map'){const c=document.querySelector('.isl.cur');if(c&&!S._scrolledMap){S._scrolledMap=true;c.scrollIntoView({block:'center'})}}else S._scrolledMap=false;
   const cb=$('#camBadge');const n=S.shots.filter(s=>s.status!=='ok').length;cb.hidden=!n;cb.textContent=n;
@@ -826,7 +839,7 @@ function meterHTML(){
     <div class="row"><span class="lbl">${TW('day')}</span><span class="num" id="mNum"></span></div>
     <div class="track"><div class="line"></div><div class="done" id="mDone"></div>
       ${tn?'<span class="port" aria-hidden="true" style="font-size:16px;line-height:18px">🏆</span>':'<svg class="port" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v11M4 9a5 5 0 0 0 10 0M6 5h6" stroke="#d6a64a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'}
-      <div class="ship" id="mShip">${tn?'<svg viewBox="0 0 30 30" width="30" height="30"><circle cx="15" cy="15" r="12" fill="#d7f23c" stroke="#9fb61f" stroke-width="1.5"/><path d="M5 9 C11 12 11 18 5 21 M25 9 C19 12 19 18 25 21" stroke="#fff" stroke-width="2" fill="none"/></svg>':I.ship}</div></div>
+      <div class="ship" id="mShip">${!tn&&fleetOn()?boatSVG(fleetState().lv,34):tn?'<svg viewBox="0 0 30 30" width="30" height="30"><circle cx="15" cy="15" r="12" fill="#d7f23c" stroke="#9fb61f" stroke-width="1.5"/><path d="M5 9 C11 12 11 18 5 21 M25 9 C19 12 19 18 25 21" stroke="#fff" stroke-width="2" fill="none"/></svg>':I.ship}</div></div>
     <div class="streak" id="mStreak"></div>
     ${examHTML()}
   </section>`;
@@ -885,7 +898,7 @@ function viewMap(){
     :lateT?`<button class="newbanner late" data-act="island" data-id="${esc(lateT.active.id)}"><span class="gift">⏰</span><span>${TW('isl')} "${esc(lateT.active.name)}" מחכה לך כבר ${waitInfo(lateT.active).days} ימים<small>${lateT.ic} ${lateT.t} · כמה דקות וממשיכים</small></span><span class="go">${TW('late')}</span></button>`:'';
   const arch=T.flatMap(t=>[...t.started,...t.done].map(i=>({i,t}))).filter(x=>x.i.id!==(x.t.active||{}).id);
   const archive=arch.length?`<details class="shelf" ${LS.get('shelfOpen',false)?'open':''}><summary data-act="shelfTog">${TW('arch')} <small>${arch.filter(x=>isDone(x.i)).length} נכבשו · אפשר לחזור ולתרגל</small></summary><div class="shelfl">${arch.map(({i,t})=>`<button class="shelfi" data-act="island" data-id="${esc(i.id)}"><span>${t.ic}</span><span class="en" style="font-family:inherit">${esc(i.name)}</span><b>${isDone(i)?'⭐'.repeat(Math.max(1,islandStars(i.id))):'בתהליך'}</b></button>`).join('')}</div></details>`:'';
-  return meterHTML()+banner+`<section class="map" aria-label="מפת האיים">
+  return meterHTML()+fleetCardHTML()+banner+`<section class="map" aria-label="מפת האיים">
     <svg viewBox="0 0 ${W} ${H}" role="group">
       <defs><pattern id="wv" width="40" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="#174260" stroke-width="1.2"/></pattern></defs>
       ${tn?`<rect width="${W}" height="${H}" fill="#2f8f5b"/><rect x="24" y="18" width="${W-48}" height="${H-36}" fill="#2766c0" stroke="#fff" stroke-width="3"/>
@@ -1786,6 +1799,8 @@ document.addEventListener('click',e=>{
     case 'tab':{const t=el.dataset.tab;if(t==='map'&&S.tab==='map'){if(S.screen.name!=='map')navTo({act:'home'})}else{stopAll();S.tab=t;render();scrollTo({top:0})}break;}
     case 'home':navTo({act:'home'});break;
     case 'kid':switchChild(el.dataset.id);break;
+    case 'fleet':S.boatModal={kind:'fleet',from:S.boatModal&&S.boatModal.kind};render();break;
+    case 'bmClose':{const m=S.boatModal;S.boatModal=null;if(m&&(m.kind==='intro'||m.from==='intro')&&!S.progress.fleetIntro){S.progress.fleetIntro=1;saveState('progress')}render();break;}
     case 'locked':sfx.bad();toast('האי עדיין נעול. 70% במשחק המילים של האי הקודם יפתחו אותו');break;
     case 'island':navTo({act:'island',id:el.dataset.id});break;
     case 'station':{
@@ -1834,6 +1849,73 @@ document.addEventListener('click',e=>{
     case 'reqProcess':{el.disabled=true;apiPost({action:'requestProcess',note:''}).then(()=>{sfx.ok();toast('הבקשה נשלחה לאבא במייל')}).catch(err=>{toast(err.message||'לא הצלחתי לשלוח, נסי שוב');el.disabled=false});break;}
   }
 });
+
+/* ============ FLEET: upgrade the boat every 5 islands finished at 85%+ ============ */
+const FLEET=[
+ {n:'רפסודה',en:'Raft',t:'raft',w:44,c:'#a0703c',story:'כמה בולי עץ, חבל אחד ומפרש מחולצה ישנה. מכאן הכל מתחיל!'},
+ {n:'סירת גומי',en:'Rubber Boat',t:'rubber',w:50,c:'#f0a030',story:'סירה מתנפחת, צהובה וקופצנית. כבר לא נרטבים כל כך.'},
+ {n:'קיאק',en:'Kayak',t:'kayak',w:58,c:'#e2553b',story:'קיאק מהיר עם משוט כפול. מחליקים בין האיים.'},
+ {n:'קאנו',en:'Canoe',t:'canoe',w:62,c:'#3f8f6b',story:'קאנו ירוק כמו של חוקרים. יש מקום לתרמיל ולמפה.'},
+ {n:'סירת משוטים',en:'Rowboat',t:'row',w:64,c:'#2f6fb0',story:'סירת עץ עם שני משוטים. הידיים מתחזקות!'},
+ {n:'סירת פדלים',en:'Pedal Boat',t:'pedal',w:64,c:'#ffffff',story:'מדוושים ברגליים ונהנים מהנוף.'},
+ {n:'סירת דייגים',en:'Fishing Boat',t:'boat',w:70,c:'#c94a2e',cabin:1,story:'סירה עם תא קטן, רשת וחכה. הדגים מתחילים לפחד.'},
+ {n:'מפרשית קטנה',en:'Sailboat',t:'boat',w:70,c:'#ffffff',sails:1,story:'מפרש לבן גדול. עכשיו הרוח עובדת בשבילך.'},
+ {n:'קטמרן',en:'Catamaran',t:'cat',w:76,c:'#1f8fb3',sails:1,story:'שני גופים, יציב ומהיר. אפשר לשכב על הרשת באמצע.'},
+ {n:'סירת מנוע',en:'Motorboat',t:'boat',w:76,c:'#2f6fb0',cabin:1,motor:1,story:'מנוע אמיתי! וווווום.'},
+ {n:'סירה מהירה',en:'Speedboat',t:'speed',w:80,c:'#e2553b',motor:1,story:'סירת מרוץ אדומה שקופצת על הגלים.'},
+ {n:'יאכטה',en:'Yacht',t:'boat',w:86,c:'#ffffff',cabin:2,sails:1,story:'יאכטה עם שני תאים ומפרש. ספינה של קפטנית אמיתית.'},
+ {n:'סקונר',en:'Schooner',t:'boat',w:90,c:'#7a4a24',sails:2,story:'ספינת מפרשים עם שני תרנים, כמו בספרי ההרפתקאות.'},
+ {n:'ספינת פיראטים',en:'Pirate Ship',t:'boat',w:94,c:'#3b2414',sails:3,pirate:1,story:'אהוי! ספינה עם שלושה תרנים ודגל שחור (אבל את פיראטית טובה).'},
+ {n:'גוררת',en:'Tugboat',t:'boat',w:84,c:'#e2553b',cabin:2,chim:1,story:'קטנה וחזקה. היא גוררת ספינות ענק לנמל.'},
+ {n:'מעבורת',en:'Ferry',t:'boat',w:98,c:'#ffffff',decks:2,chim:1,port:6,story:'מעבורת שמסיעה אנשים ומכוניות בין האיים.'},
+ {n:'ספינת מחקר',en:'Research Ship',t:'boat',w:100,c:'#f0c35e',decks:2,chim:1,port:5,crane:1,story:'ספינה של מדענים עם מנוף ומעבדה. חוקרים את הים!'},
+ {n:'ספינת קיטור',en:'Steamship',t:'boat',w:104,c:'#26344a',decks:2,chim:2,port:7,story:'שתי ארובות שמוציאות עשן. טוּט טוּט!'},
+ {n:'אוניית נוסעים',en:'Ocean Liner',t:'boat',w:108,c:'#1b2a3a',decks:3,chim:3,port:9,story:'אונייה מפוארת שחוצה אוקיינוסים.'},
+ {n:'ספינת תענוגות ענקית',en:'Queen of English',t:'boat',w:114,c:'#ffffff',decks:4,chim:2,port:11,pool:1,story:'הספינה הכי גדולה בים: בריכה, מגלשות ומסיבה על הסיפון. את הקפטנית!'}];
+function boatSVG(i,size){
+  const b=FLEET[Math.max(0,Math.min(FLEET.length-1,i))];const W=120,H=84,wl=62,x0=60-b.w/2,x1=60+b.w/2;let g='';
+  const sail=(x,h,c='#fff')=>`<path d="M${x} ${wl-8} V${wl-8-h}" stroke="#5a3a22" stroke-width="2"/><path d="M${x+1} ${wl-10-h+2} L${x+1+h*0.55} ${wl-12} H${x+1}Z" fill="${c}" stroke="#c9d3d8" stroke-width=".6"/>`;
+  if(b.t==='raft'){for(let k=0;k<5;k++)g+=`<rect x="${x0+k*(b.w/5)}" y="${wl-9}" width="${b.w/5-1}" height="10" rx="4" fill="${k%2?'#8a5a2c':b.c}"/>`;g+=`<path d="M${60} ${wl-9} V${wl-38}" stroke="#5a3a22" stroke-width="2"/><path d="M61 ${wl-36} q12 6 0 18z" fill="#f3e6c8"/><path d="M${x0+2} ${wl-6} H${x1-2}" stroke="#d9c19a" stroke-width="1"/>`}
+  else if(b.t==='rubber'){g+=`<rect x="${x0}" y="${wl-12}" width="${b.w}" height="13" rx="7" fill="${b.c}" stroke="#c4801c" stroke-width="1.5"/><rect x="${x0+8}" y="${wl-9}" width="${b.w-16}" height="5" rx="2.5" fill="#ffd27a"/>`}
+  else if(b.t==='kayak'||b.t==='canoe'){g+=`<path d="M${x0} ${wl-6} Q60 ${wl+8} ${x1} ${wl-6} Q60 ${wl-(b.t==='kayak'?2:0)} ${x0} ${wl-6}Z" fill="${b.c}"/><path d="M${x0} ${wl-6} Q60 ${wl+8} ${x1} ${wl-6}" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/>`;
+    g+=b.t==='kayak'?`<path d="M42 ${wl-22} L78 ${wl+2}" stroke="#2b2b2b" stroke-width="2.2"/><ellipse cx="42" cy="${wl-22}" rx="3" ry="6" fill="#ffd36b" transform="rotate(-35 42 ${wl-22})"/><ellipse cx="78" cy="${wl+2}" rx="3" ry="6" fill="#ffd36b" transform="rotate(-35 78 ${wl+2})"/>`:`<rect x="52" y="${wl-12}" width="16" height="7" rx="2" fill="#a0703c"/>`}
+  else if(b.t==='cat'){g+=`<path d="M${x0} ${wl-6} H${x1} L${x1-6} ${wl+1} H${x0+4}Z" fill="${b.c}"/><path d="M${x0} ${wl-14} H${x1} L${x1-6} ${wl-7} H${x0+4}Z" fill="${b.c}" opacity=".8"/><rect x="${x0+6}" y="${wl-17}" width="${b.w-12}" height="3" fill="#e8eef2"/>`}
+  else{const d=b.t==='speed'?9:12;g+=`<path d="M${x0} ${wl-d} H${x1} L${x1-(b.t==='speed'?16:8)} ${wl+2} H${x0+6}Z" fill="${b.c}" stroke="rgba(0,0,0,.2)" stroke-width="1"/><path d="M${x0+2} ${wl-d+3} H${x1-2}" stroke="${b.c==='#ffffff'?'#2f6fb0':'#ffffff'}" stroke-width="2"/>`;
+    if(b.t==='row'){g+=`<path d="M40 ${wl-14} L28 ${wl+4} M80 ${wl-14} L92 ${wl+4}" stroke="#7a4a24" stroke-width="2.4"/>`}
+    if(b.t==='pedal'){g+=`<circle cx="${x1-12}" cy="${wl-10}" r="7" fill="none" stroke="#2f6fb0" stroke-width="2.5"/><path d="M${x0+10} ${wl-12} q6 -14 16 -8" stroke="#2f6fb0" stroke-width="3" fill="none"/>`}
+    if(b.t==='speed'){g+=`<path d="M${x0+14} ${wl-9} L${x0+34} ${wl-20} H${x0+44} L${x0+40} ${wl-9}Z" fill="#9fd3ff" opacity=".9"/><path d="M${x1-6} ${wl-4} l14 -2 M${x1-6} ${wl} l12 2" stroke="#fff" stroke-width="2"/>`}
+    let top=wl-d;const decks=b.decks||0;
+    for(let k=0;k<decks;k++){const ww=b.w-14-k*12;const xx=60-ww/2+4;g+=`<rect x="${xx}" y="${top-9}" width="${ww}" height="9" fill="${k%2?'#e8eef2':'#ffffff'}" stroke="#b9c6cf" stroke-width=".6"/>`;for(let q=0;q<Math.floor(ww/9);q++)g+=`<rect x="${xx+3+q*9}" y="${top-7}" width="5" height="4" rx="1" fill="#2f6fb0"/>`;top-=9}
+    if(b.cabin){const cw=b.cabin===2?30:20;g+=`<rect x="${60-cw/2}" y="${top-12}" width="${cw}" height="12" rx="2" fill="#f4f7f2" stroke="#b9c6cf" stroke-width=".6"/><rect x="${60-cw/2+3}" y="${top-9}" width="${cw-6}" height="4" fill="#2f6fb0"/>`;if(b.cabin===2){g+=`<rect x="${60-10}" y="${top-21}" width="20" height="9" rx="2" fill="#f4f7f2" stroke="#b9c6cf" stroke-width=".6"/>`};top-=b.cabin===2?21:12}
+    for(let k=0;k<(b.chim||0);k++){const cx=60-((b.chim-1)*14)/2+k*14;g+=`<rect x="${cx-4}" y="${top-14}" width="9" height="14" fill="${b.decks>=3?'#e2553b':'#26344a'}"/><rect x="${cx-4}" y="${top-14}" width="9" height="3" fill="#1b1b1b"/><circle cx="${cx+2}" cy="${top-20}" r="4" fill="#cfd6db" opacity=".8"/>`}
+    if(b.port){for(let k=0;k<b.port;k++)g+=`<circle cx="${x0+10+k*((b.w-24)/(b.port-1||1))}" cy="${wl-4}" r="1.6" fill="#ffd36b"/>`}
+    if(b.crane){g+=`<path d="M${x1-18} ${top} V${top-22} L${x1+2} ${top-12}" stroke="#e2a530" stroke-width="2.4" fill="none"/>`}
+    if(b.pool){g+=`<rect x="44" y="${top-4}" width="14" height="4" rx="2" fill="#5fd0ff"/><path d="M66 ${top} q6 -10 12 -8" stroke="#ff7ab0" stroke-width="2.5" fill="none"/>`}
+    if(b.motor){g+=`<rect x="${x0-4}" y="${wl-14}" width="6" height="12" rx="1.5" fill="#26344a"/>`}
+    const ns=b.sails||0;for(let k=0;k<ns;k++){const mx=60-((ns-1)*18)/2+k*18-6;g+=sail(mx,ns===3&&k===1?40:32,b.pirate?'#2b2b2b':'#fff')}
+    if(b.pirate){g+=`<rect x="54" y="${wl-58}" width="12" height="7" fill="#111"/><circle cx="60" cy="${wl-55}" r="1.6" fill="#fff"/>`}}
+  return `<svg viewBox="0 0 ${W} ${H}" width="${size}" height="${Math.round(size*H/W)}" aria-hidden="true"><path d="M0 ${wl+3} q10 -4 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 V${H} H0Z" fill="#1f8fb3" opacity=".55"/>${g}</svg>`;
+}
+function isGreat(i){const st=stationsOf(i).filter(x=>x.scored);if(!st.length)return false;const b=S.progress.best[i.id]||{};if(st.some(x=>b[x.k]==null))return false;return st.reduce((n,x)=>n+b[x.k],0)/st.length>=85}
+const fleetOn=()=>THEME()==='sea'&&!!S.profile;
+function fleetState(){const q=allIslands().filter(isGreat).length;const lv=Math.min(FLEET.length-1,Math.floor(q/5));return {q,lv,next:lv>=FLEET.length-1?0:5-(q%5),inStep:q%5}}
+function fleetCardHTML(){if(!fleetOn())return '';const f=fleetState();const b=FLEET[f.lv];
+  return `<button class="fleetcard" data-act="fleet">${boatSVG(f.lv,72)}<span class="ft"><b>${esc(b.n)} <small class="en">${esc(b.en)}</small></b><span>${f.lv>=FLEET.length-1?'הגעת לספינה הגדולה ביותר! 🏆':`עוד <b>${f.next}</b> ${f.next===1?'אי מצוין':'איים מצוינים'} לשדרוג`}</span><span class="fdots">${[0,1,2,3,4].map(k=>`<i class="${k<f.inStep?'on':''}"></i>`).join('')}</span></span><span class="flv">${f.lv+1}/20</span></button>`}
+function checkFleet(){if(!fleetOn()||isParent()||!S.loaded)return;const p=S.progress;const f=fleetState();
+  if(!p.fleetIntro&&!S.boatModal){S.boatModal={kind:'intro'};return}
+  if((p.boatLevel||0)<f.lv&&!S.boatModal){S.boatModal={kind:'up',lv:f.lv};p.boatLevel=f.lv;saveState('progress');setTimeout(()=>{sfx.horn();setTimeout(()=>sfx.win(),700)},200)}}
+function boatModalHTML(){const m=S.boatModal;if(!m)return '';
+  if(m.kind==='intro')return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="bpop">${boatSVG(0,200)}</div><h3>יוביק והרפסודה הקטנה</h3>
+    <p>ביום סוער אחד נסחפה יוביק אל חוף של אי קטן. כל מה שנשאר לה זה רפסודה: כמה בולי עץ, חבל אחד ומפרש מחולצה ישנה.</p>
+    <p>על הרציף חיכה לה הקפטן הזקן של הנמל, Captain Words. "יש לי הצעה בשבילך," הוא חייך. "על כל <b>5 איים</b> שתסיימי <b>מצוין</b>, כל התחנות ב־85% ומעלה, אתן לך כלי שייט גדול יותר."</p>
+    <p>20 כלי שייט מחכים בנמל, מרפסודה ועד ספינת התענוגות הענקית <b class="en">Queen of English</b>. מוכנה להפליג?</p>
+    <div class="btns"><button class="btn brass" data-act="bmClose">יאללה, מפליגים! ⛵</button><button class="btn ghost" data-act="fleet">לראות את כל הצי</button></div></div></div>`;
+  if(m.kind==='up'){const b=FLEET[m.lv];return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="confetti">🎉✨🎊</div><div class="bpop">${boatSVG(m.lv,220)}</div><h3>שדרוג! כלי שייט חדש: ${esc(b.n)}</h3><p class="en" style="margin:0;color:var(--ink2)">${esc(b.en)} · ${m.lv+1}/20</p><p>Captain Words: "${esc(b.story)}"</p><div class="btns"><button class="btn brass" data-act="bmClose">ממשיכים להפליג!</button></div></div></div>`}
+  if(m.kind==='fleet'){const f=fleetState();return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox fleetbox"><h3>הצי של יוביק · ${f.lv+1}/20</h3><p class="sub" style="margin:0">כל 5 איים מצוינים (כל התחנות, ממוצע 85%+) משדרגים את כלי השייט.</p>
+    <div class="fleetgrid">${FLEET.map((b,k)=>`<div class="fitem ${k<=f.lv?'own':'lock'} ${k===f.lv?'cur':''}">${boatSVG(k,96)}<b>${k<=f.lv||k===f.lv+1?esc(b.n):'?'}</b><small>${k*5} איים</small></div>`).join('')}</div>
+    <div class="btns"><button class="btn brass" data-act="bmClose">סגירה</button></div></div></div>`}
+  return ''}
+
 /* ============ NAVIGATION: back button, exit confirmation ============ */
 function stopAll(){kRun++;clearTimeout(kTimer);hush();const sc=S.screen;try{sc&&sc.stop&&sc.stop()}catch(e){}try{SR&&SR.stop()}catch(e){}try{CO_R&&CO_R.stop()}catch(e){}}
 function inProgress(sc){if(!sc||S.tab!=='map')return false;switch(sc.name){
