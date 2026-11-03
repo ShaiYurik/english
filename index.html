@@ -1961,7 +1961,11 @@ function desertSVG(i,size){const d=DESERT[Math.max(0,Math.min(DESERT.length-1,i)
   const wheels=d.fire===2?`<circle cx="42" cy="66" r="11" fill="#1b1b1b"/><circle cx="80" cy="66" r="11" fill="#1b1b1b"/><circle cx="42" cy="66" r="4" fill="#888"/><circle cx="80" cy="66" r="4" fill="#888"/>`:'';
   const fire=d.fire?`<text x="${d.fire===2?14:20}" y="${d.fire===2?54:60}" font-size="${d.fire===2?20:14}">🔥</text>`:'';
   return `<svg viewBox="0 0 120 84" width="${size}" height="${Math.round(size*84/120)}" aria-hidden="true"><circle cx="98" cy="18" r="9" fill="#ffd36b"/><path d="M0 66 Q30 52 60 64 T120 60 V84 H0Z" fill="#e8b765"/><path d="M0 74 Q40 64 80 74 T120 72 V84 H0Z" fill="#d49a4a"/>${wheels}${fire}<text x="60" y="${d.fire===2?56:64}" text-anchor="middle" font-size="${d.fire===2?40:fs}">${d.e}</text></svg>`}
-const FLEETS=()=>THEME()==='desert'?DESERT:FLEET;
+const SEA_NICK=["קיסם", "בועה", "חץ קטן", "צבר", "חותרת", "דוושה מהירה", "דג זהב", "רוח גבית", "תאומי הגלים", "ברק כחול", "טורנדו", "פנינת הים", "נשר הים", "הנקמה השחורה", "השור החזק", "גשר על המים", "חוקרת המעמקים", "ענן הקיטור", "מלכת האוקיינוס", "Queen of English"];
+const DES_NICK=["דבשתון", "דבשת כפולה", "עקשן", "רוח המדבר", "שיירת הכוכבים", "גולש הדיונות", "גלגל חול", "זמזום", "קופץ דיונות", "צל נודד", "כוח סוס", "חיפושית חול", "הסיירת", "הנווד", "עין הנשר", "נווה נייד", "סופת חול", "מלך הדקאר", "השואג", "המפלצת מהדיונות"];
+const fullName=b=>b.nick&&b.nick!==b.en?`${b.n} "${b.nick}"`:b.n;
+
+const FLEETS=()=>{const ds=THEME()==='desert';const F=ds?DESERT:FLEET;const N=ds?DES_NICK:SEA_NICK;F.forEach((b,k)=>{if(!b.nick)b.nick=N[k]});return F};
 const vehSVG=(i,size)=>THEME()==='desert'?desertSVG(i,size):boatSVG(i,size);
 
 /* ============ FLEET: upgrade the boat every 5 islands finished at 85%+ ============ */
@@ -2014,7 +2018,7 @@ function isGreat(i){const st=stationsOf(i).filter(x=>x.scored);if(!st.length)ret
 const fleetOn=()=>(THEME()==='sea'||THEME()==='desert')&&!!S.profile;
 function fleetState(){const F=FLEETS();const q=allIslands().filter(isGreat).length;const lv=Math.min(F.length-1,Math.floor(q/5));return {q,lv,next:lv>=F.length-1?0:5-(q%5),inStep:q%5}}
 function fleetCardHTML(){if(!fleetOn())return '';const f=fleetState();const F=FLEETS();const b=F[f.lv];
-  return `<button class="fleetcard" data-act="fleet">${vehSVG(f.lv,72)}<span class="ft"><b>${esc(b.n)} <small class="en">${esc(b.en)}</small></b><span>${f.lv>=F.length-1?(THEME()==='desert'?'הגעת לרכב המטורף ביותר! 🏆':'הגעת לספינה הגדולה ביותר! 🏆'):`עוד <b>${f.next}</b> ${f.next===1?(THEME()==='desert'?'נווה מדבר מצוין':'אי מצוין'):(THEME()==='desert'?'נווי מדבר מצוינים':'איים מצוינים')} לשדרוג`}</span><span class="fdots">${[0,1,2,3,4].map(k=>`<i class="${k<f.inStep?'on':''}"></i>`).join('')}</span></span><span class="flv">${f.lv+1}/20</span></button>`}
+  return `<button class="fleetcard" data-act="fleet">${vehSVG(f.lv,72)}<span class="ft"><b>${esc(fullName(b))} <small style="direction:ltr;display:inline-block">${esc(b.en)}</small></b><span>${f.lv>=F.length-1?(THEME()==='desert'?'הגעת לרכב המטורף ביותר! 🏆':'הגעת לספינה הגדולה ביותר! 🏆'):`עוד <b>${f.next}</b> ${f.next===1?(THEME()==='desert'?'נווה מדבר מצוין':'אי מצוין'):(THEME()==='desert'?'נווי מדבר מצוינים':'איים מצוינים')} לשדרוג`}</span><span class="fdots">${[0,1,2,3,4].map(k=>`<i class="${k<f.inStep?'on':''}"></i>`).join('')}</span></span><span class="flv">${f.lv+1}/20</span></button>`}
 function checkFleet(){if(!fleetOn()||isParent()||!S.loaded)return;const p=S.progress;const f=fleetState();
   const fk=THEME()==='desert'?'caravanIntro':'fleetIntro';if(!p[fk]&&!S.boatModal){S.boatModal={kind:'intro'};return}
   if((p.boatLevel||0)<f.lv&&!S.boatModal){S.boatModal={kind:'up',lv:f.lv};p.boatLevel=f.lv;saveState('progress');setTimeout(()=>{sfx.horn();setTimeout(()=>sfx.win(),700)},200)}}
@@ -2029,9 +2033,9 @@ function boatModalHTML(){const m=S.boatModal;if(!m)return '';
     <p>על הרציף חיכה לה הקפטן הזקן של הנמל, Captain Words. "יש לי הצעה בשבילך," הוא חייך. "על כל <b>5 איים</b> שתסיימי <b>מצוין</b>, כל התחנות ב־85% ומעלה, אתן לך כלי שייט גדול יותר."</p>
     <p>20 כלי שייט מחכים בנמל, מרפסודה ועד ספינת התענוגות הענקית <b class="en">Queen of English</b>. מוכנה להפליג?</p>
     <div class="btns"><button class="btn brass" data-act="bmClose">יאללה, מפליגים! ⛵</button><button class="btn ghost" data-act="fleet">לראות את כל הצי</button></div></div></div>`;
-  if(m.kind==='up'){const b=FLEETS()[m.lv];const ds=THEME()==='desert';return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="confetti">🎉✨🎊</div><div class="bpop">${vehSVG(m.lv,220)}</div><h3>שדרוג! ${ds?'כלי רכיבה':'כלי שייט'} חדש: ${esc(b.n)}</h3><p style="margin:0;color:var(--ink2);text-align:center;direction:ltr">${esc(b.en)} · ${m.lv+1}/20</p><p>${ds?"שייח' אל־כלמאת":'Captain Words'}: "${esc(b.story)}"</p><div class="btns"><button class="btn brass" data-act="bmClose">ממשיכים להפליג!</button></div></div></div>`}
+  if(m.kind==='up'){const b=FLEETS()[m.lv];const ds=THEME()==='desert';return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="confetti">🎉✨🎊</div><div class="bpop">${vehSVG(m.lv,220)}</div><h3>שדרוג! ${ds?'כלי רכיבה':'כלי שייט'} חדש: ${esc(fullName(b))}</h3><p style="margin:0;color:var(--ink2);text-align:center;direction:ltr">${esc(b.en)} · ${m.lv+1}/20</p><p>${ds?"שייח' אל־כלמאת":'Captain Words'}: "${esc(b.story)}"</p><div class="btns"><button class="btn brass" data-act="bmClose">ממשיכים להפליג!</button></div></div></div>`}
   if(m.kind==='fleet'){const f=fleetState();const ds=THEME()==='desert';return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox fleetbox"><h3>${ds?'השיירה':'הצי'} של יוביק · ${f.lv+1}/20</h3><p class="sub" style="margin:0">כל 5 ${ds?'נווי מדבר':'איים'} מצוינים (כל התחנות, ממוצע 85%+) משדרגים את ${ds?'כלי הרכיבה':'כלי השייט'}.</p>
-    <div class="fleetgrid">${FLEETS().map((b,k)=>`<div class="fitem ${k<=f.lv?'own':'lock'} ${k===f.lv?'cur':''}">${vehSVG(k,96)}<b>${k<=f.lv||k===f.lv+1?esc(b.n):'?'}</b><small>${k*5} איים</small></div>`).join('')}</div>
+    <div class="fleetgrid">${FLEETS().map((b,k)=>`<div class="fitem ${k<=f.lv?'own':'lock'} ${k===f.lv?'cur':''}">${vehSVG(k,96)}<b>${k<=f.lv||k===f.lv+1?esc(b.n):'?'}</b>${k<=f.lv||k===f.lv+1?`<small>"${esc(b.nick)}"</small>`:''}<small>${k*5} איים</small></div>`).join('')}</div>
     <div class="btns"><button class="btn brass" data-act="bmClose">סגירה</button></div></div></div>`}
   return ''}
 
