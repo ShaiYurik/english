@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;700;800&family=Alegreya:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Noto+Naskh+Arabic:wght@500;700&family=Assistant:wght@400;600;700;800&family=Alegreya:wght@500;700&display=swap">
 <style>
 /* Layout: one-column phone app — a sea chart map of islands as levels, chart-paper cards for exercises, rope-and-brass details. Single committed dark-sea look. */
 :root{
@@ -34,6 +34,26 @@
   --brass:#cfe83a; --brass2:#ecf98f; --signal:#e0663a; --kelp:#2f9e5b; --kelp2:#dcf2e3; --redsoft:#fbe0d4;
   --foam:#e4ecf7; --muted:#9db3d1;
 }
+:root[data-theme="desert"]{
+  --abyss:#3a2414; --sea:#8a5a2b; --sea2:#a86d36; --swell:#c28a4a;
+  --chart:#fbf3e4; --chart2:#f1e2c6; --ink:#3a2414; --ink2:#6e4e2f;
+  --brass:#f2a93b; --brass2:#ffd78a; --signal:#d8572a; --kelp:#2f8a63; --kelp2:#dcefe0; --redsoft:#f8dccd;
+  --foam:#fff3dd; --muted:#e0c49a;
+}
+:root[data-theme="desert"] body{background-image:linear-gradient(180deg,#f0b35a 0%,#a86d36 35%,#3a2414 80%)}
+:root[data-lang="ar"] .en{font-family:"Noto Naskh Arabic","Amiri","Geeza Pro",serif;direction:rtl;unicode-bidi:isolate}
+:root[data-lang="ar"] .read,:root[data-lang="ar"] .opt.en,:root[data-lang="ar"] .qblock .q{direction:rtl;text-align:right}
+:root[data-lang="ar"] .flash .word{font-size:64px}
+.tr{color:var(--ink2);font-size:18px;margin-top:-4px}
+.worldsw .refbtn{background:var(--chart);color:var(--ink);border-color:var(--chart)}
+.refgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.refcell{border:0;background:var(--chart2);border-radius:10px;padding:6px 2px;display:grid;justify-items:center;gap:0;font:inherit;color:var(--ink)}
+.refcell .ar{font-family:"Noto Naskh Arabic",serif;font-size:34px;line-height:1.2}
+.refcell .he{font-weight:800;font-size:18px}.refcell small{color:var(--ink2);font-size:11px}
+.refcell .forms{font-family:"Noto Naskh Arabic",serif;font-size:15px;direction:rtl;color:var(--ink2)}
+.reftabs{display:flex;gap:6px;justify-content:center}.reftabs button{font:inherit;font-weight:800;border-radius:999px;border:1px solid var(--swell);padding:6px 14px;background:transparent;color:var(--ink)}.reftabs button[aria-pressed="true"]{background:var(--brass);border-color:var(--brass)}
+.numrow{display:grid;grid-template-columns:52px 40px 1fr 1fr;align-items:center;gap:8px;border:0;background:var(--chart2);border-radius:10px;padding:6px 10px;font:inherit;color:var(--ink);width:100%;text-align:start}
+.numrow .ar{font-family:"Noto Naskh Arabic",serif;font-size:28px}
 :root[data-theme="tennis"] body{background-image:linear-gradient(180deg,#1d56a8 0%,#0b2147 75%)}
 *{box-sizing:border-box}
 html,body{min-height:100%}
@@ -372,7 +392,7 @@ details summary{cursor:pointer;padding:6px 0}
   <header class="top">
     <div class="brand">
       <img src="icon-192.png" alt="">
-      <div><h1>לומדים בכיף</h1><small class="who"></small><div class="kidsw" id="kidSwitch" hidden></div><small><i class="sync" id="sync"></i><span id="syncTxt">אנגלית לכיתה ז׳</span></small></div>
+      <div><h1>לומדים בכיף</h1><small class="who"></small><div class="kidsw" id="kidSwitch" hidden></div><div class="kidsw worldsw" id="worldSwitch" hidden></div><small><i class="sync" id="sync"></i><span id="syncTxt">אנגלית לכיתה ז׳</span></small></div>
     </div>
     <button class="iconbtn" id="soundBtn" data-act="sound" aria-pressed="true" aria-label="צלילים">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
@@ -404,13 +424,15 @@ readKey();
 addEventListener('hashchange',()=>{if(readKey()){S.badKey=false;loadAll()}});
 
 let CHILD=LS.get('child','');
-const cacheKey=()=>CHILD&&CHILD!=='yuvik'?'cache:'+CHILD:'cache';
-async function apiGet(){const r=await fetch(API+'?key='+encodeURIComponent(KEY)+(CHILD?'&c='+encodeURIComponent(CHILD):''),{cache:'no-store'});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
-async function apiPost(body){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,c:CHILD||undefined,...body})});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
+let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
+const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
+const cacheKey=()=>NS()?'cache:'+NS():'cache';
+async function apiGet(){const r=await fetch(API+'?key='+encodeURIComponent(KEY)+(CHILD?'&c='+encodeURIComponent(CHILD):'')+(WORLD!=='en'?'&w='+encodeURIComponent(WORLD):''),{cache:'no-store'});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
+async function apiPost(body){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,c:CHILD||undefined,w:WORLD!=='en'?WORLD:undefined,...body})});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
 
 /* outbox: latest version of each state doc, sent when online */
 let outbox=LS.get('outbox',{});let flushing=false,flushTimer=null;
-function enqueue(id,body){body={c:CHILD||undefined,...body};id=(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+id;outbox[id]=body;LS.set('outbox',outbox);setSync();clearTimeout(flushTimer);flushTimer=setTimeout(flush,1500)}
+function enqueue(id,body){body={c:CHILD||undefined,w:WORLD!=='en'?WORLD:undefined,...body};id=NS()+id;outbox[id]=body;LS.set('outbox',outbox);setSync();clearTimeout(flushTimer);flushTimer=setTimeout(flush,1500)}
 async function flush(){
   if(flushing||!KEY)return;flushing=true;
   try{
@@ -436,7 +458,7 @@ const IDB={db:null,
 };
 let upBusy=false;const upStatus={};
 function blobToB64(b){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=()=>rej(fr.error);fr.readAsDataURL(b)})}
-async function queueUpload(item){item.meta={c:CHILD||undefined,...(item.meta||{})};try{await IDB.put(item)}catch(e){console.warn(e)}upStatus[item.id]='wait';flushUploads()}
+async function queueUpload(item){item.meta={c:CHILD||undefined,w:WORLD!=='en'?WORLD:undefined,...(item.meta||{})};try{await IDB.put(item)}catch(e){console.warn(e)}upStatus[item.id]='wait';flushUploads()}
 async function flushUploads(){
   if(upBusy||!KEY)return;upBusy=true;
   try{
@@ -548,8 +570,15 @@ function newSession(){return {date:today(),minutes:0,activities:[],missed:[],rea
 function cache(){LS.set(cacheKey(),{schedule:S.scheduleState,progress:S.progress,sessions:[S.session,...S.sessions.filter(s=>s.date!==S.session.date)].slice(0,40),classwords:S.classWords,zoom:S.zoom,lessons:S.lessons,pendingPhotos:S.pendingPhotos,transcripts:S.transcripts||[]})}
 const isParent=()=>S.role==='parent';
 S.profile=LS.get('profile',null);S.children=LS.get('children',null);
-const THEME=()=>S.profile&&S.profile.child==='gil'?'tennis':'sea';
+const LANG=()=>WORLD==='ar'?'ar':'en';
+const TTS_LANG=()=>LANG()==='ar'?'ar-SA':'en-US';
+const SR_LANG=()=>LANG()==='ar'?'ar-SA':'en-US';
+const LETTER_RE=()=>LANG()==='ar'?/[^\u0621-\u064A\u0660-\u0669]/g:/[^A-Za-z0-9'-]/g;
+const plainW=w=>LANG()==='ar'?String(w).replace(/[\u064B-\u0652\u0640]/g,'').replace(/[^\u0621-\u064A]/g,''):String(w).toLowerCase();
+const spellable=w=>LANG()==='ar'?(()=>{const p=plainW(w);return p.length>=2&&p.length<=8&&!/\s/.test(String(w).trim())})():/^[a-z]{3,10}$/i.test(w);
+const THEME=()=>WORLD==='ar'?'desert':S.profile&&S.profile.child==='gil'?'tennis':'sea';
 const WORDS={sea:{day:'המסע היומי',done:'הגעת לנמל היום. ',goal:'הספינה מגיעה לנמל אחרי 30 דקות. ',newT:'אי חדש מחכה לך!',go:'להפליג ⛵',late:'יאללה ⛵',arch:'🏆 איים שכבשת',back:'חזרה למפה',win:'כבשת את האי!',full:'האי הושלם במלואו!',flags:'🏝️⚓🏝️',tab:'מפה',loading:'מכינים את הספינה…',waits:'מחכה לך',isl:'האי'},
+  desert:{day:'המסע במדבר',done:'הגעת לנווה המדבר היום! ',goal:'השיירה מגיעה לנווה המדבר אחרי 30 דקות. ',newT:'נווה מדבר חדש מחכה לך!',go:'לרכוב 🐪',late:'יאללה 🐪',arch:'🏆 נווי מדבר שכבשת',back:'חזרה למדבר',win:'כבשת את נווה המדבר!',full:'נווה המדבר הושלם במלואו!',flags:'🌴🐪🌴',tab:'מדבר',loading:'מעמיסים את הגמלים…',waits:'מחכה לך',isl:'נווה המדבר'},
   tennis:{day:'האימון היומי',done:'סיימת את האימון היום! ',goal:'האימון היומי נגמר אחרי 30 דקות. ',newT:'מגרש חדש מחכה לך!',go:'לעלות למגרש 🎾',late:'יאללה 🎾',arch:'🏆 משחקים שניצחת',back:'חזרה למגרשים',win:'ניצחת במשחק!',full:'ניצחון מושלם! Game, set, match!',flags:'🎾🏆🎾',tab:'מגרשים',loading:'מכינים את המגרש…',waits:'מחכה לך',isl:'המגרש'}};
 const TW=k=>WORDS[THEME()][k];
 const feat=k=>!S.profile||!S.profile.features||S.profile.features[k]!==false;
@@ -558,7 +587,7 @@ function applyProfile(){
   const n=kidName();const short=isParent()?'Boss':(S.profile&&S.profile.child==='gil')?'GilGul':'Yuvik';
   document.title='לומדים בכיף · '+(isParent()?'Boss':n);const h=document.querySelector('.brand h1');if(h)h.textContent='לומדים בכיף';
   const sub=document.querySelector('.brand .who');if(sub)sub.textContent=isParent()?'Boss · '+n:n;
-  document.documentElement.dataset.theme=THEME();
+  document.documentElement.dataset.theme=THEME();document.documentElement.dataset.lang=LANG();
   const tn=THEME()==='tennis';const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=tn?'#0b2147':'#0a1a29';
   const at=document.querySelector('meta[name="apple-mobile-web-app-title"]');if(at)at.content=short;
   const want=isParent()?'manifest-boss.webmanifest':tn?'manifest-gil.webmanifest':'manifest.webmanifest';
@@ -568,7 +597,8 @@ function applyProfile(){
   const mt2=document.querySelector('.tab[data-tab="map"] .lbl');if(mt2)mt2.textContent=TW('tab');
 }
 function resetChildState(){Object.assign(S,{progress:{unlocked:1,best:{},xp:0},session:newSession(),sessions:[],classWords:[],zoom:[],lessons:[],pendingPhotos:0,scheduleState:null,transcripts:[],screen:{name:'map'},calDay:null,editLesson:null,shots:[]});_trk=null}
-function switchChild(id){if(!isParent()||id===CHILD)return;CHILD=id;LS.set('child',id);const ch=(S.children||[]).find(c=>c.id===id);if(ch){S.profile={...(S.profile||{}),child:id,name:ch.name,grade:ch.grade}}resetChildState();applyProfile();S.loaded=false;render();loadAll()}
+function switchWorld(w){if(w===WORLD)return;WORLD=w;LS.set('world:'+(CHILD||'yuvik'),w);if(S.profile)S.profile={...S.profile,world:w};resetChildState();applyProfile();S.loaded=false;render();loadAll()}
+function switchChild(id){if(!isParent()||id===CHILD)return;CHILD=id;LS.set('child',id);WORLD=LS.get('world:'+id,'en');const ch=(S.children||[]).find(c=>c.id===id);if(ch){S.profile={...(S.profile||{}),child:id,name:ch.name,grade:ch.grade}}resetChildState();applyProfile();S.loaded=false;render();loadAll()}
 function setRole(r){
   r=r==='parent'?'parent':'child';
   if(r===S.role)return;
@@ -580,7 +610,7 @@ function saveState(name){if(isParent()&&name==='progress')return;const data={pro
 
 function applyState(st,fromServer){
   if(!st)return;
-  const pend=k=>fromServer&&outbox[(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+'state:'+k];
+  const pend=k=>fromServer&&outbox[NS()+'state:'+k];
   if(st.progress&&!pend('progress')){
     const p={unlocked:1,best:{},xp:0,...st.progress};
     if(fromServer&&S.progress){p.unlocked=Math.max(p.unlocked,S.progress.unlocked||1);p.xp=Math.max(p.xp||0,S.progress.xp||0);
@@ -613,7 +643,8 @@ async function loadAll(){
   if(!KEY)return;
   try{const j=await apiGet();S.online=true;setRole(j.role);
     if(j.profile){const was=CHILD;S.profile=j.profile;S.children=j.children||null;LS.set('profile',j.profile);if(j.children)LS.set('children',j.children);
-      if(!CHILD||j.role!=='parent'){CHILD=j.profile.child;LS.set('child',CHILD)}
+      if(!CHILD||j.role!=='parent'){const ch=CHILD!==j.profile.child;CHILD=j.profile.child;LS.set('child',CHILD);if(ch)WORLD=LS.get('world:'+CHILD,'en')}
+      if(j.profile.world&&j.profile.world!==WORLD){WORLD=j.profile.world}
       if(was&&was!==CHILD)resetChildState();applyProfile()}
     applyState(j.state,true);cache();render()}
   catch(e){console.warn(e);S.online=false;if(/bad key/.test(e.message))S.badKey=true;render()}
@@ -626,6 +657,7 @@ function setSync(){
   if(S.online===false&&!navigator.onLine){d.className='sync off';t.textContent='אין אינטרנט, שומר בטלפון';return}
   if(pend||upBusy){d.className='sync wait';t.textContent='שומר בדרייב…';return}
   d.className='sync ok';t.textContent=isParent()?'הכל שמור · מצב הורה':'הכל שמור';
+  const ws=$('#worldSwitch');if(ws){const wl=S.profile&&S.profile.worlds&&S.profile.worlds.length>1?S.profile.worlds:null;ws.hidden=!wl;if(wl)ws.innerHTML=wl.map(x=>`<button data-act="world" data-id="${esc(x.id)}" aria-pressed="${x.id===WORLD}">${x.id==='ar'?'🏜️':'🌊'} ${esc(x.label)}</button>`).join('')+(LANG()==='ar'?'<button data-act="ref" class="refbtn">🔤 א־ב</button>':'')}
   const sw=$('#kidSwitch');if(sw){const kids=isParent()&&S.children&&S.children.length>1?S.children:null;sw.hidden=!kids;if(kids)sw.innerHTML=kids.map(c=>`<button data-act="kid" data-id="${esc(c.id)}" aria-pressed="${c.id===CHILD}">${esc(c.name)}</button>`).join('')}
 }
 
@@ -661,24 +693,25 @@ const sfx={
 
 /* ============ SPEECH ============ */
 let enVoice=null;
-function pickVoice(){if(!('speechSynthesis' in window))return;const v=speechSynthesis.getVoices();enVoice=v.find(x=>/en[-_]US/i.test(x.lang)&&/samantha|google|female/i.test(x.name))||v.find(x=>/en[-_]US/i.test(x.lang))||v.find(x=>/^en/i.test(x.lang))||null}
+let arVoice=null;
+function pickVoice(){if(!('speechSynthesis' in window))return;const v=speechSynthesis.getVoices();arVoice=v.find(x=>/^ar/i.test(x.lang)&&/google/i.test(x.name))||v.find(x=>/^ar/i.test(x.lang))||null;enVoice=v.find(x=>/en[-_]US/i.test(x.lang)&&/samantha|google|female/i.test(x.name))||v.find(x=>/en[-_]US/i.test(x.lang))||v.find(x=>/^en/i.test(x.lang))||null}
 if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
 function say(text,rate=.85){
   if(!('speechSynthesis' in window)){toast('הטלפון לא תומך בהקראה');return}
-  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=rate;if(enVoice)u.voice=enVoice;speechSynthesis.speak(u);
+  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=TTS_LANG();u.rate=rate;{const vv=LANG()==='ar'?arVoice:enVoice;if(vv)u.voice=vv}speechSynthesis.speak(u);
 }
 let paceRun=0;
 const hush=()=>{paceRun++;try{speechSynthesis.cancel()}catch(e){}};
 const SPEEDS={n:{label:'רגיל',rate:.85},s:{label:'לאט',rate:.6},x:{label:'סופר איטי',rate:.5,wbw:true,gap:550}};
 const SPEED_ORDER=['n','s','x'];
-function utter(t,rate){const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=rate;if(enVoice)u.voice=enVoice;return u}
+function utter(t,rate){const u=new SpeechSynthesisUtterance(t);u.lang=TTS_LANG();u.rate=rate;{const vv=LANG()==='ar'?arVoice:enVoice;if(vv)u.voice=vv}return u}
 function sayPaced(text,onWord,onEnd,sp){
   if(!('speechSynthesis' in window)){toast('הטלפון לא תומך בהקראה');return}
   const cfg=SPEEDS[sp||S.speed]||SPEEDS.n;hush();const run=++paceRun;
   const words=String(text).split(' ');
   if(!cfg.wbw||words.length===1){const u=utter(text,cfg.wbw?.35:cfg.rate);u.onend=()=>{if(run===paceRun)onEnd&&onEnd()};speechSynthesis.speak(u);return}
   let k=0;const next=()=>{if(run!==paceRun)return;if(k>=words.length){onWord&&onWord(-1);onEnd&&onEnd();return}
-    onWord&&onWord(k);const w=words[k].replace(/[^A-Za-z0-9'-]/g,'')||words[k];const u=utter(w,cfg.rate);
+    onWord&&onWord(k);const w=words[k].replace(LETTER_RE(),'')||words[k];const u=utter(w,cfg.rate);
     let done=false;const fin=()=>{if(done)return;done=true;k++;setTimeout(next,cfg.gap)};u.onend=fin;u.onerror=fin;speechSynthesis.speak(u)};
   next();
 }
@@ -722,6 +755,7 @@ function bookIslands(){
   return out.sort((a,b)=>(a.order||0)-(b.order||0)).map(i=>({...i,kind:'book',words:(i.words||[]).filter(w=>w&&w.en&&w.he),games:i.games||[],story:null,mistakes:[]}));
 }
 function allIslands(){
+  if(LANG()==='ar'){const list=[...arFixedIslands()];(S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'נווה מדבר חדש',en:l.en||'',topic:l.topic||'מחומר שצילמת',words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],created:l.created||''})});return list}
   const book=bookIslands();
   const legacy=!S.profile||S.profile.child==='yuvik';
   const list=book.length?book:legacy?ISLANDS.map(i=>({...i,kind:'base'})):[];
@@ -732,12 +766,15 @@ function allIslands(){
 function islandById(id){return allIslands().find(i=>i.id===id)}
 /* ---- three tracks: class / zoom / unseen. one active island each ---- */
 const TRACKS=[{k:'class',t:'מהכיתה',ic:'🏫',flag:'#2fbf8f',none:'כל האיים נכבשו!',empty:'יופיע כשיעלה חומר מהכיתה'},{k:'zoom',t:'שיעור זום',ic:'💻',flag:'#7fb7ff',none:'האי יופיע אחרי שיעור הזום',empty:'האי יופיע אחרי שיעור הזום'},{k:'unseen',t:'אנסין',ic:'📖',flag:'#e2553b',none:'סיימת את כל האנסינים!',empty:'עוד אין אנסינים'}];
-function trackOf(i){if(i.kind==='lesson'&&i.source==='זום')return 'zoom';if(i.kind==='book'&&i.text)return 'unseen';return 'class'}
+function trackOf(i){if(i.kind==='fixed')return i.track;if(i.kind==='lesson'&&i.source==='זום')return 'zoom';if(i.kind==='book'&&i.text)return 'unseen';return 'class'}
 function isDone(i){const st=stationsOf(i);if(st.some(s=>s.scored))return islandRatio(i)>=.5;const b=S.progress.best[i.id]||{};return !!(b.learn||b.story||b.read)}
 let _trk=null;
 function tracks(){
   if(_trk)return _trk;
   const all=allIslands();const book=all.filter(i=>i.kind==='book');
+  if(LANG()==='ar'){const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));const F=arFixedIslands();
+    const T=[{k:'letters',t:'אותיות',ic:'🔤',flag:'#f2a93b',fixed:1,list:[F[0]]},{k:'numbers',t:'מספרים',ic:'🔢',flag:'#2f8a63',fixed:1,list:[F[1]]},{k:'class',t:'מהכיתה',ic:'🏫',flag:'#d8572a',none:'כל נווי המדבר נכבשו!',empty:'יופיע כשיעלה צילום מהכיתה',list:all.filter(i=>i.kind==='lesson').sort(byC)}];
+    _trk=T.map(t=>{const list=t.list;const active=t.fixed?list[0]:list.find(i=>!isDone(i))||null;const done=t.fixed?[]:list.filter(isDone);const started=t.fixed?[]:list.filter(i=>i!==active&&!isDone(i)&&S.progress.best[i.id]);const queue=t.fixed?[]:list.filter(i=>i!==active&&!isDone(i)&&!S.progress.best[i.id]);return {...t,active,done,started,queue,none:list.length?t.none:t.empty}});return _trk}
   if(!book.length&&(!S.profile||S.profile.child==='yuvik')){_trk=null;return null}
   const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));
   const lists={
@@ -776,7 +813,7 @@ function stationsOf(i){
   if(i.text)st.push({k:'story',ic:I.book,t:'קוראים יחד',d:i.text.title+' · הקראה עם מילים מודגשות',m:b.story?'נקרא':''});
   if(i.text)st.push({k:'readtext',ic:I.mic2,t:'קוראת עם המורה 🧑‍🏫',d:readSR()?'את קוראת, המורה מסמן ועוזר לתקן':'עובד בטלפון עם כרום (אנדרואיד)',m:pct('readtext'),scored:readSR()?1:0});
   if(w.length)st.push({k:'learn',ic:I.cards,t:'כרטיסיות מילים',d:`${w.length} מילים עם הקראה`,m:b.learn?'נלמד':''});
-  if(w.filter(x=>/^[a-z]{3,10}$/i.test(x.en)).length>=3)st.push({k:'spell',ic:I.spell,t:'בונים מילה',d:'שומעים ובונים את המילה מאותיות',m:pct('spell'),scored:1});
+  if(w.filter(x=>spellable(x.en)).length>=3)st.push({k:'spell',ic:I.spell,t:'בונים מילה',d:'שומעים ובונים את המילה מאותיות',m:pct('spell'),scored:1});
   if(w.length>=4)st.push({k:'quiz',ic:I.quiz,t:'משחק מילים',d:'תרגום והאזנה',m:pct('quiz'),scored:1});
   (i.games||[]).forEach((g,n)=>st.push({k:'g'+n,ic:GAME_IC[g.kind]||I.quiz,t:g.title||'תרגיל',d:GAME_DESC[g.kind]||'',m:pct('g'+n),scored:1}));
 
@@ -820,6 +857,7 @@ function render(){
     v.innerHTML=(map[sc.name]||viewMap)();
   }
   if(S.confirm&&S.tab==='map')v.insertAdjacentHTML('beforeend',confirmHTML());
+  if(S.ref&&LANG()==='ar')v.insertAdjacentHTML('beforeend',refHTML());
   if(S.tab==='map'&&!S.confirm&&(S.screen.name==='map'||S.screen.name==='result')){checkFleet();if(S.boatModal)v.insertAdjacentHTML('beforeend',boatModalHTML())}
   updateMeter();refreshRecUI();setSync();armBack();
   if(S.tab==='map'&&S.screen.name==='map'){const c=document.querySelector('.isl.cur');if(c&&!S._scrolledMap){S._scrolledMap=true;c.scrollIntoView({block:'center'})}}else S._scrolledMap=false;
@@ -838,17 +876,18 @@ function meterHTML(){
   return `<section class="voyage" aria-label="${TW('day')}">
     <div class="row"><span class="lbl">${TW('day')}</span><span class="num" id="mNum"></span></div>
     <div class="track"><div class="line"></div><div class="done" id="mDone"></div>
-      ${tn?'<span class="port" aria-hidden="true" style="font-size:16px;line-height:18px">🏆</span>':'<svg class="port" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v11M4 9a5 5 0 0 0 10 0M6 5h6" stroke="#d6a64a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'}
-      <div class="ship" id="mShip">${!tn&&fleetOn()?boatSVG(fleetState().lv,34):tn?'<svg viewBox="0 0 30 30" width="30" height="30"><circle cx="15" cy="15" r="12" fill="#d7f23c" stroke="#9fb61f" stroke-width="1.5"/><path d="M5 9 C11 12 11 18 5 21 M25 9 C19 12 19 18 25 21" stroke="#fff" stroke-width="2" fill="none"/></svg>':I.ship}</div></div>
+      ${tn||THEME()==='desert'?`<span class="port" aria-hidden="true" style="font-size:16px;line-height:18px">${tn?'🏆':'🌴'}</span>`:'<svg class="port" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v11M4 9a5 5 0 0 0 10 0M6 5h6" stroke="#d6a64a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'}
+      <div class="ship" id="mShip">${!tn&&fleetOn()?vehSVG(fleetState().lv,34):tn?'<svg viewBox="0 0 30 30" width="30" height="30"><circle cx="15" cy="15" r="12" fill="#d7f23c" stroke="#9fb61f" stroke-width="1.5"/><path d="M5 9 C11 12 11 18 5 21 M25 9 C19 12 19 18 25 21" stroke="#fff" stroke-width="2" fill="none"/></svg>':I.ship}</div></div>
     <div class="streak" id="mStreak"></div>
     ${examHTML()}
   </section>`;
 }
 function examHTML(){
-  const ne=nextExams().find(e=>/אנגלית|english/i.test(e.subject));if(!ne&&S.profile&&S.profile.child!=='yuvik')return '';const ds=ne?ne.date:EXAM_DATE;
+  const ne=nextExams().find(e=>LANG()==='ar'?/ערבית|arabic/i.test(e.subject):/אנגלית|english/i.test(e.subject));if(!ne&&LANG()==='ar')return '';if(!ne&&S.profile&&S.profile.child!=='yuvik')return '';const ds=ne?ne.date:EXAM_DATE;
   const [y,m,d]=ds.split('-').map(Number);const ex=new Date(y,m-1,d);const t=new Date();t.setHours(0,0,0,0);
   const days=Math.round((ex-t)/864e5);if(days<0)return '';
-  return `<div class="exam">🧭 ${days===0?'<b>היום</b> מבחן באנגלית. בהצלחה!':`מבחן באנגלית בעוד <b>${days}</b> ימים (${d}.${m})`}</div>`;
+  const subj=LANG()==='ar'?'ערבית':'אנגלית';
+  return `<div class="exam">${THEME()==='desert'?'🧭':'🧭'} ${days===0?`<b>היום</b> מבחן ב${subj}. בהצלחה!`:`מבחן ב${subj} בעוד <b>${days}</b> ימים (${d}.${m})`}</div>`;
 }
 function streakDays(){
   const set=new Set(S.sessions.filter(s=>(s.minutes||0)>=10).map(s=>s.date));
@@ -872,23 +911,23 @@ function viewMap(){
   updateAlerts();
   const W=360,H=T.length===2?330:470;const pos=T.length===2?[{x:240,y:240},{x:120,y:95}]:[{x:248,y:385},{x:110,y:235},{x:250,y:95}];
   const depths=Array.from({length:7},(_,k)=>[[40,320,180,30,330,200][k%6],k*70+40,String(5+(k*7)%27)]).map(([x,y,t])=>`<text x="${x}" y="${y}" font-size="10" fill="#5f84a0" font-family="Assistant" font-style="italic">${t}</text>`).join('');
-  const tn=THEME()==='tennis';
+  const tn=THEME()==='tennis',ds=THEME()==='desert';
   const nodes=T.map((t,k)=>{const {x,y}=pos[k];const i=t.active;
-    if(!i)return `<g transform="translate(${x},${y})" opacity=".75"><text x="0" y="-44" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="#c9d6de">${t.ic} ${t.t}</text>
-      <ellipse cx="0" cy="4" rx="40" ry="20" fill="none" stroke="#2a6a92" stroke-dasharray="3 4"/><text x="0" y="9" text-anchor="middle" font-size="22">${tn?'🎾':'🌊'}</text>
-      <text x="0" y="44" text-anchor="middle" font-family="Assistant" font-size="12" fill="#86a2b6">${esc(t.none)}</text></g>`;
+    if(!i)return `<g transform="translate(${x},${y})" opacity=".75"><text x="0" y="-44" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="${ds?'#6e4e2f':'#c9d6de'}">${t.ic} ${t.t}</text>
+      <ellipse cx="0" cy="4" rx="40" ry="20" fill="none" stroke="#2a6a92" stroke-dasharray="3 4"/><text x="0" y="9" text-anchor="middle" font-size="22">${ds?'🏜️':tn?'🎾':'🌊'}</text>
+      <text x="0" y="44" text-anchor="middle" font-family="Assistant" font-size="12" fill="${ds?'#6e4e2f':'#86a2b6'}">${esc(t.none)}</text></g>`;
     const st=islandStars(i.id);const fresh=isNewIsland(i);const w=waitInfo(i);const late=!fresh&&w.days>=2;
     return `<g class="isl" tabindex="0" role="button" aria-label="${esc(t.t+': '+i.name)}" data-act="island" data-id="${esc(i.id)}" transform="translate(${x},${y})">
       <g transform="translate(0,-58)"><rect x="-62" y="-14" width="124" height="26" rx="13" fill="#0b1c2b" stroke="${t.flag}" stroke-width="1.5"/><text x="0" y="4" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="${t.flag}">${t.ic} ${t.t}</text></g>
       ${fresh?`<ellipse class="glow" cx="0" cy="4" rx="54" ry="32" fill="rgba(240,195,94,.18)" stroke="#f0c35e" stroke-width="2.5"/>`:''}
       <ellipse class="ring" cx="0" cy="4" rx="48" ry="27" fill="none" stroke="#2a6a92" stroke-width="1" stroke-dasharray="3 4"/>
-      ${tn?`<ellipse cx="0" cy="22" rx="26" ry="6" fill="rgba(0,0,0,.25)"/><circle cx="0" cy="0" r="26" fill="#d7f23c" stroke="#a3bb1c" stroke-width="2"/><path d="M-22 -13 C-8 -6 -8 6 -22 13 M22 -13 C8 -6 8 6 22 13" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+      ${ds?`<ellipse cx="0" cy="12" rx="40" ry="14" fill="#e8c27a"/><ellipse cx="2" cy="10" rx="24" ry="8" fill="#38a3c9"/><ellipse cx="-4" cy="8" rx="10" ry="3" fill="#8fd6ec"/><text x="-26" y="6" font-size="30">🌴</text><text x="12" y="0" font-size="24">🌴</text>`:tn?`<ellipse cx="0" cy="22" rx="26" ry="6" fill="rgba(0,0,0,.25)"/><circle cx="0" cy="0" r="26" fill="#d7f23c" stroke="#a3bb1c" stroke-width="2"/><path d="M-22 -13 C-8 -6 -8 6 -22 13 M22 -13 C8 -6 8 6 22 13" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
       :`<path d="M-38 6 C-34 -16 -9 -22 7 -18 C29 -13 42 -2 36 11 C27 24 -25 26 -38 6Z" fill="${i.kind==='lesson'?'#f2dfae':'#e8d6a4'}"/>
       <path d="M-25 2 C-20 -13 -2 -16 9 -11 C22 -7 25 4 16 9 C2 15 -20 13 -25 2Z" fill="${i.kind==='lesson'?'#2f9f8a':'#3f8f6b'}"/>
       <path d="M7 -11 v-24" stroke="#0f2233" stroke-width="1.6"/><path d="M7 -35 l15 5 -15 5z" fill="${t.flag}"/>`}
       ${fresh?`<text class="spark" x="40" y="-14" font-size="16">✨</text><text class="spark b" x="-54" y="-2" font-size="13">✨</text><text class="spark c" x="24" y="28" font-size="12">✨</text><g transform="translate(-34,-24)"><rect x="-18" y="-10" width="36" height="18" rx="9" fill="#e2553b"/><text x="0" y="3" text-anchor="middle" font-size="11" font-family="Assistant" font-weight="800" fill="#fff">חדש</text></g>`:''}
       ${late?`<text x="-46" y="-16" font-size="18">⏰</text>`:''}
-      <text x="0" y="46" text-anchor="middle" font-family="Secular One, Assistant" font-size="15" fill="#eef2ea">${esc(i.name)}</text>
+      <text x="0" y="46" text-anchor="middle" font-family="Secular One, Assistant" font-size="15" fill="${ds?'#3a2414':'#eef2ea'}">${esc(i.name)}</text>
       <g transform="translate(-27,54)">${[0,1,2].map(n=>`<path transform="translate(${n*18},0) scale(.62)" d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" fill="${n<st?'#d6a64a':'#2a5878'}"/>`).join('')}</g>
       ${t.queue.length?`<text x="0" y="84" text-anchor="middle" font-family="Assistant" font-size="11" fill="#86a2b6">עוד ${t.queue.length} בתור</text>`:''}
     </g>`}).join('');
@@ -896,12 +935,19 @@ function viewMap(){
   const lateT=T.filter(t=>t.active&&!isNewIsland(t.active)&&waitInfo(t.active).days>=2).sort((a,b)=>waitInfo(b.active).days-waitInfo(a.active).days)[0];
   const banner=nw?`<button class="newbanner" data-act="island" data-id="${esc(nw.id)}"><span class="gift">🎁</span><span>${TW('newT')}<small>${trackLabel(nw)} · ${esc(nw.name)}</small></span><span class="go">${TW('go')}</span></button>`
     :lateT?`<button class="newbanner late" data-act="island" data-id="${esc(lateT.active.id)}"><span class="gift">⏰</span><span>${TW('isl')} "${esc(lateT.active.name)}" מחכה לך כבר ${waitInfo(lateT.active).days} ימים<small>${lateT.ic} ${lateT.t} · כמה דקות וממשיכים</small></span><span class="go">${TW('late')}</span></button>`:'';
-  const arch=T.flatMap(t=>[...t.started,...t.done].map(i=>({i,t}))).filter(x=>x.i.id!==(x.t.active||{}).id);
+  const arch=T.filter(t=>!t.fixed).flatMap(t=>[...t.started,...t.done].map(i=>({i,t}))).filter(x=>x.i.id!==(x.t.active||{}).id);
   const archive=arch.length?`<details class="shelf" ${LS.get('shelfOpen',false)?'open':''}><summary data-act="shelfTog">${TW('arch')} <small>${arch.filter(x=>isDone(x.i)).length} נכבשו · אפשר לחזור ולתרגל</small></summary><div class="shelfl">${arch.map(({i,t})=>`<button class="shelfi" data-act="island" data-id="${esc(i.id)}"><span>${t.ic}</span><span class="en" style="font-family:inherit">${esc(i.name)}</span><b>${isDone(i)?'⭐'.repeat(Math.max(1,islandStars(i.id))):'בתהליך'}</b></button>`).join('')}</div></details>`:'';
-  return meterHTML()+fleetCardHTML()+banner+`<section class="map" aria-label="מפת האיים">
+  const refb=LANG()==='ar'?`<button class="btn small" data-act="ref" style="justify-self:start">🔤 טבלת אותיות ומספרים</button>`:'';
+  return meterHTML()+fleetCardHTML()+refb+banner+`<section class="map" aria-label="מפת האיים">
     <svg viewBox="0 0 ${W} ${H}" role="group">
       <defs><pattern id="wv" width="40" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="#174260" stroke-width="1.2"/></pattern></defs>
-      ${tn?`<rect width="${W}" height="${H}" fill="#2f8f5b"/><rect x="24" y="18" width="${W-48}" height="${H-36}" fill="#2766c0" stroke="#fff" stroke-width="3"/>
+      ${ds?`<defs><linearGradient id="sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7d79a"/><stop offset="1" stop-color="#d9a35a"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#sand)"/>
+      <circle cx="${W-50}" cy="44" r="22" fill="#ffd36b"/><circle cx="${W-50}" cy="44" r="30" fill="none" stroke="#ffe7a8" stroke-width="3" stroke-dasharray="3 7"/>
+      <path d="M0 ${H*0.35} Q80 ${H*0.27} 160 ${H*0.36} T360 ${H*0.33}" fill="none" stroke="#c98d45" stroke-width="2" opacity=".6"/>
+      <path d="M0 ${H*0.62} Q90 ${H*0.54} 190 ${H*0.64} T360 ${H*0.6}" fill="none" stroke="#c98d45" stroke-width="2" opacity=".6"/>
+      <path d="M0 ${H} V${H*0.86} Q100 ${H*0.78} 200 ${H*0.88} T360 ${H*0.84} V${H}Z" fill="#c98d45" opacity=".45"/>
+      <text x="26" y="${H-24}" font-size="22">🌵</text><text x="${W-40}" y="${H*0.55}" font-size="18">🦂</text>
+      <polyline points="${pos.slice(0,T.length).map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#8a5a2b" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round" opacity=".8"/>`:tn?`<rect width="${W}" height="${H}" fill="#2f8f5b"/><rect x="24" y="18" width="${W-48}" height="${H-36}" fill="#2766c0" stroke="#fff" stroke-width="3"/>
       <g stroke="#fff" stroke-width="2.2" fill="none" opacity=".9"><line x1="58" y1="18" x2="58" y2="${H-18}"/><line x1="${W-58}" y1="18" x2="${W-58}" y2="${H-18}"/>
       <line x1="58" y1="${H*0.28}" x2="${W-58}" y2="${H*0.28}"/><line x1="58" y1="${H*0.72}" x2="${W-58}" y2="${H*0.72}"/><line x1="${W/2}" y1="${H*0.28}" x2="${W/2}" y2="${H*0.72}"/></g>
       <line x1="16" y1="${H/2}" x2="${W-16}" y2="${H/2}" stroke="#f6f8f1" stroke-width="4"/><line x1="16" y1="${H/2+4}" x2="${W-16}" y2="${H/2+4}" stroke="rgba(0,0,0,.25)" stroke-width="2" stroke-dasharray="3 3"/>
@@ -910,7 +956,7 @@ function viewMap(){
       <g stroke="#1d4a6a" stroke-width=".6">${[60,120,180,240,300].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="${H}"/>`).join('')}${[100,200,300,400].map(y=>`<line x1="0" y1="${y}" x2="${W}" y2="${y}"/>`).join('')}</g>
       ${depths}
       <polyline points="${pos.slice(0,T.length).map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#d6a64a" stroke-width="2" stroke-dasharray="6 6" opacity=".5"/>`}
-      ${tn?'':`<g transform="translate(40,${H-40})" opacity=".85"><circle r="22" fill="none" stroke="#5f84a0"/><path d="M0 -20 L4 0 L0 20 L-4 0Z" fill="#d6a64a"/><path d="M-20 0 L0 -4 L20 0 L0 4Z" fill="#5f84a0"/><text y="-26" text-anchor="middle" font-size="10" fill="#d6a64a" font-family="Assistant" font-weight="700">N</text></g>`}
+      ${tn||ds?'':`<g transform="translate(40,${H-40})" opacity=".85"><circle r="22" fill="none" stroke="#5f84a0"/><path d="M0 -20 L4 0 L0 20 L-4 0Z" fill="#d6a64a"/><path d="M-20 0 L0 -4 L20 0 L0 4Z" fill="#5f84a0"/><text y="-26" text-anchor="middle" font-size="10" fill="#d6a64a" font-family="Assistant" font-weight="700">N</text></g>`}
       ${nodes}
     </svg></section>
     ${archive}
@@ -978,7 +1024,7 @@ function viewLearn(){
   <section class="card">
     <div class="dots">${i.words.map((_,k)=>`<i class="${k<=sc.idx?'on':''}"></i>`).join('')}</div>
     <div class="flash">
-      <div class="word en">${esc(w.en)}</div>
+      <div class="word en">${esc(w.en)}</div>${w.tr?`<div class="tr">${esc(w.tr)}</div>`:''}
       <button class="speak" data-act="say" data-text="${esc(w.en)}" aria-label="השמע">${I.speaker}</button>
       <div class="he">${esc(w.he)}</div>
       ${w.ex?`<div class="ex">${esc(w.ex)}</div><button class="btn ghost small" data-act="say" data-text="${esc(w.ex)}">${I.speaker} השמע משפט</button>`:''}
@@ -1004,7 +1050,7 @@ function buildVocabQuiz(i,n=10){
     const types=['en2he','he2en','listen'];if(canGap)types.push('gap','gap');
     const t=types[(k+Math.floor(Math.random()*types.length))%types.length];
     if(t==='en2he') return {t,word:w.en,prompt:`מה הפירוש של <span class="en">${esc(w.en)}</span>?`,say:w.en,opts:shuffle([w,...distract]).map(x=>x.he),ans:w.he,en:false};
-    if(t==='he2en') return {t,word:w.en,prompt:`איך אומרים באנגלית: <b>${esc(w.he)}</b>?`,opts:shuffle([w,...distract]).map(x=>x.en),ans:w.en,en:true};
+    if(t==='he2en') return {t,word:w.en,prompt:`איך אומרים ב${LANG()==='ar'?'ערבית':'אנגלית'}: <b>${esc(w.he)}</b>?`,opts:shuffle([w,...distract]).map(x=>x.en),ans:w.en,en:true};
     if(t==='listen') return {t,word:w.en,prompt:'הקשב ובחר את המילה ששמעת',say:w.en,autoSay:true,opts:shuffle([w,...distract]).map(x=>x.en),ans:w.en,en:true};
     return {t:'gap',word:w.en,prompt:'השלם את המשפט',gap:esc(w.ex).replace(new RegExp('\\b'+reEsc(esc(form))+'\\b','i'),'<u></u>'),say:w.ex,opts:shuffle([w,...distract]).map(x=>x.form||x.en),ans:form,en:true};
   });
@@ -1031,7 +1077,7 @@ function viewQuiz(){
   </section>`;
 }
 
-function wordsHTML(text){return text.split(' ').map(w=>`<span class="w" data-act="sayw" data-text="${esc(w.replace(/[^A-Za-z']/g,''))}">${esc(w)}</span>`).join(' ')}
+function wordsHTML(text){return text.split(' ').map(w=>`<span class="w" data-act="sayw" data-text="${esc(w.replace(LETTER_RE(),''))}">${esc(w)}</span>`).join(' ')}
 function viewRead(){
   const sc=S.screen;const i=islandById(sc.id);const s=sc.items[sc.idx];
   return `<button class="back" data-act="island" data-id="${esc(sc.id)}">${I.back} ${esc(i.name)}</button>
@@ -1102,7 +1148,8 @@ function finishActivity(kind,title,correct,total,missed,extra){
 }
 
 /* ============ BOOK GAMES ============ */
-const isLatin=s=>/[A-Za-z]/.test(s)&&!/[֐-׿]/.test(s);
+const isLatinOld=s=>/[A-Za-z]/.test(s)&&!/[֐-׿]/.test(s);
+const isLatin=s=>LANG()==='ar'?/[\u0600-\u06FF]/.test(s):isLatinOld(s);
 const enSpan=s=>isLatin(s)?`<span class="en">${esc(s)}</span>`:esc(s);
 function sentencesOf(text){return String(text).replace(/\s+/g,' ').split(/(?<=[.!?])\s+(?=[A-Z"])/).map(x=>x.trim()).filter(Boolean)}
 function readItems(i){
@@ -1194,10 +1241,10 @@ function gameDone(sc,correct,total,missed){const kind='g'+sc.n;finishActivity(ki
 
 /* spelling */
 function buildSpell(i){
-  const ws=shuffle(i.words.filter(w=>/^[a-z]{3,10}$/i.test(w.en))).slice(0,8);
+  const ws=shuffle(i.words.filter(w=>spellable(w.en))).slice(0,8);
   return {name:'spell',id:i.id,items:ws,idx:0,correct:0,missed:[],...spellState(ws[0])};
 }
-function spellState(w){const letters=w.en.toLowerCase().split('');return {tiles:shuffle(letters.map((ch,k)=>({ch,k,used:false}))),built:[],checked:false,ok:false}}
+function spellState(w){const letters=plainW(w.en).split('');return {tiles:shuffle(letters.map((ch,k)=>({ch,k,used:false}))),built:[],checked:false,ok:false}}
 function viewSpell(){
   const sc=S.screen;const i=islandById(sc.id);const w=sc.items[sc.idx];const L=w.en.length;
   return gameHead({...sc,title:'בונים מילה'},i,sc.items.length,sc.idx)+`
@@ -1213,7 +1260,7 @@ function viewSpell(){
 /* karaoke reading */
 function viewKaraoke(){
   const sc=S.screen;const i=islandById(sc.id);const t=i.text;let wi=0;
-  const paras=t.paras.map((p,pi)=>`<p class="kp" data-p="${pi}">${p.split(' ').map(w=>`<span class="w" id="kw${wi++}" data-act="sayw" data-text="${esc(w.replace(/[^A-Za-z'-]/g,''))}">${esc(w)}</span>`).join(' ')}</p>`).join('');
+  const paras=t.paras.map((p,pi)=>`<p class="kp" data-p="${pi}">${p.split(' ').map(w=>`<span class="w" id="kw${wi++}" data-act="sayw" data-text="${esc(w.replace(LETTER_RE(),''))}">${esc(w)}</span>`).join(' ')}</p>`).join('');
   const gl=Object.entries(t.gloss||{});
   return `<button class="back" data-act="island" data-id="${esc(sc.id)}">${I.back} ${esc(i.name)}</button>
   <section class="card">
@@ -1236,7 +1283,7 @@ function kPlay(){
     if(run!==kRun||pi>=paras.length){kHighlight(-1);return}
     if(SPEEDS[S.speed].wbw){sayPaced(paras[pi],k=>{if(run===kRun&&k>=0)kHighlight(offsets[pi]+k)},()=>{if(run===kRun)setTimeout(()=>playPara(pi+1),500)});return}
     const words=paras[pi].split(' ');const starts=[];let c=0;words.forEach(w=>{starts.push(c);c+=w.length+1});
-    const u=new SpeechSynthesisUtterance(paras[pi]);u.lang='en-US';u.rate=rate;if(enVoice)u.voice=enVoice;
+    const u=new SpeechSynthesisUtterance(paras[pi]);u.lang=TTS_LANG();u.rate=rate;{const vv=LANG()==='ar'?arVoice:enVoice;if(vv)u.voice=vv}
     let gotB=false,wk=0;
     u.onboundary=e=>{if(e.name&&e.name!=='word')return;gotB=true;clearTimeout(kTimer);let k=0;while(k+1<starts.length&&starts[k+1]<=e.charIndex)k++;kHighlight(offsets[pi]+k)};
     const step=()=>{if(gotB||run!==kRun)return;if(wk<words.length){kHighlight(offsets[pi]+wk);wk++;kTimer=setTimeout(step,(300+words[wk-1].length*55)/rate)}};
@@ -1249,7 +1296,7 @@ function kPlay(){
 
 /* read aloud with speech recognition */
 function buildRead2(i){return {name:'read2',id:i.id,items:shuffle(readItems(i)).slice(0,6),idx:0,correct:0,res:null,listening:false,missed:[]}}
-const normW=w=>w.toLowerCase().replace(/[^a-z0-9']/g,'').replace(/'/g,'');
+const normW=w=>LANG()==='ar'?plainW(w).replace(/[إأآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي'):w.toLowerCase().replace(/[^a-z0-9']/g,'').replace(/'/g,'');
 function lev(a,b){const m=a.length,n=b.length;const d=Array.from({length:m+1},(_,x)=>[x,...Array(n).fill(0)]);for(let y=1;y<=n;y++)d[0][y]=y;for(let x=1;x<=m;x++)for(let y=1;y<=n;y++)d[x][y]=Math.min(d[x-1][y]+1,d[x][y-1]+1,d[x-1][y-1]+(a[x-1]===b[y-1]?0:1));return d[m][n]}
 const NUMW={'1':'one','2':'two','3':'three','10':'ten','11':'eleven','12':'twelve','14':'fourteen','15':'fifteen','27':'twentyseven'};
 function matchWords(target,heard){
@@ -1261,7 +1308,7 @@ function viewRead2(){
   const res=sc.res;const pct=res?Math.round(res.filter(Boolean).length/res.length*100):null;
   return gameHead({...sc,title:'קוראת בקול'},i,sc.items.length,sc.idx)+`
   <p>${readSR()?'<b>1.</b> לוחצים על המיקרופון וקוראים את המשפט בקול. <b>2.</b> מילים בירוק נקראו נכון, מילים באדום כדאי לנסות שוב.':'קראי את המשפט בקול, ואז השווי להקראה.'}</p>
-  <div class="read r2">${words.map((w,k)=>`<span class="w ${res?(res[k]?'good':'miss'):''}" data-act="sayw" data-text="${esc(w.replace(/[^A-Za-z'-]/g,''))}">${esc(w)}</span>`).join(' ')}</div>
+  <div class="read r2">${words.map((w,k)=>`<span class="w ${res?(res[k]?'good':'miss'):''}" data-act="sayw" data-text="${esc(w.replace(LETTER_RE(),''))}">${esc(w)}</span>`).join(' ')}</div>
   <div class="btns">
     <button class="btn ghost small" data-act="say" data-text="${esc(s)}">${I.speaker} הקראה</button>
     <button class="btn ghost small" data-act="saySlow" data-text="${esc(s)}">🐢 סופר איטי</button>
@@ -1269,7 +1316,7 @@ function viewRead2(){
   </div>
   ${sc.heard?`<p class="sub">הטלפון שמע: <span class="en">${esc(sc.heard)}</span></p>`:''}
   ${pct!=null?`<p class="fb ${pct>=80?'ok':'bad'}">${pct>=80?'קריאה מצוינת!':'עוד ניסיון אחד?'} ${pct}% מהמילים</p>`:''}
-  ${res&&res.some(x=>!x)?`<div class="misslist"><span class="sub">מילים לתרגל. לחצי כדי לשמוע איך אומרים:</span><div class="hearrow">${[...new Set(words.filter((w,k)=>!res[k]).map(w=>w.replace(/[^A-Za-z'-]/g,'')).filter(Boolean))].map(w=>`<button class="chip" data-act="say" data-text="${esc(w)}">🔊 ${esc(w)}</button><button class="btn ghost small" data-act="saySlow" data-text="${esc(w)}" aria-label="לאט">🐢</button>`).join('')}</div></div>`:''}
+  ${res&&res.some(x=>!x)?`<div class="misslist"><span class="sub">מילים לתרגל. לחצי כדי לשמוע איך אומרים:</span><div class="hearrow">${[...new Set(words.filter((w,k)=>!res[k]).map(w=>w.replace(LETTER_RE(),'')).filter(Boolean))].map(w=>`<button class="chip" data-act="say" data-text="${esc(w)}">🔊 ${esc(w)}</button><button class="btn ghost small" data-act="saySlow" data-text="${esc(w)}" aria-label="לאט">🐢</button>`).join('')}</div></div>`:''}
   ${readSR()?(res?`<div class="btns"><button class="btn brass" data-act="r2Next">${sc.idx===sc.items.length-1?'לתוצאות':'הבא'}</button></div>`:''):
     `<div class="btns"><button class="btn brass" data-act="r2Self" data-v="1">קראתי נכון</button><button class="btn ghost" data-act="r2Self" data-v="0">נעזרתי בהקראה</button></div>`}
   </section>`;
@@ -1279,7 +1326,7 @@ function srGo(){
   const sc=S.screen;if(sc.listening){try{SR&&SR.stop()}catch(e){}return}
   hush();
   try{SR=new SRClass()}catch(e){toast('הזיהוי הקולי לא זמין בטלפון הזה');return}
-  SR.lang='en-US';SR.interimResults=false;SR.maxAlternatives=5;SR.continuous=false;
+  SR.lang=TTS_LANG();SR.interimResults=false;SR.maxAlternatives=5;SR.continuous=false;
   const target=sc.items[sc.idx];let got=false;
   SR.onresult=e=>{got=true;let best=null,bestN=-1,bestT='';const r=e.results[0];for(let k=0;k<r.length;k++){const m=matchWords(target,r[k].transcript);const n=m.filter(Boolean).length;if(n>bestN){bestN=n;best=m;bestT=r[k].transcript}}
     const prev=sc.res?sc.res.filter(Boolean).length:-1;if(!sc.res||bestN>=prev){sc.res=best;sc.heard=bestT}
@@ -1322,11 +1369,11 @@ function viewReadText(){
   <section class="card"><h2>קוראת עם המורה</h2><p>בטלפון הזה אין זיהוי דיבור בתוך הדפדפן, ולכן המורה לא יכול להקשיב.</p><p class="sub">בטלפון אנדרואיד עם כרום זה עובד. בינתיים אפשר לתרגל ב"קוראים יחד".</p></section>`;
   sc.fixed=sc.fixed||{};
   const html=paras.map((p,pi)=>{const r=sc.res[pi];const words=rtWords(p);const coachK=sc.coach&&sc.coach.pi===pi&&sc.coach.i<sc.coach.q.length?sc.coach.q[sc.coach.i]:-1;
-    return `<p class="rtp ${pi===cur?'cur':pi<cur?'done':'next'}" id="rtp${pi}">${words.map((w,k)=>{let c='';if(r)c=r[k]?'good':sc.fixed[pi+'_'+k]?'fixed':'miss';if(k===coachK)c+=' focus';return `<span class="w ${c}" id="rw${pi}_${k}" data-act="sayw" data-text="${esc(w.replace(/[^A-Za-z'-]/g,''))}">${esc(w)}</span>`}).join(' ')}</p>`}).join('');
+    return `<p class="rtp ${pi===cur?'cur':pi<cur?'done':'next'}" id="rtp${pi}">${words.map((w,k)=>{let c='';if(r)c=r[k]?'good':sc.fixed[pi+'_'+k]?'fixed':'miss';if(k===coachK)c+=' focus';return `<span class="w ${c}" id="rw${pi}_${k}" data-act="sayw" data-text="${esc(w.replace(LETTER_RE(),''))}">${esc(w)}</span>`}).join(' ')}</p>`}).join('');
   const done=cur>=paras.length;const co=sc.coach&&sc.coach.pi===cur?sc.coach:null;
   let ctl='';
   if(!done&&sc.listening)ctl=`<div class="btns rtctl"><button class="btn red" data-act="rtStop">${I.stop} סיימתי את הפסקה</button><span class="sub">🎙 המורה מקשיב…</span></div>`;
-  else if(!done&&co&&co.i<co.q.length){const w=rtWords(paras[cur])[co.q[co.i]].replace(/[^A-Za-z'-]/g,'');
+  else if(!done&&co&&co.i<co.q.length){const w=rtWords(paras[cur])[co.q[co.i]].replace(LETTER_RE(),'');
     ctl=`<div class="teacher rtctl"><div class="tbub"><span class="tav">🧑‍🏫</span><div><p>${co.i===0?`יפה! עכשיו נתקן ${co.q.length===1?'מילה אחת':co.q.length+' מילים'}.`:''} המילה ${co.i+1} מתוך ${co.q.length}:</p><b class="en tw">${esc(w)}</b>${heOf(w)?`<div class="the">${esc(heOf(w))}</div>`:''}${co.msg?`<p class="tmsg">${co.msg}</p>`:''}</div></div>
       <div class="hearrow"><span class="lbl">איך אומרים?</span><button class="btn small" data-act="coHear" data-w="${esc(w)}">${I.speaker} שמעי</button><button class="btn ghost small" data-act="coListen" data-w="${esc(w)}">🐢 לאט מאוד</button><button class="btn ghost small" data-act="coCtx" data-w="${esc(w)}">💬 במשפט</button></div>
       <div class="btns"><button class="btn ${co.listening?'red':'brass'}" data-act="coSay" data-w="${esc(w)}">${I.mic2} ${co.listening?'מקשיב…':'עכשיו אני אומרת'}</button>
@@ -1350,14 +1397,14 @@ function rtPaint(sc,pi,heard){
   const m=matchWords(sc.__para,heard);let last=-1;m.forEach((ok,k)=>{if(ok)last=k});
   m.forEach((ok,k)=>{const el=document.getElementById(`rw${pi}_${k}`);if(el){el.classList.toggle('good',ok);el.classList.toggle('miss',!ok&&k<last)}});return m;
 }
-function coachQueue(para,res){const words=rtWords(para);const q=[];res.forEach((ok,k)=>{const w=words[k].replace(/[^A-Za-z'-]/g,'');if(!ok&&w.length>=2)q.push(k)});return q.slice(0,8)}
+function coachQueue(para,res){const words=rtWords(para);const q=[];res.forEach((ok,k)=>{const w=words[k].replace(LETTER_RE(),'');if(!ok&&w.length>=2)q.push(k)});return q.slice(0,8)}
 function rtGo(){
   const sc=S.screen;const i=islandById(sc.id);const pi=sc.pi;const para=i.text.paras[pi];
   hush();sc.__para=para;sc.coach=null;
   let finals='',t0=0,t1=0,restarts=0,stopReq=false,best=null;
   const start=()=>{
     try{RT=new SRClass()}catch(e){toast('הזיהוי הקולי לא זמין בטלפון הזה');return}
-    RT.lang='en-US';RT.continuous=true;RT.interimResults=true;RT.maxAlternatives=1;
+    RT.lang=TTS_LANG();RT.continuous=true;RT.interimResults=true;RT.maxAlternatives=1;
     RT.onresult=e=>{
       const now=Date.now();if(!t0)t0=now;t1=now;
       let interim='';for(let k=e.resultIndex;k<e.results.length;k++){const tr=e.results[k][0].transcript;if(e.results[k].isFinal)finals+=' '+tr;else interim+=' '+tr}
@@ -1372,7 +1419,7 @@ function rtGo(){
       if(best){sc.res[pi]=best;sc.heard[pi]=finals.trim();sc.ms[pi]=Math.max(0,t1-t0);
         const q=coachQueue(para,best);sc.coach={pi,q,i:0,ok:0,tries:0,msg:''};
         if(!q.length){sfx.win()}else sfx.tap();
-        if(q.length)setTimeout(()=>{if(S.screen===sc&&sc.coach&&sc.coach.i===0){const w=rtWords(para)[q[0]].replace(/[^A-Za-z'-]/g,'');sayPaced(w,null,null,'x')}},600);}
+        if(q.length)setTimeout(()=>{if(S.screen===sc&&sc.coach&&sc.coach.i===0){const w=rtWords(para)[q[0]].replace(LETTER_RE(),'');sayPaced(w,null,null,'x')}},600);}
       else toast('לא שמעתי. נסי לקרוא קרוב יותר לטלפון');
       if(S.screen===sc)render();
     };
@@ -1388,14 +1435,14 @@ function sentenceWith(para,w){const re=new RegExp('\\b'+reEsc(w)+'\\b','i');retu
 function coSay(word){
   const sc=S.screen;const co=sc.coach;if(!co||co.listening)return;hush();
   let R;try{R=CO_R=new SRClass()}catch(e){toast('הזיהוי הקולי לא זמין');return}
-  R.lang='en-US';R.interimResults=false;R.maxAlternatives=5;R.continuous=false;let got=false;
+  R.lang=TTS_LANG();R.interimResults=false;R.maxAlternatives=5;R.continuous=false;let got=false;
   R.onresult=e=>{if(got)return;got=true;const r=e.results[0];const alts=[];for(let k=0;k<r.length;k++)alts.push(r[k].transcript);
     const k=co.q[co.i];
     if(coachHit(word,alts)){sc.fixed[co.pi+'_'+k]=true;co.ok++;co.i++;co.tries=0;co.msg='';sfx.ok();toast(['מצוין!','יפה מאוד!','בדיוק ככה!'][co.ok%3])}
     else{co.tries++;sfx.bad();
       if(co.tries>=3){co.msg='';co.i++;co.tries=0;toast('נמשיך. נחזור למילה הזו בתרגול בסוף')}
       else co.msg=`כמעט! שמעתי <span class="en">${esc(alts[0]||'')}</span>. לחצי "שמעי", הקשיבי ונסי שוב.`}
-    if(co.i<co.q.length&&co.tries===0)setTimeout(()=>{if(S.screen===sc&&co.i<co.q.length){const w=rtWords(islandById(sc.id).text.paras[co.pi])[co.q[co.i]].replace(/[^A-Za-z'-]/g,'');sayPaced(w,null,null,'x')}},700);
+    if(co.i<co.q.length&&co.tries===0)setTimeout(()=>{if(S.screen===sc&&co.i<co.q.length){const w=rtWords(islandById(sc.id).text.paras[co.pi])[co.q[co.i]].replace(LETTER_RE(),'');sayPaced(w,null,null,'x')}},700);
   };
   R.onerror=e=>{if(e.error==='no-speech')co.msg='לא שמעתי. נסי להגיד את המילה קרוב יותר לטלפון.'};
   R.onend=()=>{co.listening=false;if(S.screen===sc)render()};
@@ -1406,7 +1453,7 @@ function rtFinish(){
   const sc=S.screen;const i=islandById(sc.id);const paras=i.text.paras;
   let total=0,ok=0,ms=0;const missed=[];
   paras.forEach((p,pi)=>{const words=rtWords(p);const r=sc.res[pi];if(!r)return;total+=words.length;ok+=r.filter(Boolean).length;ms+=sc.ms[pi]||0;
-    r.forEach((g,k)=>{const w=words[k].replace(/[^A-Za-z'-]/g,'');if(!g&&!(sc.fixed||{})[pi+'_'+k]&&w.length>=3&&!SMALLW.has(w.toLowerCase()))missed.push(w)})});
+    r.forEach((g,k)=>{const w=words[k].replace(LETTER_RE(),'');if(!g&&!(sc.fixed||{})[pi+'_'+k]&&w.length>=3&&!SMALLW.has(w.toLowerCase()))missed.push(w)})});
   const fixedN=Object.keys(sc.fixed||{}).length;
   if(!total){toast('עוד לא קראת אף פסקה');return}
   const wpm=ms>3000?Math.round(ok/(ms/60000)):null;
@@ -1631,14 +1678,14 @@ function refreshUploadUI(){
   setSync();
 }
 function belongHTML(id){const zs=(feat('zoom')?S.zoom:[]).filter(z=>z.done||(z.recs||[]).length).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||''))).slice(0,4);
-  const T=tracks();const cur=T&&T[0].active;
+  const T=tracks();const cur=T&&(T.find(t=>t.k==='class')||{}).active;
   return `<label>למה זה שייך? <b style="color:var(--signal)">*</b><select id="${id}" required><option value="" selected disabled>בחרי…</option>
     ${zs.map(z=>`<option value="zoom:${esc(z.id)}">💻 שיעור זום ${dayName(z.date)} ${fmtDate(z.date)}${z.teacher?' · '+esc(z.teacher):''}</option>`).join('')}
     ${cur?`<option value="class-add">🏫 להוסיף לאי של הכיתה: ${esc(cur.name)}</option>`:''}
     <option value="class-new">🆕 נושא חדש בכיתה (אי חדש)</option></select></label>`}
 function zoomMeta(selId){const v=($('#'+selId)||{}).value||'';
   if(v.startsWith('zoom:')){const z=S.zoom.find(x=>x.id===v.slice(5));return z?{zoomId:z.id,zoomDate:z.date,tag:'zoom '+z.date}:{}}
-  if(v==='class-add'){const T=tracks();const cur=T&&T[0].active;return {tag:'class-add '+(cur?cur.id+' ('+cur.name+')':'')}}
+  if(v==='class-add'){const T=tracks();const cur=T&&(T.find(t=>t.k==='class')||{}).active;return {tag:'class-add '+(cur?cur.id+' ('+cur.name+')':'')}}
   if(v==='class-new')return {tag:'class-new'};return null}
 function viewCamera(){
   const fresh=S.shots.filter(s=>s.status==='new');
@@ -1766,7 +1813,7 @@ document.addEventListener('click',e=>{
       if(sc.idx<sc.items.length-1){sc.idx++;sc.shuf=shuffle(sc.items[sc.idx].map((s,k)=>({s,k})));sc.next=0;sc.err=0;render()}
       else gameDone(sc,sc.correct,sc.items.length,sc.missed);break;}
     case 'spTile':{const t=sc.tiles[+el.dataset.k];if(t.used)break;t.used=true;sc.built.push(t);sfx.tap();
-      const w=sc.items[sc.idx];if(sc.built.length===w.en.length){sc.checked=true;sc.ok=sc.built.map(x=>x.ch).join('')===w.en.toLowerCase();
+      const w=sc.items[sc.idx];if(sc.built.length===plainW(w.en).length){sc.checked=true;sc.ok=sc.built.map(x=>x.ch).join('')===plainW(w.en);
         if(sc.ok){sc.correct++;sfx.ok()}else{sfx.bad();sc.missed.push(w.en)}say(w.en)}
       render();break;}
     case 'spBack':{const t=sc.built.pop();if(t)t.used=false;render();break;}
@@ -1799,8 +1846,13 @@ document.addEventListener('click',e=>{
     case 'tab':{const t=el.dataset.tab;if(t==='map'&&S.tab==='map'){if(S.screen.name!=='map')navTo({act:'home'})}else{stopAll();S.tab=t;render();scrollTo({top:0})}break;}
     case 'home':navTo({act:'home'});break;
     case 'kid':switchChild(el.dataset.id);break;
+    case 'world':switchWorld(el.dataset.id);break;
+    case 'ref':S.refTab=S.refTab||'letters';S.ref=true;render();break;
+    case 'refTab':S.refTab=el.dataset.id;render();break;
+    case 'refClose':S.ref=false;render();break;
+    case 'sayAr':say(el.dataset.text,.7);break;
     case 'fleet':S.boatModal={kind:'fleet',from:S.boatModal&&S.boatModal.kind};render();break;
-    case 'bmClose':{const m=S.boatModal;S.boatModal=null;if(m&&(m.kind==='intro'||m.from==='intro')&&!S.progress.fleetIntro){S.progress.fleetIntro=1;saveState('progress')}render();break;}
+    case 'bmClose':{const m=S.boatModal;S.boatModal=null;const fk=THEME()==='desert'?'caravanIntro':'fleetIntro';if(m&&(m.kind==='intro'||m.from==='intro')&&!S.progress[fk]){S.progress[fk]=1;saveState('progress')}render();break;}
     case 'locked':sfx.bad();toast('האי עדיין נעול. 70% במשחק המילים של האי הקודם יפתחו אותו');break;
     case 'island':navTo({act:'island',id:el.dataset.id});break;
     case 'station':{
@@ -1850,6 +1902,68 @@ document.addEventListener('click',e=>{
   }
 });
 
+
+/* ============ ARABIC WORLD: letters, numbers, desert fleet ============ */
+// [letter, Hebrew equivalent, Hebrew name, Arabic name, connects to next letter]
+const AR_LETTERS=[['ا','א','אַלִף','ألف',0],['ب','ב','בָּא','باء',1],['ت','ת','תָּא','تاء',1],['ث','ת׳','תַ׳א','ثاء',1],['ج','ג׳','ג׳ִים','جيم',1],['ح','ח','חָא','حاء',1],['خ','ח׳','ח׳ָא','خاء',1],
+ ['د','ד','דָאל','دال',0],['ذ','ד׳','ד׳ָאל','ذال',0],['ر','ר','רָא','راء',0],['ز','ז','זָאי','زاي',0],['س','ס','סִין','سين',1],['ش','ש','שִׁין','شين',1],['ص','צ','צָאד','صاد',1],
+ ['ض','צ׳','צ׳ָאד','ضاد',1],['ط','ט','טָא','طاء',1],['ظ','ט׳','ט׳ָא','ظاء',1],['ع','ע','עֵין','عين',1],['غ','ע׳','ע׳ֵין','غين',1],['ف','פ','פָא','فاء',1],['ق','ק','קָאף','قاف',1],
+ ['ك','כ','כָּאף','كاف',1],['ل','ל','לָאם','لام',1],['م','מ','מִים','ميم',1],['ن','נ','נוּן','نون',1],['ه','ה','הָא','هاء',1],['و','ו','וָאו','واو',0],['ي','י','יָא','ياء',1]];
+const arForms=l=>l[4]?[l[0]+'ـ','ـ'+l[0]+'ـ','ـ'+l[0]]:[l[0],'ـ'+l[0]];
+// [Arabic-Indic digit, number, Arabic word, Hebrew transliteration, Hebrew]
+const AR_NUMS=[['١',1,'واحد','וָאחִד','אחת'],['٢',2,'اثنان','אִתְ׳נָאן','שתיים'],['٣',3,'ثلاثة','תַ׳לָאתַ׳ה','שלוש'],['٤',4,'أربعة','אַרְבַּעַה','ארבע'],['٥',5,'خمسة','ח׳ַמְסַה','חמש'],
+ ['٦',6,'ستة','סִתַּה','שש'],['٧',7,'سبعة','סַבְּעַה','שבע'],['٨',8,'ثمانية','תַ׳מָאנְיַה','שמונה'],['٩',9,'تسعة','תִסְעַה','תשע'],['١٠',10,'عشرة','עַשַׁרַה','עשר']];
+function mcFrom(pool,n,qf,af,optf,title,extra){const items=shuffle(pool).slice(0,n).map(x=>{const others=shuffle(pool.filter(y=>y!==x)).slice(0,3);const opts=shuffle([x,...others]);return {q:qf(x),o:opts.map(optf),a:opts.indexOf(x),...(extra?extra(x):{})}});return {kind:'mc',title,items}}
+let _arFixed=null;
+function arFixedIslands(){if(_arFixed)return _arFixed;
+  const L=AR_LETTERS,N=AR_NUMS;
+  const letters={id:'ar-letters',kind:'fixed',track:'letters',name:'האותיות',en:'الحروف',topic:'28 אותיות · ערבית מול עברית · תמיד פתוח',
+    words:L.map(l=>({en:l[0],he:l[1]+' · '+l[2],tr:arForms(l).join('  ')})),
+    games:[mcFrom(L,10,l=>l[0],0,l=>l[1],'איזו אות בעברית?'),
+      mcFrom(L,10,l=>'איזו אות בערבית היא '+l[1]+'?',0,l=>l[0],'איזו אות בערבית?'),
+      mcFrom(L.filter(l=>l[4]),8,l=>'ـ'+l[0]+'ـ',0,l=>l[0],'זהי את האות באמצע מילה'),
+      mcFrom(L,8,()=>'הקשיבי לשם האות ובחרי',0,l=>l[0],'מה שמעת?',l=>({say:l[3]})),
+      {kind:'pairs',title:'זיכרון: ערבית ועברית',pairs:shuffle(L).slice(0,6).map(l=>[l[0],l[1]])}],mistakes:[],source:'',created:'0'};
+  const nums={id:'ar-numbers',kind:'fixed',track:'numbers',name:'המספרים',en:'الأرقام',topic:'1–10 · ספרות ומילים · תמיד פתוח',
+    words:N.map(n=>({en:n[2],he:n[1]+' · '+n[4],tr:n[3]+' · '+n[0]})),
+    games:[mcFrom(N,10,n=>n[0],0,n=>String(n[1]),'איזו ספרה זו?'),
+      mcFrom(N,10,n=>n[2],0,n=>String(n[1]),'איזה מספר כתוב?'),
+      mcFrom(N,8,()=>'איזה מספר שמעת?',0,n=>String(n[1]),'מה שמעת?',n=>({say:n[2]})),
+      mcFrom(N,8,n=>'איך כותבים '+n[1]+' במילה?',0,n=>n[2],'מספר במילה'),
+      {kind:'pairs',title:'זיכרון: ספרה ערבית ומספר',pairs:shuffle(N).slice(0,6).map(n=>[n[0],String(n[1])])}],mistakes:[],source:'',created:'0'};
+  _arFixed=[letters,nums];return _arFixed}
+function refHTML(){const t=S.refTab||'letters';
+  const body=t==='letters'?`<p class="sub" style="margin:0">לחיצה על אות משמיעה את השם שלה. מתחת: איך היא נראית בתחילת, באמצע ובסוף מילה.</p><div class="refgrid">${AR_LETTERS.map(l=>`<button class="refcell" data-act="sayAr" data-text="${esc(l[3])}"><span class="ar">${l[0]}</span><span class="he">${l[1]}</span><small>${l[2]}</small><span class="forms">${arForms(l).join(' ')}</span></button>`).join('')}</div><p class="sub" style="margin:0">האותיות ا د ذ ر ز و לא מתחברות לאות שאחריהן.</p>`
+    :`<p class="sub" style="margin:0">לחיצה על שורה משמיעה את המספר.</p><div style="display:grid;gap:6px">${AR_NUMS.map(n=>`<button class="numrow" data-act="sayAr" data-text="${esc(n[2])}"><span class="ar">${n[0]}</span><b>${n[1]}</b><span class="ar" style="font-size:22px">${n[2]}</span><span>${n[3]}</span></button>`).join('')}</div>`;
+  return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><h3>🔤 טבלת עזר</h3><div class="reftabs"><button data-act="refTab" data-id="letters" aria-pressed="${t==='letters'}">אותיות</button><button data-act="refTab" data-id="nums" aria-pressed="${t!=='letters'}">מספרים 1–10</button></div>${body}<div class="btns"><button class="btn brass" data-act="refClose">סגירה</button></div></div></div>`}
+const DESERT=[
+ {n:'גמל צעיר',en:'Young Camel',e:'🐪',story:'גמל קטן וסקרן עם דבשת אחת ועיניים גדולות. מכאן הכל מתחיל!'},
+ {n:'גמל דו־דבשתי',en:'Bactrian Camel',e:'🐫',story:'שתי דבשות: כפול מים, כפול כוח.'},
+ {n:'חמור מדבר',en:'Desert Donkey',e:'🫏',story:'קטן, עקשן ונאמן. הוא מכיר כל שביל בין הדיונות.'},
+ {n:'סוס ערבי',en:'Arabian Horse',e:'🐎',story:'סוס אצילי ומהיר כמו רוח המדבר.'},
+ {n:'שיירת גמלים',en:'Camel Caravan',e:'🐪🐫🐪',story:'שיירה שלמה, ואת בראש!'},
+ {n:'גלשן חולות',en:'Sandboard',e:'🏂',story:'גולשים במורד הדיונות כמו על שלג.'},
+ {n:'אופני מדבר',en:'Desert Bike',e:'🚲',story:'גלגלים עבים שלא שוקעים בחול.'},
+ {n:'קטנוע חולות',en:'Sand Scooter',e:'🛵',story:'מנוע קטן, הרבה כיף.'},
+ {n:'אופנוע שטח',en:'Dirt Bike',e:'🏍️',story:'קופצים מעל הדיונות!'},
+ {n:'ריקשה מדברית',en:'Desert Rickshaw',e:'🛺',story:'שלושה גלגלים וגג נגד השמש.'},
+ {n:'טרקטור מדבר',en:'Desert Tractor',e:'🚜',story:'חזק ואיטי. הוא מושך הכל.'},
+ {n:'רכב חולות',en:'Dune Car',e:'🚗',story:'מכונית קטנה שנוסעת על החול.'},
+ {n:'ג׳יפ',en:'Jeep',e:'🚙',story:'ג׳יפ אמיתי! עכשיו אפשר לחצות את כל המדבר.'},
+ {n:'טנדר מדבר',en:'Desert Pickup',e:'🛻',story:'מקום בארגז לאוהל, למים ולחברים.'},
+ {n:'רכב ספארי',en:'Safari Van',e:'🚐',story:'רכב סיור עם חלון גג לצפות בנוף.'},
+ {n:'משאית מים',en:'Water Truck',e:'🚚',story:'מביאה מים לכל נווי המדבר.'},
+ {n:'רכב ראלי',en:'Rally Car',e:'🏎️',story:'מהיר! משאיר אחריו ענן אבק.'},
+ {n:'משאית דקאר',en:'Dakar Truck',e:'🚛',story:'משאית של מרוץ הדקאר: אי אפשר לעצור אותה.'},
+ {n:'סופר 4x4',en:'Super 4x4',e:'🚙',fire:1,story:'ארבעה גלגלי ענק, מנוע שואג ואורות חזקים.'},
+ {n:'רכב שטח מפלצתי',en:'Monster Truck',e:'🛻',fire:2,story:'הרכב הכי מטורף במדבר: גלגלי ענק, אש מהאגזוז, ואת הנהגת!'}];
+function desertSVG(i,size){const d=DESERT[Math.max(0,Math.min(DESERT.length-1,i))];const fs=Math.min(46,26+i*1.1);
+  const wheels=d.fire===2?`<circle cx="42" cy="66" r="11" fill="#1b1b1b"/><circle cx="80" cy="66" r="11" fill="#1b1b1b"/><circle cx="42" cy="66" r="4" fill="#888"/><circle cx="80" cy="66" r="4" fill="#888"/>`:'';
+  const fire=d.fire?`<text x="${d.fire===2?14:20}" y="${d.fire===2?54:60}" font-size="${d.fire===2?20:14}">🔥</text>`:'';
+  return `<svg viewBox="0 0 120 84" width="${size}" height="${Math.round(size*84/120)}" aria-hidden="true"><circle cx="98" cy="18" r="9" fill="#ffd36b"/><path d="M0 66 Q30 52 60 64 T120 60 V84 H0Z" fill="#e8b765"/><path d="M0 74 Q40 64 80 74 T120 72 V84 H0Z" fill="#d49a4a"/>${wheels}${fire}<text x="60" y="${d.fire===2?56:64}" text-anchor="middle" font-size="${d.fire===2?40:fs}">${d.e}</text></svg>`}
+const FLEETS=()=>THEME()==='desert'?DESERT:FLEET;
+const vehSVG=(i,size)=>THEME()==='desert'?desertSVG(i,size):boatSVG(i,size);
+
 /* ============ FLEET: upgrade the boat every 5 islands finished at 85%+ ============ */
 const FLEET=[
  {n:'רפסודה',en:'Raft',t:'raft',w:44,c:'#a0703c',story:'כמה בולי עץ, חבל אחד ומפרש מחולצה ישנה. מכאן הכל מתחיל!'},
@@ -1897,22 +2011,27 @@ function boatSVG(i,size){
   return `<svg viewBox="0 0 ${W} ${H}" width="${size}" height="${Math.round(size*H/W)}" aria-hidden="true"><path d="M0 ${wl+3} q10 -4 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 V${H} H0Z" fill="#1f8fb3" opacity=".55"/>${g}</svg>`;
 }
 function isGreat(i){const st=stationsOf(i).filter(x=>x.scored);if(!st.length)return false;const b=S.progress.best[i.id]||{};if(st.some(x=>b[x.k]==null))return false;return st.reduce((n,x)=>n+b[x.k],0)/st.length>=85}
-const fleetOn=()=>THEME()==='sea'&&!!S.profile;
-function fleetState(){const q=allIslands().filter(isGreat).length;const lv=Math.min(FLEET.length-1,Math.floor(q/5));return {q,lv,next:lv>=FLEET.length-1?0:5-(q%5),inStep:q%5}}
-function fleetCardHTML(){if(!fleetOn())return '';const f=fleetState();const b=FLEET[f.lv];
-  return `<button class="fleetcard" data-act="fleet">${boatSVG(f.lv,72)}<span class="ft"><b>${esc(b.n)} <small class="en">${esc(b.en)}</small></b><span>${f.lv>=FLEET.length-1?'הגעת לספינה הגדולה ביותר! 🏆':`עוד <b>${f.next}</b> ${f.next===1?'אי מצוין':'איים מצוינים'} לשדרוג`}</span><span class="fdots">${[0,1,2,3,4].map(k=>`<i class="${k<f.inStep?'on':''}"></i>`).join('')}</span></span><span class="flv">${f.lv+1}/20</span></button>`}
+const fleetOn=()=>(THEME()==='sea'||THEME()==='desert')&&!!S.profile;
+function fleetState(){const F=FLEETS();const q=allIslands().filter(isGreat).length;const lv=Math.min(F.length-1,Math.floor(q/5));return {q,lv,next:lv>=F.length-1?0:5-(q%5),inStep:q%5}}
+function fleetCardHTML(){if(!fleetOn())return '';const f=fleetState();const F=FLEETS();const b=F[f.lv];
+  return `<button class="fleetcard" data-act="fleet">${vehSVG(f.lv,72)}<span class="ft"><b>${esc(b.n)} <small class="en">${esc(b.en)}</small></b><span>${f.lv>=F.length-1?(THEME()==='desert'?'הגעת לרכב המטורף ביותר! 🏆':'הגעת לספינה הגדולה ביותר! 🏆'):`עוד <b>${f.next}</b> ${f.next===1?(THEME()==='desert'?'נווה מדבר מצוין':'אי מצוין'):(THEME()==='desert'?'נווי מדבר מצוינים':'איים מצוינים')} לשדרוג`}</span><span class="fdots">${[0,1,2,3,4].map(k=>`<i class="${k<f.inStep?'on':''}"></i>`).join('')}</span></span><span class="flv">${f.lv+1}/20</span></button>`}
 function checkFleet(){if(!fleetOn()||isParent()||!S.loaded)return;const p=S.progress;const f=fleetState();
-  if(!p.fleetIntro&&!S.boatModal){S.boatModal={kind:'intro'};return}
+  const fk=THEME()==='desert'?'caravanIntro':'fleetIntro';if(!p[fk]&&!S.boatModal){S.boatModal={kind:'intro'};return}
   if((p.boatLevel||0)<f.lv&&!S.boatModal){S.boatModal={kind:'up',lv:f.lv};p.boatLevel=f.lv;saveState('progress');setTimeout(()=>{sfx.horn();setTimeout(()=>sfx.win(),700)},200)}}
 function boatModalHTML(){const m=S.boatModal;if(!m)return '';
+  if(m.kind==='intro'&&THEME()==='desert')return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="bpop">${desertSVG(0,200)}</div><h3>יוביק והגמל הצעיר</h3>
+    <p>יוביק נחתה בלב המדבר הגדול. בצל עץ דקל חיכה לה גמל צעיר וסקרן, עם דבשת אחת ועיניים גדולות.</p>
+    <p>מתוך אוהל גדול יצא שייח' אל־כַּלִמָאת, שייח' המילים. "כל <b>5 נווי מדבר</b> שתסיימי <b>מצוין</b>, כל התחנות ב־85% ומעלה," הוא אמר, "ואתן לך כלי רכיבה חזק יותר."</p>
+    <p>20 כלים מחכים לך, מגמל צעיר ועד <b>רכב שטח מפלצתי</b>. ובכל רגע אפשר לפתוח את טבלת האותיות והמספרים בכפתור 🔤 למעלה. מוכנה לרכוב?</p>
+    <div class="btns"><button class="btn brass" data-act="bmClose">יאללה, רוכבים! 🐪</button><button class="btn ghost" data-act="fleet">לראות את כל השיירה</button></div></div></div>`;
   if(m.kind==='intro')return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="bpop">${boatSVG(0,200)}</div><h3>יוביק והרפסודה הקטנה</h3>
     <p>ביום סוער אחד נסחפה יוביק אל חוף של אי קטן. כל מה שנשאר לה זה רפסודה: כמה בולי עץ, חבל אחד ומפרש מחולצה ישנה.</p>
     <p>על הרציף חיכה לה הקפטן הזקן של הנמל, Captain Words. "יש לי הצעה בשבילך," הוא חייך. "על כל <b>5 איים</b> שתסיימי <b>מצוין</b>, כל התחנות ב־85% ומעלה, אתן לך כלי שייט גדול יותר."</p>
     <p>20 כלי שייט מחכים בנמל, מרפסודה ועד ספינת התענוגות הענקית <b class="en">Queen of English</b>. מוכנה להפליג?</p>
     <div class="btns"><button class="btn brass" data-act="bmClose">יאללה, מפליגים! ⛵</button><button class="btn ghost" data-act="fleet">לראות את כל הצי</button></div></div></div>`;
-  if(m.kind==='up'){const b=FLEET[m.lv];return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="confetti">🎉✨🎊</div><div class="bpop">${boatSVG(m.lv,220)}</div><h3>שדרוג! כלי שייט חדש: ${esc(b.n)}</h3><p class="en" style="margin:0;color:var(--ink2)">${esc(b.en)} · ${m.lv+1}/20</p><p>Captain Words: "${esc(b.story)}"</p><div class="btns"><button class="btn brass" data-act="bmClose">ממשיכים להפליג!</button></div></div></div>`}
-  if(m.kind==='fleet'){const f=fleetState();return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox fleetbox"><h3>הצי של יוביק · ${f.lv+1}/20</h3><p class="sub" style="margin:0">כל 5 איים מצוינים (כל התחנות, ממוצע 85%+) משדרגים את כלי השייט.</p>
-    <div class="fleetgrid">${FLEET.map((b,k)=>`<div class="fitem ${k<=f.lv?'own':'lock'} ${k===f.lv?'cur':''}">${boatSVG(k,96)}<b>${k<=f.lv||k===f.lv+1?esc(b.n):'?'}</b><small>${k*5} איים</small></div>`).join('')}</div>
+  if(m.kind==='up'){const b=FLEETS()[m.lv];const ds=THEME()==='desert';return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="confetti">🎉✨🎊</div><div class="bpop">${vehSVG(m.lv,220)}</div><h3>שדרוג! ${ds?'כלי רכיבה':'כלי שייט'} חדש: ${esc(b.n)}</h3><p style="margin:0;color:var(--ink2);text-align:center;direction:ltr">${esc(b.en)} · ${m.lv+1}/20</p><p>${ds?"שייח' אל־כלמאת":'Captain Words'}: "${esc(b.story)}"</p><div class="btns"><button class="btn brass" data-act="bmClose">ממשיכים להפליג!</button></div></div></div>`}
+  if(m.kind==='fleet'){const f=fleetState();const ds=THEME()==='desert';return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox fleetbox"><h3>${ds?'השיירה':'הצי'} של יוביק · ${f.lv+1}/20</h3><p class="sub" style="margin:0">כל 5 ${ds?'נווי מדבר':'איים'} מצוינים (כל התחנות, ממוצע 85%+) משדרגים את ${ds?'כלי הרכיבה':'כלי השייט'}.</p>
+    <div class="fleetgrid">${FLEETS().map((b,k)=>`<div class="fitem ${k<=f.lv?'own':'lock'} ${k===f.lv?'cur':''}">${vehSVG(k,96)}<b>${k<=f.lv||k===f.lv+1?esc(b.n):'?'}</b><small>${k*5} איים</small></div>`).join('')}</div>
     <div class="btns"><button class="btn brass" data-act="bmClose">סגירה</button></div></div></div>`}
   return ''}
 

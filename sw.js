@@ -1,4 +1,4 @@
-const CACHE = 'voyage-v18';
+const CACHE = 'voyage-v19';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './manifest-gil.webmanifest', './manifest-boss.webmanifest', './icon-gil-512.png', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
