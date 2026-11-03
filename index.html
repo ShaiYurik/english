@@ -8,8 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Yuvik">
-<link rel="manifest" href="manifest.webmanifest">
+<script>(function(){var r='child',c='yuvik';try{r=JSON.parse(localStorage.getItem('voy:role'))||r;c=JSON.parse(localStorage.getItem('voy:child'))||c}catch(e){}var m=r==='parent'?['manifest-boss.webmanifest','Boss']:c==='gil'?['manifest-gil.webmanifest','GilGul']:['manifest.webmanifest','Yuvik'];document.write('<meta name="apple-mobile-web-app-title" content="'+m[1]+'"><link rel="manifest" href="'+m[0]+'">')})()</script>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -422,13 +421,21 @@ const STANDALONE=(window.matchMedia&&matchMedia('(display-mode: standalone)').ma
 function readKey(){const m=location.hash.match(/k=([A-Za-z0-9_-]+)/);if(m){KEY=m[1];LS.set('key',KEY);if(STANDALONE)history.replaceState(null,'',location.pathname+location.search);return true}return false}
 function keyFromText(t){const m=String(t||'').match(/k=([A-Za-z0-9_-]{10,})/)||String(t||'').trim().match(/^([A-Za-z0-9_-]{10,})$/);return m?m[1]:''}
 readKey();
+addEventListener('online',()=>{if(KEY&&S.online===false&&!S._inflight)loadAll()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible'||!KEY||S._inflight)return;if(S.online===false||Date.now()-CONN.okAt>5*60e3)loadAll()});
 addEventListener('hashchange',()=>{if(readKey()){S.badKey=false;loadAll()}});
 
 let CHILD=LS.get('child','');
 let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-async function apiGet(){const ac=window.AbortController?new AbortController():null;const tm=ac&&setTimeout(()=>ac.abort(),30000);try{return await apiGet_(ac)}finally{clearTimeout(tm)}}
+const CONN={fails:0,okAt:0,ch:'',lastErr:''};const zz=ms=>new Promise(r=>setTimeout(r,ms));
+async function withTO(fn,ms){const ac=window.AbortController?new AbortController():null;const tm=ac&&setTimeout(()=>ac.abort(),ms);try{return await fn(ac)}finally{clearTimeout(tm)}}
+async function apiLoadPost(ac){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,c:CHILD||undefined,w:WORLD!=='en'?WORLD:undefined,action:'load',diag:CONN.fails||CONN.lastErr?{fails:CONN.fails,err:CONN.lastErr,ua:navigator.userAgent.slice(0,90)}:undefined}),signal:ac?ac.signal:undefined});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');if(!j.state)throw new Error('no state');return j}
+async function apiGet(){const tries=[['post',apiLoadPost],['get',apiGet_],['post',apiLoadPost]];let last;
+  for(let i=0;i<tries.length;i++){const [ch,fn]=tries[i];try{const j=await withTO(fn,30000);CONN.ch=ch;CONN.okAt=Date.now();CONN.fails=0;CONN.lastErr='';return j}
+    catch(e){last=e;if(/bad key/.test(e&&e.message))throw e;CONN.lastErr=ch+': '+String(e&&e.message||e).slice(0,80);if(i<tries.length-1)await zz(i?3000:400)}}
+  CONN.fails++;throw last}
 async function apiGet_(ac){const r=await fetch(API+'?key='+encodeURIComponent(KEY)+(CHILD?'&c='+encodeURIComponent(CHILD):'')+(WORLD!=='en'?'&w='+encodeURIComponent(WORLD):'')+'&t='+Date.now(),{cache:'no-store',signal:ac?ac.signal:undefined});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
 async function apiPost(body){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,c:CHILD||undefined,w:WORLD!=='en'?WORLD:undefined,...body})});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
 
@@ -636,6 +643,10 @@ function applyState(st,fromServer){
     S.activeSec=Math.max(S.activeSec,(S.session.minutes||0)*60);
   }
 }
+async function connTest(){const el=()=>document.getElementById('conntest');const out=[];const show=()=>{const e=el();if(e)e.textContent=out.join(' · ')};
+  out.push(navigator.onLine?'אינטרנט ✓':'אין אינטרנט ✗');show();
+  for(const [n,fn] of [['שמירה/קריאה',apiLoadPost],['קריאה ישנה',apiGet_]]){const t0=Date.now();try{await withTO(fn,30000);out.push(n+' ✓ '+((Date.now()-t0)/1000).toFixed(1)+'ש׳')}catch(e){out.push(n+' ✗ '+String(e&&e.message||e).slice(0,40))}show()}
+  if(S.online===false&&out.some(x=>x.includes('✓')))loadAll()}
 async function loadAll(){
   applyProfile();const c=LS.get(cacheKey(),null);
   if(c)applyState(c,false);
@@ -643,14 +654,17 @@ async function loadAll(){
   S.activeSec=(S.session.minutes||0)*60;
   S.loaded=true;render();
   if(!KEY)return;
-  try{const j=await apiGet();S.online=true;setRole(j.role);
+  const tok=S._loadTok=(S._loadTok||0)+1,at0=CHILD+'|'+WORLD;S._inflight=true;
+  try{const j=await apiGet();if(tok!==S._loadTok||at0!==CHILD+'|'+WORLD)return;S.online=true;setRole(j.role);
     if(j.profile){const was=CHILD;S.profile=j.profile;S.children=j.children||null;LS.set('profile',j.profile);if(j.children)LS.set('children',j.children);
       if(!CHILD||j.role!=='parent'){const ch=CHILD!==j.profile.child;CHILD=j.profile.child;LS.set('child',CHILD);if(ch)WORLD=LS.get('world:'+CHILD,'en')}
       if(j.profile.world&&j.profile.world!==WORLD){WORLD=j.profile.world}
       if(was&&was!==CHILD)resetChildState();applyProfile()}
     applyState(j.state,true);cache();render()}
-  catch(e){console.warn(e);S.online=false;S.lastErr=String(e&&e.message||e).slice(0,120);if(/bad key/.test(e.message))S.badKey=true;render();
-    clearTimeout(S._retry);S._retry=setTimeout(()=>{if(S.online===false&&KEY)loadAll()},45000)}
+  catch(e){if(tok!==S._loadTok)return;console.warn(e);S.online=false;S.lastErr=CONN.lastErr||String(e&&e.message||e).slice(0,120);if(/bad key/.test(e&&e.message))S.badKey=true;render();
+    clearTimeout(S._retry);const d=[5,15,30,60,120][Math.min(CONN.fails-1,4)]||120;S._retry=setTimeout(()=>{if(S.online===false&&KEY&&!S._inflight)loadAll()},d*1000)}
+  finally{if(tok===S._loadTok)S._inflight=false}
+  if(tok!==S._loadTok)return;
   setSync();flush();flushUploads();
 }
 function setSync(){
@@ -911,6 +925,7 @@ function updateMeter(){
 }
 
 function viewMap(){
+  if(!CHILD&&KEY&&S.online!==true)return `<div class="ihead"><h2>${S.online===false?'⚠️ עוד לא הצלחנו להתחבר':'מתחברים…'}</h2><p>${S.online===false?'בפתיחה הראשונה צריך חיבור לשרת כדי לדעת של מי האפליקציה. מנסים שוב לבד כל כמה שניות.':'טוענים את האיים שלך.'}</p>${S.online===false?'<p><button class="syncbtn" data-act="retry">לנסות שוב עכשיו</button></p>':''}</div>`;
   const T=tracks();if(!T)return viewMapLegacy();
   updateAlerts();
   const W=360,H=T.length===2?330:470;const pos=T.length===2?[{x:240,y:240},{x:120,y:95}]:[{x:248,y:385},{x:110,y:235},{x:250,y:95}];
@@ -1746,6 +1761,7 @@ function viewParent(){
   const week=all.filter(x=>(Date.now()-new Date(x.date))/864e5<7).reduce((n,x)=>n+(x.minutes||0),0);
   return `<div class="ihead"><span class="eyebrow">Captain's Log</span><h2>יומן הורה</h2><p>דוח מלא נשלח במייל בכל ערב ב־20:00.</p></div>
   ${S.online===false?`<p class="maphint" style="text-align:start;color:#ffb4a2">⚠️ השרת לא ענה בפתיחה האחרונה: ${esc(S.lastErr||'')}</p>`:''}
+  <p class="maphint" style="text-align:start"><button class="syncbtn" data-act="conntest">🔌 בדיקת חיבור</button> <span id="conntest">${CONN.okAt?'חיבור אחרון תקין: '+new Date(CONN.okAt).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})+' ('+CONN.ch+')':''}</span></p>
   <p class="maphint" style="text-align:start">מצב הורה: מה שעושים בטלפון הזה לא נספר כתרגול שלה. הנתונים מתעדכנים מהטלפון שלה בכל פתיחה.</p>
   <section class="card">
     <h2>היום</h2>
@@ -1851,6 +1867,7 @@ document.addEventListener('click',e=>{
     case 'tab':{const t=el.dataset.tab;if(t==='map'&&S.tab==='map'){if(S.screen.name!=='map')navTo({act:'home'})}else{stopAll();S.tab=t;render();scrollTo({top:0})}break;}
     case 'home':navTo({act:'home'});break;
     case 'kid':switchChild(el.dataset.id);break;
+    case 'conntest':connTest();break;
     case 'retry':toast('מתחבר…');S.online=null;setSync();loadAll();break;
     case 'world':switchWorld(el.dataset.id);break;
     case 'ref':S.refTab=S.refTab||'letters';S.ref=true;render();break;
