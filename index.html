@@ -214,6 +214,7 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance
 .logrow .d{font-variant-numeric:tabular-nums;font-weight:700;color:var(--sea2);min-width:58px}
 .logrow .m{min-width:0;font-size:14px;color:var(--ink2)}
 .logrow .s{font-weight:700;font-variant-numeric:tabular-nums;text-align:end}
+.syncbtn{font:inherit;font-size:13px;font-weight:800;border:0;background:#e2553b;color:#fff;border-radius:999px;padding:2px 10px}
 .kidsw{display:flex;gap:4px;margin:2px 0}.kidsw button{font:inherit;font-size:13px;font-weight:800;border:1px solid var(--swell);background:transparent;color:var(--foam);border-radius:999px;padding:2px 12px}.kidsw button[aria-pressed="true"]{background:var(--brass);color:#1a1206;border-color:var(--brass)}
 .pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--chart2);color:var(--ink)}
 .pill.ok{background:var(--kelp2);color:var(--kelp)} .pill.warn{background:var(--redsoft);color:#a53a24}
@@ -427,7 +428,8 @@ let CHILD=LS.get('child','');
 let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-async function apiGet(){const r=await fetch(API+'?key='+encodeURIComponent(KEY)+(CHILD?'&c='+encodeURIComponent(CHILD):'')+(WORLD!=='en'?'&w='+encodeURIComponent(WORLD):''),{cache:'no-store'});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
+async function apiGet(){const ac=window.AbortController?new AbortController():null;const tm=ac&&setTimeout(()=>ac.abort(),30000);try{return await apiGet_(ac)}finally{clearTimeout(tm)}}
+async function apiGet_(ac){const r=await fetch(API+'?key='+encodeURIComponent(KEY)+(CHILD?'&c='+encodeURIComponent(CHILD):'')+(WORLD!=='en'?'&w='+encodeURIComponent(WORLD):'')+'&t='+Date.now(),{cache:'no-store',signal:ac?ac.signal:undefined});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
 async function apiPost(body){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,c:CHILD||undefined,w:WORLD!=='en'?WORLD:undefined,...body})});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
 
 /* outbox: latest version of each state doc, sent when online */
@@ -598,7 +600,7 @@ function applyProfile(){
 }
 function resetChildState(){Object.assign(S,{progress:{unlocked:1,best:{},xp:0},session:newSession(),sessions:[],classWords:[],zoom:[],lessons:[],pendingPhotos:0,scheduleState:null,transcripts:[],screen:{name:'map'},calDay:null,editLesson:null,shots:[]});_trk=null}
 function switchWorld(w){if(w===WORLD)return;WORLD=w;LS.set('world:'+(CHILD||'yuvik'),w);if(S.profile)S.profile={...S.profile,world:w};resetChildState();applyProfile();S.loaded=false;render();loadAll()}
-function switchChild(id){if(!isParent()||id===CHILD)return;CHILD=id;LS.set('child',id);WORLD=LS.get('world:'+id,'en');const ch=(S.children||[]).find(c=>c.id===id);if(ch){S.profile={...(S.profile||{}),child:id,name:ch.name,grade:ch.grade}}resetChildState();applyProfile();S.loaded=false;render();loadAll()}
+function switchChild(id){if(!isParent()||id===CHILD)return;CHILD=id;LS.set('child',id);WORLD='en';LS.set('world:'+id,'en');const ch=(S.children||[]).find(c=>c.id===id);S.profile={child:id,name:ch?ch.name:id,grade:ch?ch.grade:'',world:'en',worlds:[{id:'en',label:'אנגלית'}],features:{zoom:id==='yuvik',cal:true,camera:true,readtext:true}};LS.set('profile',S.profile);resetChildState();applyProfile();S.loaded=false;render();loadAll()}
 function setRole(r){
   r=r==='parent'?'parent':'child';
   if(r===S.role)return;
@@ -647,7 +649,8 @@ async function loadAll(){
       if(j.profile.world&&j.profile.world!==WORLD){WORLD=j.profile.world}
       if(was&&was!==CHILD)resetChildState();applyProfile()}
     applyState(j.state,true);cache();render()}
-  catch(e){console.warn(e);S.online=false;if(/bad key/.test(e.message))S.badKey=true;render()}
+  catch(e){console.warn(e);S.online=false;S.lastErr=String(e&&e.message||e).slice(0,120);if(/bad key/.test(e.message))S.badKey=true;render();
+    clearTimeout(S._retry);S._retry=setTimeout(()=>{if(S.online===false&&KEY)loadAll()},45000)}
   setSync();flush();flushUploads();
 }
 function setSync(){
@@ -655,9 +658,10 @@ function setSync(){
   const pend=Object.keys(outbox).length;
   if(S.badKey){d.className='sync off';t.textContent='קישור לא תקין';return}
   if(S.online===false&&!navigator.onLine){d.className='sync off';t.textContent='אין אינטרנט, שומר בטלפון';return}
+  if(S.online===false){d.className='sync off';t.innerHTML='<button class="syncbtn" data-act="retry">⚠️ אין חיבור לשרת · לנסות שוב</button>';return}
   if(pend||upBusy){d.className='sync wait';t.textContent='שומר בדרייב…';return}
   d.className='sync ok';t.textContent=isParent()?'הכל שמור · מצב הורה':'הכל שמור';
-  const ws=$('#worldSwitch');if(ws){const wl=S.profile&&S.profile.worlds&&S.profile.worlds.length>1?S.profile.worlds:null;ws.hidden=!wl;if(wl)ws.innerHTML=wl.map(x=>`<button data-act="world" data-id="${esc(x.id)}" aria-pressed="${x.id===WORLD}">${x.id==='ar'?'🏜️':'🌊'} ${esc(x.label)}</button>`).join('')+(LANG()==='ar'?'<button data-act="ref" class="refbtn">🔤 א־ב</button>':'')}
+  const ws=$('#worldSwitch');if(ws){const wl=S.profile&&S.profile.child===CHILD&&S.online!==false&&S.profile.worlds&&S.profile.worlds.length>1?S.profile.worlds:null;ws.hidden=!wl;if(wl)ws.innerHTML=wl.map(x=>`<button data-act="world" data-id="${esc(x.id)}" aria-pressed="${x.id===WORLD}">${x.id==='ar'?'🏜️':'🌊'} ${esc(x.label)}</button>`).join('')+(LANG()==='ar'?'<button data-act="ref" class="refbtn">🔤 א־ב</button>':'')}
   const sw=$('#kidSwitch');if(sw){const kids=isParent()&&S.children&&S.children.length>1?S.children:null;sw.hidden=!kids;if(kids)sw.innerHTML=kids.map(c=>`<button data-act="kid" data-id="${esc(c.id)}" aria-pressed="${c.id===CHILD}">${esc(c.name)}</button>`).join('')}
 }
 
@@ -1741,6 +1745,7 @@ function viewParent(){
   const all=[s,...S.sessions.filter(x=>x.date!==s.date)].slice(0,14);
   const week=all.filter(x=>(Date.now()-new Date(x.date))/864e5<7).reduce((n,x)=>n+(x.minutes||0),0);
   return `<div class="ihead"><span class="eyebrow">Captain's Log</span><h2>יומן הורה</h2><p>דוח מלא נשלח במייל בכל ערב ב־20:00.</p></div>
+  ${S.online===false?`<p class="maphint" style="text-align:start;color:#ffb4a2">⚠️ השרת לא ענה בפתיחה האחרונה: ${esc(S.lastErr||'')}</p>`:''}
   <p class="maphint" style="text-align:start">מצב הורה: מה שעושים בטלפון הזה לא נספר כתרגול שלה. הנתונים מתעדכנים מהטלפון שלה בכל פתיחה.</p>
   <section class="card">
     <h2>היום</h2>
@@ -1846,6 +1851,7 @@ document.addEventListener('click',e=>{
     case 'tab':{const t=el.dataset.tab;if(t==='map'&&S.tab==='map'){if(S.screen.name!=='map')navTo({act:'home'})}else{stopAll();S.tab=t;render();scrollTo({top:0})}break;}
     case 'home':navTo({act:'home'});break;
     case 'kid':switchChild(el.dataset.id);break;
+    case 'retry':toast('מתחבר…');S.online=null;setSync();loadAll();break;
     case 'world':switchWorld(el.dataset.id);break;
     case 'ref':S.refTab=S.refTab||'letters';S.ref=true;render();break;
     case 'refTab':S.refTab=el.dataset.id;render();break;
