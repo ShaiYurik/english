@@ -555,6 +555,10 @@ const ISLANDS=[
 ];
 const PAIRS=[['ship','sheep'],['live','leave'],['sit','seat'],['cap','cup'],['hat','hot'],['full','fool'],['walk','work'],['bed','bad'],['think','sink'],['very','berry'],['fill','feel'],['pen','pan']];
 const GOAL_MIN=30, SEG_MIN=5, MAX_REC_MIN=70;
+// היעד היומי: משימות (תחנות שהושלמו), לא דקות. תרגילים = כל השאלות בתחנות האלה
+const GOAL_T=()=>((S.profile&&S.profile.child)||CHILD)==='gil'?4:5;
+const tasksOf=s=>((s&&s.activities)||[]).length;
+const exOf=s=>((s&&s.activities)||[]).reduce((n,a)=>n+(a.total||0),0);
 
 /* ============ UTIL ============ */
 const $=s=>document.querySelector(s);
@@ -586,10 +590,12 @@ const LETTER_RE=()=>LANG()==='ar'?/[^\u0621-\u064A\u0660-\u0669]/g:/[^A-Za-z0-9'
 const plainW=w=>LANG()==='ar'?String(w).replace(/[\u064B-\u0652\u0640]/g,'').replace(/[^\u0621-\u064A]/g,''):String(w).toLowerCase();
 const spellable=w=>LANG()==='ar'?(()=>{const p=plainW(w);return p.length>=2&&p.length<=8&&!/\s/.test(String(w).trim())})():/^[a-z]{3,10}$/i.test(w);
 const THEME=()=>WORLD==='ar'?'desert':S.profile&&S.profile.child==='gil'?'tennis':'sea';
-const WORDS={sea:{day:'המסע היומי',done:'הגעת לנמל היום. ',goal:'הספינה מגיעה לנמל אחרי 30 דקות. ',newT:'אי חדש מחכה לך!',go:'להפליג ⛵',late:'יאללה ⛵',arch:'🏆 איים שכבשת',back:'חזרה למפה',win:'כבשת את האי!',full:'האי הושלם במלואו!',flags:'🏝️⚓🏝️',tab:'מפה',loading:'מכינים את הספינה…',waits:'מחכה לך',isl:'האי'},
-  desert:{day:'המסע במדבר',done:'הגעת לנווה המדבר היום! ',goal:'השיירה מגיעה לנווה המדבר אחרי 30 דקות. ',newT:'נווה מדבר חדש מחכה לך!',go:'לרכוב 🐪',late:'יאללה 🐪',arch:'🏆 נווי מדבר שכבשת',back:'חזרה למדבר',win:'כבשת את נווה המדבר!',full:'נווה המדבר הושלם במלואו!',flags:'🌴🐪🌴',tab:'מדבר',loading:'מעמיסים את הגמלים…',waits:'מחכה לך',isl:'נווה המדבר'},
-  tennis:{day:'האימון היומי',done:'סיימת את האימון היום! ',goal:'האימון היומי נגמר אחרי 30 דקות. ',newT:'מגרש חדש מחכה לך!',go:'לעלות למגרש 🎾',late:'יאללה 🎾',arch:'🏆 משחקים שניצחת',back:'חזרה למגרשים',win:'ניצחת במשחק!',full:'ניצחון מושלם! Game, set, match!',flags:'🎾🏆🎾',tab:'מגרשים',loading:'מכינים את המגרש…',waits:'מחכה לך',isl:'המגרש'}};
+const WORDS={sea:{day:'המסע היומי',done:'הגעת לנמל היום. ',goal:'הספינה מגיעה לנמל אחרי {G} משימות. ',newT:'אי חדש מחכה לך!',go:'להפליג ⛵',late:'יאללה ⛵',arch:'🏆 איים שכבשת',back:'חזרה למפה',win:'כבשת את האי!',full:'האי הושלם במלואו!',flags:'🏝️⚓🏝️',tab:'מפה',loading:'מכינים את הספינה…',waits:'מחכה לך',isl:'האי'},
+  desert:{day:'המסע במדבר',done:'הגעת לנווה המדבר היום! ',goal:'השיירה מגיעה לנווה המדבר אחרי {G} משימות. ',newT:'נווה מדבר חדש מחכה לך!',go:'לרכוב 🐪',late:'יאללה 🐪',arch:'🏆 נווי מדבר שכבשת',back:'חזרה למדבר',win:'כבשת את נווה המדבר!',full:'נווה המדבר הושלם במלואו!',flags:'🌴🐪🌴',tab:'מדבר',loading:'מעמיסים את הגמלים…',waits:'מחכה לך',isl:'נווה המדבר'},
+  tennis:{day:'האימון היומי',done:'סיימת את האימון היום! ',goal:'האימון היומי נגמר אחרי {G} משימות. ',newT:'מגרש חדש מחכה לך!',go:'לעלות למגרש 🎾',late:'יאללה 🎾',arch:'🏆 משחקים שניצחת',back:'חזרה למגרשים',win:'ניצחת במשחק!',full:'ניצחון מושלם! Game, set, match!',flags:'🎾🏆🎾',tab:'מגרשים',loading:'מכינים את המגרש…',waits:'מחכה לך',isl:'המגרש'}};
 const TW=k=>WORDS[THEME()][k];
+const EBW={sea:{log:"Ship's Log",radio:'Radio Room',hunt:'Treasure Hunt',cap:"Captain's Log",anc:'⚓'},tennis:{log:'Match Schedule',radio:'Commentary Box',hunt:'Ball Hunt',cap:"Coach's Notes",anc:'🎾'},desert:{log:'Caravan Log',radio:'Radio Tent',hunt:'Treasure Hunt',cap:"Caravan Master's Log",anc:'🐪'}};
+const EB=k=>(EBW[THEME()]||EBW.sea)[k];
 const feat=k=>!S.profile||!S.profile.features||S.profile.features[k]!==false;
 const kidName=()=>S.profile?S.profile.name:'יוביק';
 function applyProfile(){
@@ -690,7 +696,6 @@ setInterval(()=>{
   const m=Math.floor(S.activeSec/60);
   if(m!==S.session.minutes){
     S.session.minutes=m;saveSession();
-    if(m===GOAL_MIN){sfx.win();toast('הגעת לנמל! 30 דקות של מסע היום')}
     updateMeter();
   }
 },1000);
@@ -803,15 +808,24 @@ function tracks(){
     const done=list.filter(isDone);const started=list.filter(i=>i!==active&&!isDone(i)&&S.progress.best[i.id]);
     const queue=list.filter(i=>i!==active&&!isDone(i)&&!S.progress.best[i.id]);
     return {...t,active,done,started,queue,none:list.length?t.none:t.empty}});
+  if(classSlots()>1){const ci=_trk.findIndex(t=>t.k==='class');if(ci>=0){const c=_trk[ci];const open=lists.class.filter(i=>!isDone(i));const a2=open[1]||null,rest=open.slice(2);
+    const L1={...c,queue:rest.filter(i=>!S.progress.best[i.id]),started:rest.filter(i=>S.progress.best[i.id])};
+    const L2={...c,lane:2,active:a2,done:[],started:[],queue:[],none:'מגרש נוסף ייפתח כשיעלה עוד חומר'};
+    _trk.splice(ci,1,L1,L2);_trk=_trk.filter(t=>t.k!=='unseen'||lists.unseen.length)}
+    // גיל: כשאין אי חדש, האי האחרון שנכבש נשאר פתוח לתרגול חוזר
+    const used=new Set(_trk.map(t=>t.active&&t.active.id).filter(Boolean));
+    const back=lists.class.filter(isDone).slice().reverse().filter(i=>!used.has(i.id));
+    _trk=_trk.map(t=>{if(t.k!=='class'||t.active||!back.length)return t;const r=back.shift();return {...t,active:r,replay:true,none:t.none}})}
   return _trk;
 }
+const classSlots=()=>((S.profile&&S.profile.child)||CHILD)==='gil'?2:1;
 const activeIds=()=>{const T=tracks();return T?T.filter(t=>t.active).map(t=>t.active.id):[]};
 const daysSince=d=>d?Math.max(0,Math.round((new Date(today())-new Date(d))/864e5)):0;
 function waitInfo(i){const p=S.progress;const since=(p.activeSince||{})[i.id];const touch=(p.touch||{})[i.id];const last=[since,touch].filter(Boolean).sort().pop();return {days:daysSince(last),touched:!!(touch||p.best[i.id])}}
 function updateAlerts(){
   if(isParent())return;const T=tracks();if(!T)return;const p=S.progress;p.activeSince=p.activeSince||{};let ch=false;
-  T.forEach(t=>{if(t.active&&!p.activeSince[t.active.id]){p.activeSince[t.active.id]=today();ch=true}});
-  const alerts=T.filter(t=>t.active).map(t=>{const w=waitInfo(t.active);return w.days>=2?{track:t.t,ic:t.ic,name:t.active.name,days:w.days,kind:w.touched?'stuck':'untouched'}:null}).filter(Boolean);
+  T.forEach(t=>{if(t.active&&!t.replay&&!p.activeSince[t.active.id]){p.activeSince[t.active.id]=today();ch=true}});
+  const alerts=T.filter(t=>t.active&&!t.replay).map(t=>{const w=waitInfo(t.active);return w.days>=2?{track:t.t,ic:t.ic,name:t.active.name,days:w.days,kind:w.touched?'stuck':'untouched'}:null}).filter(Boolean);
   if(JSON.stringify(alerts)!==JSON.stringify(p.alerts||[])){p.alerts=alerts;ch=true}
   if(ch)saveState('progress');
 }
@@ -908,20 +922,20 @@ function examHTML(){
   return `<div class="exam">${THEME()==='desert'?'🧭':'🧭'} ${days===0?`<b>היום</b> מבחן ב${subj}. בהצלחה!`:`מבחן ב${subj} בעוד <b>${days}</b> ימים (${d}.${m})`}</div>`;
 }
 function streakDays(){
-  const set=new Set(S.sessions.filter(s=>(s.minutes||0)>=10).map(s=>s.date));
-  if((S.session.minutes||0)>=10)set.add(today());
+  const set=new Set(S.sessions.filter(s=>tasksOf(s)>=1).map(s=>s.date));
+  if(tasksOf(S.session)>=1)set.add(today());
   let n=0;const d=new Date();if(!set.has(today()))d.setDate(d.getDate()-1);
   while(set.has(ymd(d))){n++;d.setDate(d.getDate()-1)}
   return n;
 }
 function updateMeter(){
   const n=$('#mNum');if(!n)return;
-  const m=Math.min(S.session.minutes||0,GOAL_MIN);const pct=m/GOAL_MIN*100;
-  n.textContent=`${S.session.minutes||0} / ${GOAL_MIN} דק׳`;
+  const G=GOAL_T(),tk=tasksOf(S.session),ex=exOf(S.session);const pct=Math.min(tk,G)/G*100;
+  n.textContent=`${tk} מתוך ${G} משימות`+(ex?` · ${ex} תרגילים`:'');
   $('#mDone').style.width=pct+'%';
   $('#mShip').style.right=`calc(${pct}% - ${pct/100*30}px)`;
   const st=streakDays();
-  $('#mStreak').textContent=(m>=GOAL_MIN?TW('done'):TW('goal'))+(st?`רצף: ${st} ימים`:'');
+  $('#mStreak').textContent=(tk>=G?TW('done'):TW('goal').replace('{G}',G))+(st?`רצף: ${st} ימים`:'');
 }
 
 function viewMap(){
@@ -948,10 +962,10 @@ function viewMap(){
       ${late?`<text x="-46" y="-16" font-size="18">⏰</text>`:''}
       <text x="0" y="46" text-anchor="middle" font-family="Secular One, Assistant" font-size="15" fill="${ds?'#3a2414':'#eef2ea'}">${esc(i.name)}</text>
       <g transform="translate(-27,54)">${[0,1,2].map(n=>`<path transform="translate(${n*18},0) scale(.62)" d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" fill="${n<st?'#d6a64a':'#2a5878'}"/>`).join('')}</g>
-      ${t.queue.length?`<text x="0" y="84" text-anchor="middle" font-family="Assistant" font-size="11" fill="#86a2b6">עוד ${t.queue.length} בתור</text>`:''}
+      ${t.queue.length?`<text x="0" y="84" text-anchor="middle" font-family="Assistant" font-size="11" fill="#86a2b6">עוד ${t.queue.length} בתור</text>`:t.replay?`<text x="0" y="84" text-anchor="middle" font-family="Assistant" font-size="11" fill="#86a2b6">🏆 לתרגול חוזר עד שיעלה חדש</text>`:''}
     </g>`}).join('');
   const nw=T.map(t=>t.active).filter(i=>i&&isNewIsland(i)).sort((a,b)=>String(b.created||'').localeCompare(String(a.created||'')))[0];
-  const lateT=T.filter(t=>t.active&&!isNewIsland(t.active)&&waitInfo(t.active).days>=2).sort((a,b)=>waitInfo(b.active).days-waitInfo(a.active).days)[0];
+  const lateT=T.filter(t=>t.active&&!t.replay&&!isNewIsland(t.active)&&waitInfo(t.active).days>=2).sort((a,b)=>waitInfo(b.active).days-waitInfo(a.active).days)[0];
   const banner=nw?`<button class="newbanner" data-act="island" data-id="${esc(nw.id)}"><span class="gift">🎁</span><span>${TW('newT')}<small>${trackLabel(nw)} · ${esc(nw.name)}</small></span><span class="go">${TW('go')}</span></button>`
     :lateT?`<button class="newbanner late" data-act="island" data-id="${esc(lateT.active.id)}"><span class="gift">⏰</span><span>${TW('isl')} "${esc(lateT.active.name)}" מחכה לך כבר ${waitInfo(lateT.active).days} ימים<small>${lateT.ic} ${lateT.t} · כמה דקות וממשיכים</small></span><span class="go">${TW('late')}</span></button>`:'';
   const arch=T.filter(t=>!t.fixed).flatMap(t=>[...t.started,...t.done].map(i=>({i,t}))).filter(x=>x.i.id!==(x.t.active||{}).id);
@@ -979,7 +993,7 @@ function viewMap(){
       ${nodes}
     </svg></section>
     ${archive}
-    <p class="maphint">${T.some(t=>t.active||t.done.length)?'בכל מסלול יש אי אחד פעיל. כשכובשים אותו (70% ברוב התחנות) נפתח הבא בתור.':'עוד אין איים. כשאבא יעלה חומר מהכיתה, האי הראשון יופיע כאן.'}</p>`;
+    <p class="maphint">${T.some(t=>t.active||t.done.length)?(classSlots()>1?'אפשר לשחק בשני מגרשים במקביל. כשמנצחים באחד':'בכל מסלול יש אי אחד פעיל. כשכובשים אותו')+' (70% ברוב התחנות) נפתח הבא בתור.':'עוד אין איים. כשאבא יעלה חומר מהכיתה, האי הראשון יופיע כאן.'}</p>`;
 }
 function trackLabel(i){const t=TRACKS.find(x=>x.k===trackOf(i));return t?t.ic+' '+t.t:''}
 function viewMapLegacy(){
@@ -1146,6 +1160,7 @@ function finishActivity(kind,title,correct,total,missed,extra){
   _trk=null;const activeBefore=activeIds();
   const ratioBefore=islandRatio(i);
   S.session.activities.push({kind,island:id,islandName:i.name,title,correct,total,at:Date.now()});
+  if(tasksOf(S.session)===GOAL_T()){setTimeout(()=>{sfx.win();toast(TW('done')+GOAL_T()+' משימות היום 🎉')},900)}
   if(missed&&missed.length)S.session.missed=[...new Set([...S.session.missed,...missed])].slice(-60);
   saveSession();
   const b=S.progress.best[id]||(S.progress.best[id]={});
@@ -1508,7 +1523,7 @@ const isEng=x=>x&&/אנגלית|english/i.test(x.s||x.subject||'');
 function curLessonIdx(times){const n=new Date();const hm=hhmm(n);return times.findIndex(t=>hm>=t.from&&hm<=t.to)}
 function viewCal(){
   const sc=getSchedule();const par=isParent();
-  if(!sc)return `<div class="ihead"><span class="eyebrow">Ship's Log</span><h2>לוח</h2><p>עוד אין מערכת שעות. צלמו אותה ונעדכן.</p></div>${calPhotoHTML()}`;
+  if(!sc)return `<div class="ihead"><span class="eyebrow">${EB('log')}</span><h2>לוח</h2><p>עוד אין מערכת שעות. צלמו אותה ונעדכן.</p></div>${calPhotoHTML()}`;
   const todayIdx=new Date().getDay();const di=S.calDay!=null?S.calDay:(todayIdx<=4?todayIdx:0);
   const day=sc.days[di]||{d:DAY_NAMES[di],l:[]};const times=sc.times||[];
   const ci=di===todayIdx?curLessonIdx(times):-1;
@@ -1517,15 +1532,15 @@ function viewCal(){
   const tomorrow=(todayIdx+1)%7;const tmr=sc.days[tomorrow];const engTmr=tmr&&tmr.l.some(isEng);
   const exRow=e=>{const n=daysUntil(e.date);const [y,m,d]=e.date.split('-').map(Number);
     return `<div class="exrow ${isEng(e)?'eng':''} ${n<0?'past':''}"><span class="exd"><b>${d}.${m}</b><small>${dayName(e.date)}</small></span><span class="exs">${esc(e.subject)}${e.note?`<small>${esc(e.note)}</small>`:''}</span><span class="exn">${n<0?'עבר':n===0?'היום!':n===1?'מחר':`בעוד ${n} ימים`}</span>${par?`<button class="xbtn" data-act="exDel" data-id="${esc(e.id)}" aria-label="מחק">${I.x}</button>`:''}</div>`};
-  return `<div class="ihead"><span class="eyebrow">Ship's Log</span><h2>לוח</h2><p>${sc.class?`כיתה ${esc(sc.class)} · `:''}עודכן ${fmtDate((sc.updated||'').slice(0,10))}</p></div>
+  return `<div class="ihead"><span class="eyebrow">${EB('log')}</span><h2>לוח</h2><p>${sc.class?`כיתה ${esc(sc.class)} · `:''}עודכן ${fmtDate((sc.updated||'').slice(0,10))}</p></div>
   ${nx?`<section class="nextex ${isEng(nx)?'eng':''}"><span>המבחן הבא</span><b>${esc(nx.subject)}</b><span>יום ${dayName(nx.date)} ${fmtDate(nx.date)} · ${daysUntil(nx.date)===0?'היום!':daysUntil(nx.date)===1?'מחר':'בעוד '+daysUntil(nx.date)+' ימים'}</span></section>`:''}
-  ${engTmr&&!isParent()?`<p class="maphint">⚓ מחר יש אנגלית. זה זמן טוב לעבור על המילים של האי האחרון.</p>`:''}
+  ${engTmr&&!isParent()?`<p class="maphint">${EB('anc')} מחר יש אנגלית. זה זמן טוב לעבור על המילים של ${TW('isl')} האחרון.</p>`:''}
   <section class="card">
     <h2>מערכת שעות</h2>
     <div class="daychips">${sc.days.map((d,k)=>`<button class="dchip ${k===di?'on':''} ${k===todayIdx?'today':''}" data-act="calDay" data-k="${k}">${esc(d.d)}</button>`).join('')}</div>
     <div class="ttable">${times.map((t,k)=>{const l=day.l[k];const ed=par&&S.editLesson===k;
       if(ed)return `<form class="f lform" data-form="lesson" data-k="${k}"><div class="lt"><b>${t.n}</b><small>${t.from}–${t.to}</small></div><div class="two"><label>מקצוע<input id="lsS" value="${esc(l?l.s:'')}"></label><label>מורה<input id="lsT" value="${esc(l?l.t:'')}"></label></div><label>חדר<input id="lsR" value="${esc(l?l.r:'')}"></label><div class="btns"><button class="btn brass small" type="submit">שמור</button><button class="btn ghost small" type="button" data-act="lsCancel">ביטול</button></div></form>`;
-      return `<div class="lrow ${l?'':'free'} ${isEng(l)?'eng':''} ${k===ci?'now':''}" ${par?`data-act="lsEdit" data-k="${k}"`:''}><div class="lt"><b>${t.n}</b><small>${t.from}–${t.to}</small></div><div class="ls">${l?`<b>${esc(l.s)}</b><small>${esc([l.t,l.r&&('חדר '+l.r)].filter(Boolean).join(' · '))}</small>`:'<small>אין שיעור</small>'}</div>${isEng(l)?'<span class="eb">⚓</span>':''}${k===ci?'<span class="nowb">עכשיו</span>':''}</div>`}).join('')}</div>
+      return `<div class="lrow ${l?'':'free'} ${isEng(l)?'eng':''} ${k===ci?'now':''}" ${par?`data-act="lsEdit" data-k="${k}"`:''}><div class="lt"><b>${t.n}</b><small>${t.from}–${t.to}</small></div><div class="ls">${l?`<b>${esc(l.s)}</b><small>${esc([l.t,l.r&&('חדר '+l.r)].filter(Boolean).join(' · '))}</small>`:'<small>אין שיעור</small>'}</div>${isEng(l)?`<span class="eb">${EB('anc')}</span>`:''}${k===ci?'<span class="nowb">עכשיו</span>':''}</div>`}).join('')}</div>
     ${par?'<p class="sub">לחיצה על שיעור פותחת עריכה.</p>':''}
   </section>
   <section class="card">
@@ -1622,7 +1637,7 @@ addEventListener('beforeunload',e=>{if(REC.rec){e.preventDefault();e.returnValue
 function viewZoom(){
   if(REC.rec){
     const z=S.zoom.find(x=>x.id===REC.zoomId)||{};
-    return `<div class="ihead"><span class="eyebrow">Radio Room</span><h2>מקליטים שיעור</h2><p>${esc(z.teacher?'שיעור עם '+z.teacher:'שיעור זום')} · ${fmtDate(z.date||today())}</p></div>
+    return `<div class="ihead"><span class="eyebrow">${EB('radio')}</span><h2>מקליטים שיעור</h2><p>${esc(z.teacher?'שיעור עם '+z.teacher:'שיעור זום')} · ${fmtDate(z.date||today())}</p></div>
     <section class="recpanel" aria-live="polite">
       <div class="recdot">${I.mic.replace('stroke="currentColor"','stroke="#fff"')}</div>
       <div class="rectime" id="recTime">00:00</div>
@@ -1643,7 +1658,7 @@ function viewZoom(){
     ${z.done?(z.notes?'':`<form class="f" data-form="znotes" data-id="${esc(z.id)}"><label>מה למדנו בשיעור?<input id="zn-${esc(z.id)}" autocomplete="off" placeholder="דיברנו על תחביבים, מילים חדשות…"></label><button class="btn ghost small" type="submit">שמור</button></form>`)
       :`<div class="btns"><button class="btn red small" data-act="recStart" data-id="${esc(z.id)}">${I.mic} התחל הקלטה</button><button class="btn ghost small" data-act="delZoom" data-id="${esc(z.id)}">מחק</button></div>`}
   </div>`;
-  return `<div class="ihead"><span class="eyebrow">Radio Room</span><h2>שיעורי זום</h2><p>בתחילת השיעור לוחצים "התחל הקלטה". ההקלטה נשמרת בדרייב כל 5 דקות.</p></div>
+  return `<div class="ihead"><span class="eyebrow">${EB('radio')}</span><h2>שיעורי זום</h2><p>בתחילת השיעור לוחצים "התחל הקלטה". ההקלטה נשמרת בדרייב כל 5 דקות.</p></div>
   ${pendRec?`<p class="maphint">${pendRec} חלקי הקלטה מחכים להעלאה. הם יעלו כשיהיה אינטרנט.</p>`:''}
   <section class="card"><h2>הבאים</h2>${up.length?up.map(item).join(''):'<div class="empty">אין שיעור מתוכנן.</div>'}
     <button class="btn red" data-act="recStart" data-id="">${I.mic} הקלטת שיעור עכשיו</button></section>
@@ -1709,7 +1724,7 @@ function zoomMeta(selId){const v=($('#'+selId)||{}).value||'';
 function viewCamera(){
   const fresh=S.shots.filter(s=>s.status==='new');
   const label={new:'חדש',wait:'ממתין',up:'עולה…',ok:'נשמר',err:'ינסה שוב'};
-  return `<div class="ihead"><span class="eyebrow">Treasure Hunt</span><h2>צילום חומר</h2><p>מצלמים דף עבודה, מילים מהלוח או טקסט מהספר, והחומר הופך לאי חדש במפה.</p></div>
+  return `<div class="ihead"><span class="eyebrow">${EB('hunt')}</span><h2>צילום חומר</h2><p>מצלמים דף עבודה, מילים מהלוח או טקסט מהספר, והחומר הופך לאי חדש במפה.</p></div>
   <div class="shoot">
     <label class="main" for="camIn">${I.camera}צלם עכשיו<input id="camIn" type="file" accept="image/*" capture="environment"></label>
     <label for="galIn">${I.gallery}בחר מהגלריה<input id="galIn" type="file" accept="image/*" multiple></label>
@@ -1738,7 +1753,7 @@ function viewCamera(){
 function sessSummary(s){const acts=s.activities||[];const q=acts.filter(a=>a.total&&a.kind!=='read');const c=q.reduce((n,a)=>n+a.correct,0),t=q.reduce((n,a)=>n+a.total,0);return {acts,pct:t?Math.round(c/t*100):null}}
 function buildReport(){
   const s=S.session;const {acts,pct}=sessSummary(s);
-  const lines=[`דוח יומי · האפליקציה של יוביק · ${fmtDate(s.date)}`,`זמן תרגול: ${s.minutes} מתוך ${GOAL_MIN} דקות`];
+  const lines=[`דוח יומי · האפליקציה של יוביק · ${fmtDate(s.date)}`,`משימות היום: ${tasksOf(s)} מתוך ${GOAL_T()} (${exOf(s)} תרגילים)`];
   if(pct!=null)lines.push(`הצלחה בתרגילים: ${pct}%`);
   if(s.readOk+s.readHelp)lines.push(`קריאה בקול: ${s.readOk} משפטים לבד, ${s.readHelp} עם עזרה`);
   if(acts.length){lines.push('','מה נעשה:');acts.forEach(a=>lines.push(`• ${a.islandName} · ${a.title}${a.total&&a.kind!=='read'?` · ${a.correct}/${a.total}`:''}`))}
@@ -1758,18 +1773,18 @@ function tracksParentHTML(){const T=tracks();if(!T)return '';const al=S.progress
 function viewParent(){
   const s=S.session;const {pct}=sessSummary(s);
   const all=[s,...S.sessions.filter(x=>x.date!==s.date)].slice(0,14);
-  const week=all.filter(x=>(Date.now()-new Date(x.date))/864e5<7).reduce((n,x)=>n+(x.minutes||0),0);
-  return `<div class="ihead"><span class="eyebrow">Captain's Log</span><h2>יומן הורה</h2><p>דוח מלא נשלח במייל בכל ערב ב־20:00.</p></div>
+  const week=all.filter(x=>(Date.now()-new Date(x.date))/864e5<7).reduce((n,x)=>n+tasksOf(x),0);
+  return `<div class="ihead"><span class="eyebrow">${EB('cap')}</span><h2>יומן הורה</h2><p>דוח מלא נשלח במייל בכל ערב ב־20:00.</p></div>
   ${S.online===false?`<p class="maphint" style="text-align:start;color:#ffb4a2">⚠️ השרת לא ענה בפתיחה האחרונה: ${esc(S.lastErr||'')}</p>`:''}
   <p class="maphint" style="text-align:start"><button class="syncbtn" data-act="conntest">🔌 בדיקת חיבור</button> <span id="conntest">${CONN.okAt?'חיבור אחרון תקין: '+new Date(CONN.okAt).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})+' ('+CONN.ch+')':''}</span></p>
   <p class="maphint" style="text-align:start">מצב הורה: מה שעושים בטלפון הזה לא נספר כתרגול שלה. הנתונים מתעדכנים מהטלפון שלה בכל פתיחה.</p>
   <section class="card">
     <h2>היום</h2>
     <div class="stats">
-      <div class="stat"><b>${s.minutes}<small style="font-size:14px"> / ${GOAL_MIN}</small></b><span>דקות תרגול</span></div>
+      <div class="stat"><b>${tasksOf(s)}<small style="font-size:14px"> / ${GOAL_T()}</small></b><span>משימות היום · ${exOf(s)} תרגילים</span></div>
       <div class="stat"><b>${pct==null?'—':pct+'%'}</b><span>הצלחה בתרגילים</span></div>
       <div class="stat"><b>${s.readOk}/${s.readOk+s.readHelp}</b><span>משפטים שקרא לבד</span></div>
-      <div class="stat"><b>${week}</b><span>דקות בשבוע האחרון</span></div>
+      <div class="stat"><b>${week}</b><span>משימות בשבוע האחרון</span></div>
     </div>
     ${s.missed.length?`<div><p class="sub">מילים לחזרה היום</p><div class="chips" style="justify-content:flex-start">${s.missed.slice(-16).map(m=>`<span class="chip">${esc(m)}</span>`).join('')}</div></div>`:''}
     <div class="report" id="rep">${esc(buildReport())}</div>
@@ -1783,7 +1798,7 @@ function viewParent(){
   </section>`:''}
   <section class="card">
     <h2>יומן מסעות</h2>
-    <div class="log">${all.map(x=>{const sm=sessSummary(x);const ok=(x.minutes||0)>=GOAL_MIN;return `<div class="logrow"><span class="d">${dayName(x.date)} ${fmtDate(x.date)}</span><span class="m">${sm.acts.length?sm.acts.map(a=>esc(a.title)).slice(0,4).join(' · '):'לא תורגל'}${x.missed&&x.missed.length?`<br>לחזרה: <span class="en">${esc(x.missed.slice(-5).join(', '))}</span>`:''}</span><span class="s"><span class="pill ${ok?'ok':(x.minutes||0)<10?'warn':''}">${x.minutes||0} דק׳</span>${sm.pct!=null?`<br><small>${sm.pct}%</small>`:''}</span></div>`}).join('')}</div>
+    <div class="log">${all.map(x=>{const sm=sessSummary(x);const ok=tasksOf(x)>=GOAL_T();return `<div class="logrow"><span class="d">${dayName(x.date)} ${fmtDate(x.date)}</span><span class="m">${sm.acts.length?sm.acts.map(a=>esc(a.title)).slice(0,4).join(' · '):'לא תורגל'}${x.missed&&x.missed.length?`<br>לחזרה: <span class="en">${esc(x.missed.slice(-5).join(', '))}</span>`:''}</span><span class="s"><span class="pill ${ok?'ok':!tasksOf(x)?'warn':''}">${tasksOf(x)} משימות</span>${sm.pct!=null?`<br><small>${sm.pct}%</small>`:''}</span></div>`}).join('')}</div>
   </section>
   <section class="card">
     <h2>מילים מהכיתה</h2>
