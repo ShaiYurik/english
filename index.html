@@ -1204,7 +1204,8 @@ function buildGame(i,n){
     let items;
     if(g.kind==='mc')items=g.items.map(it=>({q:it.q,o:it.o,a:Array.isArray(it.a)?it.a:[it.a],why:it.why,say:it.q}));
     else if(g.kind==='fill')items=shuffle(g.items).map(it=>({q:it.t,gap:true,o:shuffle(it.o),a:null,ans:it.a,say:it.t.replace('___',it.a)}));
-    else if(g.kind==='odd')items=shuffle(g.items).map(it=>({q:'איזו מילה לא שייכת?',o:shuffle(it.o),ans:it.a}));
+    else if(g.kind==='odd'){const tr={};[...(i.words||[]),...WORDS_ALL()].forEach(w=>{if(w&&w.en&&w.he&&!tr[w.en.toLowerCase()])tr[w.en.toLowerCase()]=w.he});
+      items=shuffle(g.items).map(it=>({q:'איזו מילה לא שייכת?',o:shuffle(it.o),ans:it.a,why:it.why,odd:true,tr:it.o.map(w=>tr[String(w).toLowerCase()]?`${w} = ${tr[String(w).toLowerCase()]}`:'').filter(Boolean).join(' · ')}))}
     else{const all=g.items.map(x=>x[1]);items=shuffle(g.items).map(([e,w])=>({pic:e,q:'מה בתמונה?',o:shuffle([w,...shuffle(all.filter(x=>x!==w)).slice(0,3)]),ans:w,say:w}))}
     items.forEach(it=>{if(it.ans!=null)it.a=[it.o.indexOf(it.ans)]});
     return {name:'game',kind:'mc',id:i.id,n,title:g.title,items,idx:0,correct:0,picked:[],answered:false,missed:[]};
@@ -1219,6 +1220,10 @@ function gameHead(sc,i,total,idx){
   <section class="card"><div class="qtop"><span>${esc(sc.title||'')}</span><span>${Math.min(idx+1,total)} / ${total} · ${sc.correct||0} נכונות</span></div>
   <div class="bar"><i style="width:${idx/total*100}%"></i></div>`;
 }
+function WORDS_ALL(){try{return allIslands().flatMap(x=>x.words||[])}catch(e){return []}}
+function oddFeedback(q,sc){const pk=q.o[sc.picked[0]];
+  const head=sc.wasOk?'נכון! ':`בחרת <span class="en">${esc(pk)}</span>, אבל היא כן שייכת לקבוצה. המילה שלא שייכת היא <span class="en">${esc(q.ans)}</span>. `;
+  return head+(q.why?`<br><span class="sub">${esc(q.why)}</span>`:'')+(q.tr?`<br><span class="sub" dir="ltr" style="display:inline-block">${esc(q.tr)}</span>`:'')}
 function viewGame(){
   const sc=S.screen;const i=islandById(sc.id);
   if(sc.kind==='mc'){
@@ -1229,7 +1234,7 @@ function viewGame(){
     ${multi&&!sc.answered?'<p class="sub">יש כאן שתי תשובות נכונות. בחרי שתיים.</p>':''}
     ${q.say&&!q.gap&&!q.pic?`<div><button class="btn ghost small" data-act="say" data-text="${esc(q.say)}">${I.speaker} השמע</button></div>`:''}
     <div class="opts">${q.o.map((o,k)=>{let cls='opt'+(isLatin(o)?' en':'');if(sc.answered){if(q.a.includes(k))cls+=' ok';else if(sc.picked.includes(k))cls+=' bad'}else if(sc.picked.includes(k))cls+=' sel';return `<button class="${cls}" data-act="gAns" data-k="${k}" ${sc.answered?'disabled':''}>${esc(o)}</button>`}).join('')}</div>
-    <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?(sc.wasOk?'נכון!':'כמעט.')+(q.why&&!sc.wasOk?` <span class="sub">${esc(q.why)}</span>`:''):''}</div>
+    <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?(q.odd?oddFeedback(q,sc):(sc.wasOk?'נכון!':'כמעט.')+(q.why&&!sc.wasOk?` <span class="sub">${esc(q.why)}</span>`:'')):''}</div>
     ${sc.answered?`<div class="btns">${q.say?`<button class="btn ghost small" data-act="say" data-text="${esc(q.say)}">${I.speaker} השמע</button>`:''}<button class="btn brass" data-act="gNext">${sc.idx===sc.items.length-1?'לתוצאות':'הבאה'}</button></div>`:''}
     </section>`;
   }
@@ -1256,9 +1261,9 @@ function viewGame(){
   }
   if(sc.kind==='pairs'){
     return `<button class="back" data-act="island" data-id="${esc(sc.id)}">${I.back} ${esc(i.name)}</button>
-    <section class="card"><div class="qtop"><span>${esc(sc.title)}</span><span>${sc.found} / ${sc.total} זוגות · ${sc.mistakes} טעויות</span></div>
-    <p class="sub">הופכים שני קלפים. מוצאים מילה וההפך שלה.</p>
-    <div class="memo">${sc.cards.map(c=>`<button class="mcard ${c.open||c.done?'open':''} ${c.done?'done':''}" data-act="memo" data-k="${c.k}" ${c.done?'disabled':''}>${c.open||c.done?`<span class="en">${esc(c.t)}</span>`:'<span class="back-face">⚓</span>'}</button>`).join('')}</div>
+    <section class="card"><div class="qtop"><span>${esc(sc.title)}</span><span>${sc.found} / ${sc.total} זוגות</span></div>
+    <p class="sub">הופכים שני קלפים ומחפשים זוג שמתאים. אין פה טעויות, רק מנסים עד שמוצאים הכל.</p>
+    <div class="memo">${sc.cards.map(c=>`<button class="mcard ${c.open||c.done?'open':''} ${c.done?'done':''}" data-act="memo" data-k="${c.k}" ${c.done?'disabled':''}>${c.open||c.done?`<span class="en">${esc(c.t)}</span>`:`<span class="back-face">${EB('anc')}</span>`}</button>`).join('')}</div>
     </section>`;
   }
   if(sc.kind==='order'){
@@ -1839,7 +1844,7 @@ document.addEventListener('click',e=>{
       if(sc.first==null){sc.first=c.k;render();break}
       const f=sc.cards[sc.first];sc.first=null;
       if(f.p===c.p){f.done=c.done=true;sc.found++;setTimeout(()=>sfx.ok(),250);render();
-        if(sc.found===sc.total)setTimeout(()=>gameDone(sc,sc.total,sc.total+sc.mistakes,[]),900)}
+        if(sc.found===sc.total)setTimeout(()=>gameDone(sc,sc.total,sc.total,[]),900)}
       else{sc.mistakes++;sc.lock=true;render();setTimeout(()=>{f.open=c.open=false;sc.lock=false;if(S.screen===sc)render()},1000)}
       break;}
     case 'ordTap':{const k=+el.dataset.k;if(k===sc.next){sc.next++;sfx.ok();sc.flash=null}else{sc.err++;sfx.bad();sc.flash=k;setTimeout(()=>{if(S.screen===sc){sc.flash=null;render()}},600)}
