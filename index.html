@@ -285,6 +285,14 @@ textarea.paste{width:100%;min-height:80px;border-radius:12px;border:1px solid va
 .mcard.open{background:#fff;color:var(--ink);border:2px solid var(--chart2);transform:rotateY(0)}
 .mcard.done{background:var(--kelp2);border-color:var(--kelp)}
 .mcard .en{overflow-wrap:anywhere}
+.mrun{display:inline-flex;align-items:center;gap:6px;direction:ltr;unicode-bidi:isolate;white-space:nowrap;vertical-align:middle}
+.mx{display:inline-flex;align-items:center;gap:5px;direction:ltr;vertical-align:middle;font-family:Assistant,sans-serif}
+.mx b{font-size:1.25em}
+.fr{display:inline-flex;flex-direction:column;align-items:center;line-height:1.1;font-weight:700}
+.fr i{font-style:normal;padding:0 4px}
+.fr i:first-child{border-bottom:2px solid currentColor}
+.prompt .mrun{font-size:1.5em}
+.howto p{margin:6px 0}
 .olist{display:grid;gap:8px}
 .ordr{display:flex;gap:10px;align-items:flex-start;font-size:22px}
 .ordr .num{flex:0 0 26px;height:26px;border-radius:50%;background:var(--chart2);display:grid;place-items:center;font-family:var(--f-body);font-size:14px}
@@ -428,21 +436,22 @@ addEventListener('hashchange',()=>{if(readKey()){S.badKey=false;loadAll()}});
 
 let CHILD=LS.get('child','');
 let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
+const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
 const CONN={fails:0,okAt:0,ch:'',lastErr:''};const zz=ms=>new Promise(r=>setTimeout(r,ms));
 async function withTO(fn,ms){const ac=window.AbortController?new AbortController():null;const tm=ac&&setTimeout(()=>ac.abort(),ms);try{return await fn(ac)}finally{clearTimeout(tm)}}
-async function apiLoadPost(ac){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,c:CHILD||undefined,w:WORLD!=='en'?WORLD:undefined,action:'load',diag:CONN.fails||CONN.lastErr?{fails:CONN.fails,err:CONN.lastErr,ua:navigator.userAgent.slice(0,90)}:undefined}),signal:ac?ac.signal:undefined});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');if(!j.state)throw new Error('no state');return j}
+async function apiLoadPost(ac){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,c:CHILD||undefined,w:WP(),action:'load',diag:CONN.fails||CONN.lastErr?{fails:CONN.fails,err:CONN.lastErr,ua:navigator.userAgent.slice(0,90)}:undefined}),signal:ac?ac.signal:undefined});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');if(!j.state)throw new Error('no state');return j}
 async function apiGet(){const tries=[['post',apiLoadPost],['get',apiGet_],['post',apiLoadPost]];let last;
   for(let i=0;i<tries.length;i++){const [ch,fn]=tries[i];try{const j=await withTO(fn,30000);CONN.ch=ch;CONN.okAt=Date.now();CONN.fails=0;CONN.lastErr='';return j}
     catch(e){last=e;if(/bad key/.test(e&&e.message))throw e;CONN.lastErr=ch+': '+String(e&&e.message||e).slice(0,80);if(i<tries.length-1)await zz(i?3000:400)}}
   CONN.fails++;throw last}
-async function apiGet_(ac){const r=await fetch(API+'?key='+encodeURIComponent(KEY)+(CHILD?'&c='+encodeURIComponent(CHILD):'')+(WORLD!=='en'?'&w='+encodeURIComponent(WORLD):'')+'&t='+Date.now(),{cache:'no-store',signal:ac?ac.signal:undefined});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
-async function apiPost(body){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,c:CHILD||undefined,w:WORLD!=='en'?WORLD:undefined,...body})});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
+async function apiGet_(ac){const r=await fetch(API+'?key='+encodeURIComponent(KEY)+(CHILD?'&c='+encodeURIComponent(CHILD):'')+(WP()?'&w='+encodeURIComponent(WP()):'')+'&t='+Date.now(),{cache:'no-store',signal:ac?ac.signal:undefined});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
+async function apiPost(body){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,c:CHILD||undefined,w:WP(),...body})});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
 
 /* outbox: latest version of each state doc, sent when online */
 let outbox=LS.get('outbox',{});let flushing=false,flushTimer=null;
-function enqueue(id,body){body={c:CHILD||undefined,w:WORLD!=='en'?WORLD:undefined,...body};id=NS()+id;outbox[id]=body;LS.set('outbox',outbox);setSync();clearTimeout(flushTimer);flushTimer=setTimeout(flush,1500)}
+function enqueue(id,body){body={c:CHILD||undefined,w:WP(),...body};id=NS()+id;outbox[id]=body;LS.set('outbox',outbox);setSync();clearTimeout(flushTimer);flushTimer=setTimeout(flush,1500)}
 async function flush(){
   if(flushing||!KEY)return;flushing=true;
   try{
@@ -468,7 +477,7 @@ const IDB={db:null,
 };
 let upBusy=false;const upStatus={};
 function blobToB64(b){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=()=>rej(fr.error);fr.readAsDataURL(b)})}
-async function queueUpload(item){item.meta={c:CHILD||undefined,w:WORLD!=='en'?WORLD:undefined,...(item.meta||{})};try{await IDB.put(item)}catch(e){console.warn(e)}upStatus[item.id]='wait';flushUploads()}
+async function queueUpload(item){item.meta={c:CHILD||undefined,w:WP(),...(item.meta||{})};try{await IDB.put(item)}catch(e){console.warn(e)}upStatus[item.id]='wait';flushUploads()}
 async function flushUploads(){
   if(upBusy||!KEY)return;upBusy=true;
   try{
@@ -613,6 +622,7 @@ function applyProfile(){
   const mt2=document.querySelector('.tab[data-tab="map"] .lbl');if(mt2)mt2.textContent=TW('tab');
 }
 function resetChildState(){Object.assign(S,{progress:{unlocked:1,best:{},xp:0},session:newSession(),sessions:[],classWords:[],zoom:[],lessons:[],pendingPhotos:0,scheduleState:null,transcripts:[],screen:{name:'map'},calDay:null,editLesson:null,shots:[]});_trk=null}
+function worldsOf(){const w=(S.profile&&S.profile.worlds)||[{id:'en',label:'אנגלית'}];return ((S.profile&&S.profile.child)||CHILD)==='gil'&&!w.some(x=>x.id==='math')?[...w,{id:'math',label:'חשבון'}]:w}
 function switchWorld(w){if(w===WORLD)return;WORLD=w;LS.set('world:'+(CHILD||'yuvik'),w);if(S.profile)S.profile={...S.profile,world:w};resetChildState();applyProfile();S.loaded=false;render();loadAll()}
 function switchChild(id){if(!isParent()||id===CHILD)return;CHILD=id;LS.set('child',id);WORLD='en';LS.set('world:'+id,'en');const ch=(S.children||[]).find(c=>c.id===id);S.profile={child:id,name:ch?ch.name:id,grade:ch?ch.grade:'',world:'en',worlds:[{id:'en',label:'אנגלית'}],features:{zoom:id==='yuvik',cal:true,camera:true,readtext:true}};LS.set('profile',S.profile);resetChildState();applyProfile();S.loaded=false;render();loadAll()}
 function setRole(r){
@@ -665,7 +675,7 @@ async function loadAll(){
   try{const j=await apiGet();if(tok!==S._loadTok||at0!==CHILD+'|'+WORLD)return;S.online=true;setRole(j.role);
     if(j.profile){const was=CHILD;S.profile=j.profile;S.children=j.children||null;LS.set('profile',j.profile);if(j.children)LS.set('children',j.children);
       if(!CHILD||j.role!=='parent'){const ch=CHILD!==j.profile.child;CHILD=j.profile.child;LS.set('child',CHILD);if(ch)WORLD=LS.get('world:'+CHILD,'en')}
-      if(j.profile.world&&j.profile.world!==WORLD){WORLD=j.profile.world}
+      if(j.profile.world&&j.profile.world!==WORLD&&WORLD!=='math'){WORLD=j.profile.world}
       if(was&&was!==CHILD)resetChildState();applyProfile()}
     applyState(j.state,true);cache();render()}
   catch(e){if(tok!==S._loadTok)return;console.warn(e);S.online=false;S.lastErr=CONN.lastErr||String(e&&e.message||e).slice(0,120);if(/bad key/.test(e&&e.message))S.badKey=true;render();
@@ -682,7 +692,7 @@ function setSync(){
   if(S.online===false){d.className='sync off';t.innerHTML='<button class="syncbtn" data-act="retry">⚠️ אין חיבור לשרת · לנסות שוב</button>';return}
   if(pend||upBusy){d.className='sync wait';t.textContent='שומר בדרייב…';return}
   d.className='sync ok';t.textContent=isParent()?'הכל שמור · מצב הורה':'הכל שמור';
-  const ws=$('#worldSwitch');if(ws){const wl=S.profile&&S.profile.child===CHILD&&S.online!==false&&S.profile.worlds&&S.profile.worlds.length>1?S.profile.worlds:null;ws.hidden=!wl;if(wl)ws.innerHTML=wl.map(x=>`<button data-act="world" data-id="${esc(x.id)}" aria-pressed="${x.id===WORLD}">${x.id==='ar'?'🏜️':'🌊'} ${esc(x.label)}</button>`).join('')+(LANG()==='ar'?'<button data-act="ref" class="refbtn">🔤 א־ב</button>':'')}
+  const ws=$('#worldSwitch');if(ws){const wl=S.profile&&S.profile.child===CHILD&&S.online!==false&&worldsOf().length>1?worldsOf():null;ws.hidden=!wl;if(wl)ws.innerHTML=wl.map(x=>`<button data-act="world" data-id="${esc(x.id)}" aria-pressed="${x.id===WORLD}">${x.id==='ar'?'🏜️':x.id==='math'?'🔢':'🌊'} ${esc(x.label)}</button>`).join('')+(LANG()==='ar'?'<button data-act="ref" class="refbtn">🔤 א־ב</button>':'')}
   const sw=$('#kidSwitch');if(sw){const kids=isParent()&&S.children&&S.children.length>1?S.children:null;sw.hidden=!kids;if(kids)sw.innerHTML=kids.map(c=>`<button data-act="kid" data-id="${esc(c.id)}" aria-pressed="${c.id===CHILD}">${esc(c.name)}</button>`).join('')}
 }
 
@@ -779,6 +789,7 @@ function bookIslands(){
   return out.sort((a,b)=>(a.order||0)-(b.order||0)).map(i=>({...i,kind:'book',words:(i.words||[]).filter(w=>w&&w.en&&w.he),games:i.games||[],story:null,mistakes:[]}));
 }
 function allIslands(){
+  if(WORLD==='math')return mathFixedIslands();
   if(LANG()==='ar'){const list=[...arFixedIslands()];(S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'נווה מדבר חדש',en:l.en||'',topic:l.topic||'מחומר שצילמת',words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],created:l.created||''})});return list}
   const book=bookIslands();
   const legacy=!S.profile||S.profile.child==='yuvik';
@@ -796,6 +807,7 @@ let _trk=null;
 function tracks(){
   if(_trk)return _trk;
   const all=allIslands();const book=all.filter(i=>i.kind==='book');
+  if(WORLD==='math'){_trk=MATH_TRACKS.map(t=>{const isl=mathFixedIslands().find(x=>x.track===t.k);return {...t,fixed:1,active:isl,done:[],started:[],queue:[],none:''}});return _trk}
   if(LANG()==='ar'){const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));const F=arFixedIslands();
     const T=[{k:'letters',t:'אותיות',ic:'🔤',flag:'#f2a93b',fixed:1,list:[F[0]]},{k:'numbers',t:'מספרים',ic:'🔢',flag:'#2f8a63',fixed:1,list:[F[1]]},{k:'class',t:'מהכיתה',ic:'🏫',flag:'#d8572a',none:'כל נווי המדבר נכבשו!',empty:'יופיע כשיעלה צילום מהכיתה',list:all.filter(i=>i.kind==='lesson').sort(byC)}];
     _trk=T.map(t=>{const list=t.list;const active=t.fixed?list[0]:list.find(i=>!isDone(i))||null;const done=t.fixed?[]:list.filter(isDone);const started=t.fixed?[]:list.filter(i=>i!==active&&!isDone(i)&&S.progress.best[i.id]);const queue=t.fixed?[]:list.filter(i=>i!==active&&!isDone(i)&&!S.progress.best[i.id]);return {...t,active,done,started,queue,none:list.length?t.none:t.empty}});return _trk}
@@ -824,7 +836,7 @@ const activeIds=()=>{const T=tracks();return T?T.filter(t=>t.active).map(t=>t.ac
 const daysSince=d=>d?Math.max(0,Math.round((new Date(today())-new Date(d))/864e5)):0;
 function waitInfo(i){const p=S.progress;const since=(p.activeSince||{})[i.id];const touch=(p.touch||{})[i.id];const last=[since,touch].filter(Boolean).sort().pop();return {days:daysSince(last),touched:!!(touch||p.best[i.id])}}
 function updateAlerts(){
-  if(isParent())return;const T=tracks();if(!T)return;const p=S.progress;p.activeSince=p.activeSince||{};let ch=false;
+  if(isParent()||WORLD==='math')return;const T=tracks();if(!T)return;const p=S.progress;p.activeSince=p.activeSince||{};let ch=false;
   T.forEach(t=>{if(t.active&&!t.replay&&!p.activeSince[t.active.id]){p.activeSince[t.active.id]=today();ch=true}});
   const alerts=T.filter(t=>t.active&&!t.replay).map(t=>{const w=waitInfo(t.active);return w.days>=2?{track:t.t,ic:t.ic,name:t.active.name,days:w.days,kind:w.touched?'stuck':'untouched'}:null}).filter(Boolean);
   if(JSON.stringify(alerts)!==JSON.stringify(p.alerts||[])){p.alerts=alerts;ch=true}
@@ -848,7 +860,7 @@ function stationsOf(i){
   if(w.length)st.push({k:'learn',ic:I.cards,t:'כרטיסיות מילים',d:`${w.length} מילים עם הקראה`,m:b.learn?'נלמד':''});
   if(w.filter(x=>spellable(x.en)).length>=3)st.push({k:'spell',ic:I.spell,t:'בונים מילה',d:'שומעים ובונים את המילה מאותיות',m:pct('spell'),scored:1});
   if(w.length>=4)st.push({k:'quiz',ic:I.quiz,t:'משחק מילים',d:'תרגום והאזנה',m:pct('quiz'),scored:1});
-  (i.games||[]).forEach((g,n)=>st.push({k:'g'+n,ic:GAME_IC[g.kind]||I.quiz,t:g.title||'תרגיל',d:GAME_DESC[g.kind]||'',m:pct('g'+n),scored:1}));
+  (i.games||[]).forEach((g,n)=>st.push({k:'g'+n,ic:GAME_IC[g.kind]||I.quiz,t:g.title||'תרגיל',d:g.desc||GAME_DESC[g.kind]||'',m:pct('g'+n),scored:1}));
 
   if(readItems(i).length)st.push({k:'readaloud',ic:I.mouth,t:'קוראת בקול',d:readSR()?'הטלפון מקשיב ומסמן כל מילה':'קוראים ומשווים להקראה',m:pct('readaloud'),scored:1});
   if(i.mistakes&&i.mistakes.length)st.push({k:'fix',ic:I.fix,t:'מתקנים טעויות',d:'משפטים מהשיעור: איך אומרים נכון?',m:pct('fix'),scored:1});
@@ -996,7 +1008,7 @@ function viewMap(){
     ${archive}
     <p class="maphint">${T.some(t=>t.active||t.done.length)?(classSlots()>1?'אפשר לשחק בשני מגרשים במקביל. כשמנצחים באחד':'בכל מסלול יש אי אחד פעיל. כשכובשים אותו')+' (70% ברוב התחנות) נפתח הבא בתור.':'עוד אין איים. כשאבא יעלה חומר מהכיתה, האי הראשון יופיע כאן.'}</p>`;
 }
-function trackLabel(i){const t=TRACKS.find(x=>x.k===trackOf(i));return t?t.ic+' '+t.t:''}
+function trackLabel(i){const t=TRACKS.find(x=>x.k===trackOf(i))||MATH_TRACKS.find(x=>x.k===trackOf(i));return t?t.ic+' '+t.t:''}
 function viewMapLegacy(){
   const isl=allIslands();const n=isl.length;
   const W=360,H=Math.max(500,n*96+110);
@@ -1048,6 +1060,7 @@ function viewIsland(id){
   return `<button class="back" data-act="home">${I.back} ${TW('back')}</button>
   ${i.kind==='lesson'&&i.source==='זום'?`<span class="zbadge">💻 מהשיעור בזום${i.zoomDate?' · '+dayName(i.zoomDate)+' '+fmtDate(i.zoomDate):''}${zl&&zl.teacher?' · עם '+esc(zl.teacher):''}</span>`:i.kind!=='base'?`<span class="zbadge" style="background:${trackOf(i)==='unseen'?'#ffe1da;color:#9a2f1c':'#d8f3e8;color:#1d6b4f'}">${trackLabel(i)}${i.kind==='lesson'&&i.created?' · '+fmtDate(String(i.created).slice(0,10)):''}</span>`:''}
   <div class="ihead">${i.en?`<span class="eyebrow en">${esc(i.en)}</span>`:''}<h2>${esc(i.name)}</h2><p>${esc(i.topic)}</p></div>
+  ${i.howto?`<section class="card howto"><h2>איך עושים את זה?</h2>${i.howto}</section>`:''}
   ${anyScore?`<section class="card rep-card"><h2>${THEME()==='tennis'?'דוח המאמן':'דוח קפטן'}</h2>${islandReportHTML(i)}</section>`:''}
   <div class="stations">${st.map(s=>`<button class="station" data-act="station" data-k="${s.k}" data-id="${esc(id)}"><span class="ic">${s.ic}</span><span class="tx"><b>${s.t}</b><span>${esc(s.d)}</span></span><span class="mark">${s.m}</span></button>`).join('')}</div>`;
 }
@@ -1185,7 +1198,9 @@ function finishActivity(kind,title,correct,total,missed,extra){
 /* ============ BOOK GAMES ============ */
 const isLatinOld=s=>/[A-Za-z]/.test(s)&&!/[֐-׿]/.test(s);
 const isLatin=s=>LANG()==='ar'?/[\u0600-\u06FF]/.test(s):isLatinOld(s);
-const enSpan=s=>isLatin(s)?`<span class="en">${esc(s)}</span>`:esc(s);
+const enSpan=s=>WORLD==='math'?fx(s):isLatin(s)?`<span class="en">${esc(s)}</span>`:esc(s);
+function fx(s){const fr=t=>t.replace(/(\d+)\s+(\d+)\/(\d+)|(\d+)\/(\d+)/g,(m,w,n1,d1,n2,d2)=>`<span class="mx">${w?`<b>${w}</b>`:''}<span class="fr"><i>${n1||n2}</i><i>${d1||d2}</i></span></span>`);return esc(s).replace(/\d[\d \u00f7\u00d7+=\/]*\d|\d/g,r=>/[\/\u00f7\u00d7+=]/.test(r)?`<span class="mrun" dir="ltr">${fr(r.trim())}</span>${/ $/.test(r)?' ':''}`:r)}
+const tx=s=>WORLD==='math'?fx(s):esc(s);
 function sentencesOf(text){return String(text).replace(/\s+/g,' ').split(/(?<=[.!?])\s+(?=[A-Z"])/).map(x=>x.trim()).filter(Boolean)}
 function readItems(i){
   let out=[];
@@ -1203,7 +1218,7 @@ function buildGame(i,n){
   const g=i.games[n];
   if(['mc','fill','odd','pic'].includes(g.kind)){
     let items;
-    if(g.kind==='mc')items=g.items.map(it=>({q:it.q,o:it.o,a:Array.isArray(it.a)?it.a:[it.a],why:it.why,say:it.q}));
+    if(g.kind==='mc')items=g.items.map(it=>({q:it.q,o:it.o,a:Array.isArray(it.a)?it.a:[it.a],why:it.why,say:WORLD==='math'?null:it.q}));
     else if(g.kind==='fill')items=shuffle(g.items).map(it=>({q:it.t,gap:true,o:shuffle(it.o),a:null,ans:it.a,say:it.t.replace('___',it.a)}));
     else if(g.kind==='odd'){const tr={};[...(i.words||[]),...WORDS_ALL()].forEach(w=>{if(w&&w.en&&w.he&&!tr[w.en.toLowerCase()])tr[w.en.toLowerCase()]=w.he});
       items=shuffle(g.items).map(it=>({q:'איזו מילה לא שייכת?',o:shuffle(it.o),ans:it.a,why:it.why,odd:true,tr:it.o.map(w=>tr[String(w).toLowerCase()]?`${w} = ${tr[String(w).toLowerCase()]}`:'').filter(Boolean).join(' · ')}))}
@@ -1234,19 +1249,19 @@ function viewGame(){
     ${q.pic||q.gap?`<div class="prompt">${q.pic?'מה בתמונה?':'השלימי את החסר'}</div>`:''}${qHTML}
     ${multi&&!sc.answered?'<p class="sub">יש כאן שתי תשובות נכונות. בחרי שתיים.</p>':''}
     ${q.say&&!q.gap&&!q.pic?`<div><button class="btn ghost small" data-act="say" data-text="${esc(q.say)}">${I.speaker} השמע</button></div>`:''}
-    <div class="opts">${q.o.map((o,k)=>{let cls='opt'+(isLatin(o)?' en':'');if(sc.answered){if(q.a.includes(k))cls+=' ok';else if(sc.picked.includes(k))cls+=' bad'}else if(sc.picked.includes(k))cls+=' sel';return `<button class="${cls}" data-act="gAns" data-k="${k}" ${sc.answered?'disabled':''}>${esc(o)}</button>`}).join('')}</div>
-    <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?(q.odd?oddFeedback(q,sc):(sc.wasOk?'נכון!':'כמעט.')+(q.why&&!sc.wasOk?` <span class="sub">${esc(q.why)}</span>`:'')):''}</div>
+    <div class="opts">${q.o.map((o,k)=>{let cls='opt'+(isLatin(o)?' en':'');if(sc.answered){if(q.a.includes(k))cls+=' ok';else if(sc.picked.includes(k))cls+=' bad'}else if(sc.picked.includes(k))cls+=' sel';return `<button class="${cls}" data-act="gAns" data-k="${k}" ${sc.answered?'disabled':''}>${tx(o)}</button>`}).join('')}</div>
+    <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?(q.odd?oddFeedback(q,sc):(sc.wasOk?'נכון!':'כמעט.')+(q.why&&(!sc.wasOk||WORLD==='math')?` <span class="sub">${tx(q.why)}</span>`:'')):''}</div>
     ${sc.answered?`<div class="btns">${q.say?`<button class="btn ghost small" data-act="say" data-text="${esc(q.say)}">${I.speaker} השמע</button>`:''}<button class="btn brass" data-act="gNext">${sc.idx===sc.items.length-1?'לתוצאות':'הבאה'}</button></div>`:''}
     </section>`;
   }
   if(sc.kind==='tf'){
     const q=sc.items[sc.idx];
     return gameHead(sc,i,sc.items.length,sc.idx)+`
-    <div class="prompt"><span class="en">${esc(q.s)}</span></div>
-    <div><button class="btn ghost small" data-act="say" data-text="${esc(q.s)}">${I.speaker} השמע</button></div>
-    <div class="tfbtns"><button class="opt tfb ${sc.answered?(q.t?'ok':sc.pick===true?'bad':''):''}" data-act="tfAns" data-v="1" ${sc.answered?'disabled':''}>✓ True · נכון</button><button class="opt tfb ${sc.answered?(!q.t?'ok':sc.pick===false?'bad':''):''}" data-act="tfAns" data-v="0" ${sc.answered?'disabled':''}>✗ False · לא נכון</button></div>
+    <div class="prompt">${WORLD==='math'?fx(q.s):`<span class="en">${esc(q.s)}</span>`}</div>
+    ${WORLD==='math'?'':`<div><button class="btn ghost small" data-act="say" data-text="${esc(q.s)}">${I.speaker} השמע</button></div>`}
+    <div class="tfbtns"><button class="opt tfb ${sc.answered?(q.t?'ok':sc.pick===true?'bad':''):''}" data-act="tfAns" data-v="1" ${sc.answered?'disabled':''}>${WORLD==='math'?'✓ נכון':'✓ True · נכון'}</button><button class="opt tfb ${sc.answered?(!q.t?'ok':sc.pick===false?'bad':''):''}" data-act="tfAns" data-v="0" ${sc.answered?'disabled':''}>${WORLD==='math'?'✗ לא נכון':'✗ False · לא נכון'}</button></div>
     <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?(sc.wasOk?'נכון!':'כמעט.'):''}</div>
-    ${sc.answered&&q.fix?`<div class="fixbox"><span class="sub">המשפט הנכון:</span><div class="en">${esc(q.fix)}</div><button class="btn ghost small" data-act="say" data-text="${esc(q.fix)}">${I.speaker} השמע</button></div>`:''}
+    ${sc.answered&&q.fix?(WORLD==='math'?`<div class="fixbox"><span class="sub">${q.t?'נכון, כי:':'התשובה הנכונה:'}</span><div>${fx(q.fix)}</div></div>`:`<div class="fixbox"><span class="sub">המשפט הנכון:</span><div class="en">${esc(q.fix)}</div><button class="btn ghost small" data-act="say" data-text="${esc(q.fix)}">${I.speaker} השמע</button></div>`):''}
     ${sc.answered?`<div class="btns"><button class="btn brass" data-act="gNext">${sc.idx===sc.items.length-1?'לתוצאות':'הבאה'}</button></div>`:''}
     </section>`;
   }
@@ -1264,7 +1279,7 @@ function viewGame(){
     return `<button class="back" data-act="island" data-id="${esc(sc.id)}">${I.back} ${esc(i.name)}</button>
     <section class="card"><div class="qtop"><span>${esc(sc.title)}</span><span>${sc.found} / ${sc.total} זוגות</span></div>
     <p class="sub">הופכים שני קלפים ומחפשים זוג שמתאים. אין פה טעויות, רק מנסים עד שמוצאים הכל.</p>
-    <div class="memo">${sc.cards.map(c=>`<button class="mcard ${c.open||c.done?'open':''} ${c.done?'done':''}" data-act="memo" data-k="${c.k}" ${c.done?'disabled':''}>${c.open||c.done?`<span class="en">${esc(c.t)}</span>`:`<span class="back-face">${EB('anc')}</span>`}</button>`).join('')}</div>
+    <div class="memo">${sc.cards.map(c=>`<button class="mcard ${c.open||c.done?'open':''} ${c.done?'done':''}" data-act="memo" data-k="${c.k}" ${c.done?'disabled':''}>${c.open||c.done?(WORLD==='math'?fx(c.t):`<span class="en">${esc(c.t)}</span>`):`<span class="back-face">${EB('anc')}</span>`}</button>`).join('')}</div>
     </section>`;
   }
   if(sc.kind==='order'){
@@ -1935,6 +1950,41 @@ document.addEventListener('click',e=>{
   }
 });
 
+
+/* ============ MATH WORLD (גיל): fractions and mixed numbers ============ */
+// עולם חשבון בצד הלקוח בלבד: הנתונים נשמרים יחד עם עולם האנגלית של גיל (מזהי איים שונים, בלי התנגשות)
+const MATH_TRACKS=[{k:'fractions',t:'שברים',ic:'➗',flag:'#d7f23c'}];
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+function mixPool(){const out=[];for(let d=2;d<=9;d++)for(let w=1;w<=4;w++)for(let r=1;r<d;r++)out.push({w,r,d,n:w*d+r});return out}
+const fS=(n,d)=>n+'/'+d, mS=(w,r,d)=>w+' '+r+'/'+d;
+function pickDistinct(pool,k,key){const seen=new Set(),out=[];for(const x of shuffle(pool)){const kk=key(x);if(seen.has(kk))continue;seen.add(kk);out.push(x);if(out.length>=k)break}return out}
+function optsWith(correct,cands){const o=[correct];for(const c of shuffle(cands))if(c&&!o.includes(c)&&o.length<4)o.push(c);const sh=shuffle(o);return {o:sh,a:sh.indexOf(correct)}}
+function mathFixedIslands(){
+  const P=mixPool();const byVal=x=>x.n+'/'+x.d;
+  // G0: which fraction is bigger than 1
+  const g0={kind:'mc',title:'איזה שבר גדול מ־1?',desc:'מכירים שבר שיש בו יותר משלם',items:pickDistinct(P,6,byVal).map(x=>{const props=[];while(props.length<3){const d=rnd(2,9),n=rnd(1,d-1),s=fS(n,d);if(!props.includes(s))props.push(s)}
+    const {o,a}=optsWith(fS(x.n,x.d),props);return {q:'איזה שבר גדול מ־1?',o,a,why:`ב־${fS(x.n,x.d)} המונה (${x.n}) גדול מהמכנה (${x.d}), ולכן יש בו יותר משלם אחד.`}})};
+  // G1: improper fraction -> mixed number
+  const g1={kind:'mc',title:'משבר למספר מעורב',desc:'מחלקים מונה במכנה: שלמים ושארית',items:pickDistinct(P,8,byVal).map(x=>{const c=mS(x.w,x.r,x.d);
+    const cands=[x.d-x.r!==x.r?mS(x.w,x.d-x.r,x.d):null,mS(x.w+1,x.r,x.d),x.w>1?mS(x.w-1,x.r,x.d):mS(x.w+2,x.r,x.d),x.r<x.d&&x.w<x.d&&x.w!==x.r?mS(x.r,x.w,x.d):null,mS(x.w,x.r,x.n)];
+    const {o,a}=optsWith(c,cands);return {q:'הפכי למספר מעורב: '+fS(x.n,x.d),o,a,why:`${x.n}÷${x.d} = ${x.w} ושארית ${x.r}. ${x.w} שלמים, והשארית ${x.r} נשארת מעל המכנה ${x.d}: ${c}`}})};
+  // G2: mixed number -> improper fraction
+  const g2={kind:'mc',title:'ממספר מעורב לשבר',desc:'שלם כפול מכנה, ועוד המונה',items:pickDistinct(P,8,byVal).map(x=>{const c=fS(x.n,x.d);
+    const cands=[fS(x.w+x.r,x.d),fS(x.w*x.r+x.d,x.d),x.w*x.d-x.r>0?fS(x.w*x.d-x.r,x.d):null,fS(x.n+1,x.d),fS(x.n,x.d+1)];
+    const {o,a}=optsWith(c,cands);return {q:'הפכי לשבר: '+mS(x.w,x.r,x.d),o,a,why:`${x.w}×${x.d}+${x.r} = ${x.n}. המכנה נשאר ${x.d}, ולכן התשובה ${c}`}})};
+  // G3: true / false (including whole numbers)
+  const tfItems=pickDistinct(P,6,byVal).map((x,k)=>{const right=mS(x.w,x.r,x.d);const truth=k%2===0;
+    const wrong=shuffle([mS(x.w+1,x.r,x.d),x.d-x.r!==x.r?mS(x.w,x.d-x.r,x.d):mS(x.w,x.r,x.d+1),x.w>1?mS(x.w-1,x.r,x.d):mS(x.w+2,x.r,x.d)])[0];
+    return {s:fS(x.n,x.d)+' = '+(truth?right:wrong),t:truth,fix:truth?`${x.n}÷${x.d} = ${x.w} ושארית ${x.r}`:fS(x.n,x.d)+' = '+right}});
+  [[rnd(2,5),rnd(2,4)],[rnd(2,5),rnd(2,4)]].forEach(([d,w],k)=>{const n=d*w;tfItems.push(k===0?{s:fS(n,d)+' = '+w,t:true,fix:`${n}÷${d} = ${w} בלי שארית, ולכן זה מספר שלם`}:{s:fS(n,d)+' = '+(w+1),t:false,fix:fS(n,d)+' = '+w})});
+  const g3={kind:'tf',title:'נכון או לא נכון?',desc:'בודקים תרגיל ומוצאים טעויות',items:shuffle(tfItems)};
+  // G4: memory pairs
+  const g4={kind:'pairs',title:'זיכרון: שבר ומספר מעורב',desc:'מוצאים זוגות ששווים זה לזה',pairs:pickDistinct(P,6,x=>byVal(x)+'|'+x.w+' '+x.r).filter((x,k,a)=>a.findIndex(y=>y.w===x.w&&y.r===x.r&&y.d===x.d)===k).map(x=>[fS(x.n,x.d),mS(x.w,x.r,x.d)])};
+  const howto=`<p><b>משבר למספר מעורב:</b> מחלקים את המונה במכנה. התוצאה היא מספר השלמים, והשארית נשארת מעל אותו מכנה.</p><p>דוגמה: ${fx('11/4 ← 11÷4 = 2 ושארית 3 ← 2 3/4')}</p>
+    <p><b>ממספר מעורב לשבר:</b> כופלים את השלם במכנה ומוסיפים את המונה. המכנה לא משתנה.</p><p>דוגמה: ${fx('2 3/4 ← 2×4+3 = 11 ← 11/4')}</p>`;
+  return [{id:'m-mixed',kind:'fixed',track:'fractions',name:'שבר ומספר מעורב',en:'',topic:'כיתה ה׳ · הופכים שבר למספר מעורב ובחזרה · תמיד פתוח, עם תרגילים חדשים בכל פעם',howto,
+    words:[],games:[g0,g1,g2,g3,g4],mistakes:[],source:'',created:'0'}];
+}
 
 /* ============ ARABIC WORLD: letters, numbers, desert fleet ============ */
 // [letter, Hebrew equivalent, Hebrew name, Arabic name, connects to next letter]
