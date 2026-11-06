@@ -253,6 +253,7 @@ form.f{display:grid;gap:10px}
 .shoot input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .shoot label.wide{grid-column:1/-1;flex-direction:row;padding:14px 10px;background:var(--swell)}
 .shoot label.wide span{font-size:26px}
+.shoot label.main.wide{background:var(--brass);color:var(--ink)}
 .thumb .doc{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#fff;color:var(--ink);font-size:11px;padding:6px;text-align:center;word-break:break-all;overflow:hidden}
 .thumb .doc b{font-size:28px}
 textarea.paste{width:100%;min-height:80px;border-radius:12px;border:1px solid var(--swell);padding:10px;font:inherit}
@@ -1731,9 +1732,7 @@ function viewCamera(){
   const label={new:'חדש',wait:'ממתין',up:'עולה…',ok:'נשמר',err:'ינסה שוב'};
   return `<div class="ihead"><span class="eyebrow">${EB('hunt')}</span><h2>צילום חומר</h2><p>מצלמים דף עבודה, מילים מהלוח או טקסט מהספר, והחומר הופך לאי חדש במפה.</p></div>
   <div class="shoot">
-    <label class="main" for="camIn">${I.camera}צלם עכשיו<input id="camIn" type="file" accept="image/*" capture="environment"></label>
-    <label for="galIn">${I.gallery}בחר מהגלריה<input id="galIn" type="file" accept="image/*" multiple></label>
-    <label class="wide" for="fileIn"><span>📎</span>העלאת קובץ (PDF, Word, צילום מסך)<input id="fileIn" type="file" accept="application/pdf,.pdf,.doc,.docx,.odt,.rtf,.txt,.html,.htm,.eml,image/*" multiple></label>
+    <label class="main wide" for="fileIn"><span>📎</span>צרף קובץ (צילום, גלריה, PDF, Word)<input id="fileIn" type="file" accept="application/pdf,.pdf,.doc,.docx,.odt,.rtf,.txt,.html,.htm,.eml,image/*" multiple></label>
   </div>
   ${S.shots.length?`<section class="card">
     <h2>מה שהעלית</h2>
@@ -1805,16 +1804,7 @@ function viewParent(){
     <h2>יומן מסעות</h2>
     <div class="log">${all.map(x=>{const sm=sessSummary(x);const ok=tasksOf(x)>=GOAL_T();return `<div class="logrow"><span class="d">${dayName(x.date)} ${fmtDate(x.date)}</span><span class="m">${sm.acts.length?sm.acts.map(a=>esc(a.title)).slice(0,4).join(' · '):'לא תורגל'}${x.missed&&x.missed.length?`<br>לחזרה: <span class="en">${esc(x.missed.slice(-5).join(', '))}</span>`:''}</span><span class="s"><span class="pill ${ok?'ok':!tasksOf(x)?'warn':''}">${tasksOf(x)} משימות</span>${sm.pct!=null?`<br><small>${sm.pct}%</small>`:''}</span></div>`}).join('')}</div>
   </section>
-  <section class="card">
-    <h2>מילים מהכיתה</h2>
-    <p class="sub">מילים שהמורה נתנה. מ־4 מילים נפתח אי: מפרץ המטמון.</p>
-    <form class="f" data-form="word">
-      <div class="two"><label>באנגלית<input id="wEn" required dir="ltr" autocomplete="off" placeholder="harbor"></label><label>בעברית<input id="wHe" required autocomplete="off" placeholder="נמל"></label></div>
-      <label>משפט לדוגמה (לא חובה)<input id="wEx" dir="ltr" autocomplete="off" placeholder="The boat is in the harbor."></label>
-      <button class="btn brass small" type="submit">הוסף מילה</button>
-    </form>
-    ${S.classWords.length?`<div class="wlist">${S.classWords.map(w=>`<span class="wtag"><span class="en">${esc(w.en)}</span> ${esc(w.he)}<button data-act="delWord" data-id="${esc(w.id)}" aria-label="מחק">${I.x}</button></span>`).join('')}</div>`:'<div class="empty">עוד לא נוספו מילים מהכיתה.</div>'}
-  </section>`;
+`;
 }
 
 /* ============ EVENTS ============ */
