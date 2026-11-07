@@ -10,7 +10,9 @@ More than one conversation may work on it, so **never overwrite someone else's w
    and `"version"` in status.json.
 3. Run the local tests, then `NODE_PATH=$(npm root -g) node tools/smoke.js http://localhost:PORT/` against a local copy.
 4. Commit with a clear message, add a line to CHANGES.md, `git push`.
-5. ~1 minute later run `node tools/smoke.js` (live). If it fails, `git revert` and push immediately.
+5. ~1 minute later check the live site: `node tools/smoke.js` (if this machine can reach github.io), otherwise fetch
+   index.html / sw.js / status.json through the browser and compare their SHA-256 with the committed files.
+   If anything is wrong, `git revert` and push immediately.
 6. If the change needs the Apps Script server too: first push status.json with `"updating": true`
    (the app shows "האפליקציה מתעדכנת"), deploy the server, then push the client with `"updating": false`.
 
