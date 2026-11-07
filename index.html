@@ -447,7 +447,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='29';
+const APP_VERSION='30';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -466,10 +466,11 @@ async function enablePush(){if(!pushOK()){toast('בטלפון הזה אין תמ
   try{const perm=await Notification.requestPermission();if(perm!=='granted'){LS.set('pushOff',1);toast('התזכורות לא הופעלו. אפשר להפעיל אחר כך בהגדרות הדפדפן.');render();return}
     await notifPrefs();const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8b64(VAPID_PUB)});
-    await apiPost({action:'pushSub',sub:sub.toJSON(),ua:navigator.userAgent.slice(0,60)});LS.set('pushEp',sub.endpoint);LS.set('pushOn',1);toast('🔔 התזכורת הופעלה! ראשון עד חמישי ב-18:00');render()}
+    LS.set('pushOn',1);render();toast('🔔 התזכורת הופעלה! ראשון עד חמישי ב-18:00');
+    const old=LS.get('pushEp','');await apiPost({action:'pushSub',sub:sub.toJSON(),old:old&&old!==sub.endpoint?old:undefined,ua:navigator.userAgent.slice(0,60)});LS.set('pushEp',sub.endpoint)}
   catch(e){console.warn(e);toast('לא הצלחנו להפעיל תזכורות: '+String(e&&e.message||e).slice(0,60))}}
 async function syncPush(){if(!pushOK()||isParent()||Notification.permission!=='granted')return;try{await notifPrefs();const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(!sub)return;
-  if(LS.get('pushEp','')!==sub.endpoint||!LS.get('pushOn',0)){await apiPost({action:'pushSub',sub:sub.toJSON(),ua:navigator.userAgent.slice(0,60)});LS.set('pushEp',sub.endpoint);LS.set('pushOn',1)}}catch(e){}}
+  LS.set('pushOn',1);const old=LS.get('pushEp','');if(old!==sub.endpoint){await apiPost({action:'pushSub',sub:sub.toJSON(),old:old||undefined,ua:navigator.userAgent.slice(0,60)});LS.set('pushEp',sub.endpoint)}}catch(e){}}
 function pushCardHTML(){if(isParent()||!pushOK()||LS.get('pushOff',0)||(Notification.permission==='granted'&&LS.get('pushOn',0)))return '';
   return `<button class="newbanner late" data-act="pushOn"><span class="gift">🔔</span><span>תזכורת יומית לתרגול<small>ראשון עד חמישי ב-18:00</small></span><span class="go">להפעיל</span></button>`}
 const CONN={fails:0,okAt:0,ch:'',lastErr:''};const zz=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1376,10 +1377,9 @@ function viewKaraoke(){
   <section class="card">
     <h2 class="en" style="text-align:left">${esc(t.title)}</h2>
     <p class="tip">${i.kind==='daily'?'קוראים לבד, ואם צריך לוחצים "הקראה". לא מכירה מילה? לוחצים עליה ורואים מה היא אומרת.':'לוחצים "הקראה" ועוקבים אחרי המילה הצבועה. לחיצה על מילה משמיעה אותה ומראה תרגום.'}</p>
-    <div class="btns"><button class="btn brass small" data-act="kPlay">${I.play} הקראה</button>${speedBtn()}<button class="btn ghost small" data-act="kStop">עצור</button><button class="btn ghost small" data-act="kDict" aria-pressed="${sc.dict?'true':'false'}">🔤 ${sc.dict?'להסתיר תרגום':'תרגום מילים'}</button></div>
+    <div class="btns"><button class="btn brass small" data-act="kPlay">${I.play} הקראה</button>${speedBtn()}<button class="btn ghost small" data-act="kStop">עצור</button></div>
     <div class="read story kara">${paras}</div>
-    ${gl.length&&!sc.dict?`<div class="gloss"><p class="sub">מילים שהחוברת מתרגמת:</p>${gl.map(([e,h])=>`<span class="wtag"><span class="en">${esc(e)}</span> ${esc(h)}</span>`).join('')}</div>`:''}
-    ${sc.dict?`<div class="gloss"><p class="sub">המילים בקטע (לחיצה משמיעה):</p>${dictOfText(i).map(([e,h])=>`<button class="wtag" data-act="say" data-text="${esc(e)}"><span class="en">${esc(e)}</span> ${esc(h)}</button>`).join('')}</div>`:''}
+    ${gl.length?`<div class="gloss"><p class="sub">מילים שהחוברת מתרגמת:</p>${gl.map(([e,h])=>`<span class="wtag"><span class="en">${esc(e)}</span> ${esc(h)}</span>`).join('')}</div>`:''}
     <button class="btn" data-act="kDone">${i.kind==='daily'?'קראתי את הקטע ✓':'קראתי את הטקסט'}</button>
   </section>`;
 }
@@ -1412,7 +1412,9 @@ function lev(a,b){const m=a.length,n=b.length;const d=Array.from({length:m+1},(_
 const NUMW={'1':'one','2':'two','3':'three','10':'ten','11':'eleven','12':'twelve','14':'fourteen','15':'fifteen','27':'twentyseven'};
 function matchWords(target,heard){
   const T=target.split(' ').map(normW).filter(Boolean);const H=heard.split(/\s+/).map(normW).filter(Boolean).map(w=>NUMW[w]||w);
-  let p=0;return T.map(t=>{for(let k=p;k<Math.min(H.length,p+4);k++){const h=H[k];if(h===t||(t.length>=4&&lev(h,t)<=1)||(NUMW[t]&&NUMW[t]===h)){p=k+1;return true}}return false});
+  // p = מקום בדיבור, lastT = המילה האחרונה בטקסט שזוהתה. לא קופצים יותר מ-3 מילים קדימה בטקסט,
+  // כדי שמילה נפוצה (is, the) שנאמרה בהתחלה לא "תתפוס" מילה רחוקה ותצבע באדום את כל מה שביניהן.
+  let p=0,lastT=-1;return T.map((t,j)=>{if(j-lastT>4)return false;for(let k=p;k<Math.min(H.length,p+4);k++){const h=H[k];if(h===t||(t.length>=4&&lev(h,t)<=1)||(t.length===3&&h.length>=2&&lev(h,t)<=1&&h[0]===t[0])||(NUMW[t]&&NUMW[t]===h)){p=k+1;lastT=j;return true}}return false});
 }
 function viewRead2(){
   const sc=S.screen;const i=islandById(sc.id);const s=sc.items[sc.idx];const words=s.split(' ');
@@ -1955,7 +1957,7 @@ document.addEventListener('click',e=>{
     case 'kid':switchChild(el.dataset.id);break;
     case 'conntest':connTest();break;
     case 'pushOn':enablePush();break;
-    case 'pushTest':(async()=>{toast('שולח…');try{const r=await apiPost({action:'pushTest'});toast(r.devices?`נשלח ל-${r.sent} מתוך ${r.devices} מכשירים`:'עוד אין מכשיר עם תזכורות מופעלות')}catch(e){toast('לא נשלח: '+String(e.message||e).slice(0,50))}})();break;
+    case 'pushTest':(async()=>{toast('שולח…');try{const r=await apiPost({action:'pushTest'});toast(r.devices?`נשלח ל-${r.sent} מתוך ${r.devices} מכשירים`+(r.sent<r.devices&&r.codes?` (קודים: ${r.codes.join(', ')})`:''):'עוד אין מכשיר עם תזכורות מופעלות')}catch(e){toast('לא נשלח: '+String(e.message||e).slice(0,50))}})();break;
     case 'retry':toast('מתחבר…');S.online=null;setSync();loadAll();break;
     case 'world':switchWorld(el.dataset.id);break;
     case 'ref':S.refTab=S.refTab||'letters';S.ref=true;render();break;
