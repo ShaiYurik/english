@@ -447,7 +447,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='30';
+const APP_VERSION='31';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -461,7 +461,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 const VAPID_PUB='BBR4fkFfpsYjeBt2gwMCR-f8Uo7xR7Eao2UVjioVPr4f7Q7ysexQZKy707C-etOaB7fGALonLbWB_i9Mb8DCzMU';
 const pushOK=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&window.isSecureContext;
 function u8b64(b){const p='='.repeat((4-b.length%4)%4);const raw=atob((b+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0))}
-async function notifPrefs(){try{const c=await caches.open('notif');const nm=(S.profile&&S.profile.name)||'';await c.put('name',new Response(nm));await c.put('icon',new Response(((S.profile&&S.profile.child)||CHILD)==='gil'?'./icon-gil-192.png':'./icon-192.png'))}catch(e){}}
+async function notifPrefs(){try{const c=await caches.open('notif');const nm=(S.profile&&S.profile.name)||'';await c.put('name',new Response(nm));await c.put('icon',new Response(((S.profile&&S.profile.child)||CHILD)==='gil'?'./icon-gil-192.png':'./icon-192.png'));await c.put('api',new Response(JSON.stringify({api:API,key:KEY})))}catch(e){}}
 async function enablePush(){if(!pushOK()){toast('בטלפון הזה אין תמיכה בתזכורות. באייפון: צריך להתקין את האפליקציה למסך הבית.');return}
   try{const perm=await Notification.requestPermission();if(perm!=='granted'){LS.set('pushOff',1);toast('התזכורות לא הופעלו. אפשר להפעיל אחר כך בהגדרות הדפדפן.');render();return}
     await notifPrefs();const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();

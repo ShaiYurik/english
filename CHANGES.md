@@ -1,5 +1,6 @@
 # Changes
 
+- v31 (2026-11-07): smart reminder text: the service worker asks the server how many tasks she did today (action `today`) and picks a random message: praise (≥ half the goal), a small push (some), or "time to practice" (none). Server: push permission granted, duplicate subscriptions per phone removed.
 - v30 (2026-11-07): reading-with-teacher no longer paints words ahead of the reader red (alignment can't jump >3 words ahead); removed the "תרגום מילים" button (tapping a word already translates); reminder card hides right after enabling; test shows push error codes.
 - v29 (2026-11-07): Gil daily story track (📖 סיפור יומי): one part a day from a Drive lesson file with `dailyStory`, tap a word for its Hebrew meaning, "תרגום מילים" list, comprehension questions; counts as a task.
 - v28 (2026-11-07): safe deploys via git (this file, CLAUDE.md, tools/smoke.js); "the app is updating" banner and
