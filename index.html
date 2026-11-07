@@ -112,6 +112,9 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance
 .fitem svg{width:100%;height:auto}.fitem small{color:var(--ink2)}
 .fitem.lock svg{filter:grayscale(1) brightness(.35);opacity:.6}.fitem.cur{outline:3px solid var(--brass);background:#fff6dc}
 .newbanner{display:flex;align-items:center;gap:12px;width:100%;border:0;text-align:start;background:linear-gradient(135deg,#f0c35e,#e2553b);color:#1a1206;border-radius:var(--r);padding:12px 14px;font:inherit;font-weight:700;box-shadow:0 10px 24px -14px #000;animation:pop .4s ease-out}
+.updbanner{position:fixed;inset:auto 12px 84px 12px;z-index:60;background:#13283b;color:#fff;border:2px solid #f0c35e;border-radius:16px;padding:12px 14px;font-weight:700;box-shadow:0 8px 24px #0008;text-align:center}
+.updbanner small{display:block;font-weight:500;opacity:.85}
+.updbanner[hidden]{display:none}
 .newbanner .gift{font-size:32px;animation:bobg 1.2s ease-in-out infinite}
 @keyframes bobg{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-4px) rotate(6deg)}}
 .newbanner small{display:block;font-weight:600;opacity:.85}
@@ -440,6 +443,31 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
+const APP_VERSION='28';
+/* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
+let UPD={updating:false,ver:null,pendingReload:false};
+async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
+  UPD.updating=!!j.updating;UPD.msg=j.msg||'';UPD.ver=j.version||null;UPD.pendingReload=!!(UPD.ver&&String(UPD.ver)!==APP_VERSION&&!UPD.updating&&LS.get('reloadedFor','')!==String(UPD.ver));showUpd();maybeReload()}catch(e){}}
+function showUpd(){let el=document.getElementById('updBanner');if(!el){el=document.createElement('div');el.id='updBanner';el.className='updbanner';document.body.appendChild(el)}
+  el.hidden=!(UPD.updating||UPD.pendingReload);el.innerHTML=UPD.updating?`⏳ האפליקציה מתעדכנת עכשיו. אפשר להמשיך בעוד דקה-שתיים, ומה שעשית נשמר.${UPD.msg?`<small>${esc(UPD.msg)}</small>`:''}`:UPD.pendingReload?'✨ יש גרסה חדשה. היא תיטען כשתסיימי את התרגיל.':''}
+function maybeReload(){if(UPD.pendingReload&&!inProgress(S.screen)&&!(S.screen&&['game','spell','quiz','sounds','fix','read2','readtext'].includes(S.screen.name))){UPD.pendingReload=false;LS.set('reloadedFor',String(UPD.ver));flush&&flush();setTimeout(()=>location.reload(),300)}}
+setInterval(()=>{if(document.visibilityState==='visible')checkStatus()},60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkStatus()});
+/* ---- תזכורות בטלפון (Web Push) ---- */
+const VAPID_PUB='BBR4fkFfpsYjeBt2gwMCR-f8Uo7xR7Eao2UVjioVPr4f7Q7ysexQZKy707C-etOaB7fGALonLbWB_i9Mb8DCzMU';
+const pushOK=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&window.isSecureContext;
+function u8b64(b){const p='='.repeat((4-b.length%4)%4);const raw=atob((b+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0))}
+async function notifPrefs(){try{const c=await caches.open('notif');const nm=(S.profile&&S.profile.name)||'';await c.put('name',new Response(nm));await c.put('icon',new Response(((S.profile&&S.profile.child)||CHILD)==='gil'?'./icon-gil-192.png':'./icon-192.png'))}catch(e){}}
+async function enablePush(){if(!pushOK()){toast('בטלפון הזה אין תמיכה בתזכורות. באייפון: צריך להתקין את האפליקציה למסך הבית.');return}
+  try{const perm=await Notification.requestPermission();if(perm!=='granted'){LS.set('pushOff',1);toast('התזכורות לא הופעלו. אפשר להפעיל אחר כך בהגדרות הדפדפן.');render();return}
+    await notifPrefs();const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8b64(VAPID_PUB)});
+    await apiPost({action:'pushSub',sub:sub.toJSON(),ua:navigator.userAgent.slice(0,60)});LS.set('pushEp',sub.endpoint);LS.set('pushOn',1);toast('🔔 התזכורת הופעלה! ראשון עד חמישי ב-18:00');render()}
+  catch(e){console.warn(e);toast('לא הצלחנו להפעיל תזכורות: '+String(e&&e.message||e).slice(0,60))}}
+async function syncPush(){if(!pushOK()||isParent()||Notification.permission!=='granted')return;try{await notifPrefs();const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(!sub)return;
+  if(LS.get('pushEp','')!==sub.endpoint||!LS.get('pushOn',0)){await apiPost({action:'pushSub',sub:sub.toJSON(),ua:navigator.userAgent.slice(0,60)});LS.set('pushEp',sub.endpoint);LS.set('pushOn',1)}}catch(e){}}
+function pushCardHTML(){if(isParent()||!pushOK()||LS.get('pushOff',0)||(Notification.permission==='granted'&&LS.get('pushOn',0)))return '';
+  return `<button class="newbanner late" data-act="pushOn"><span class="gift">🔔</span><span>תזכורת יומית לתרגול<small>ראשון עד חמישי ב-18:00</small></span><span class="go">להפעיל</span></button>`}
 const CONN={fails:0,okAt:0,ch:'',lastErr:''};const zz=ms=>new Promise(r=>setTimeout(r,ms));
 async function withTO(fn,ms){const ac=window.AbortController?new AbortController():null;const tm=ac&&setTimeout(()=>ac.abort(),ms);try{return await fn(ac)}finally{clearTimeout(tm)}}
 async function apiLoadPost(ac){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,c:CHILD||undefined,w:WP(),action:'load',diag:CONN.fails||CONN.lastErr?{fails:CONN.fails,err:CONN.lastErr,ua:navigator.userAgent.slice(0,90)}:undefined}),signal:ac?ac.signal:undefined});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');if(!j.state)throw new Error('no state');return j}
@@ -683,7 +711,7 @@ async function loadAll(){
     clearTimeout(S._retry);const d=[5,15,30,60,120][Math.min(CONN.fails-1,4)]||120;S._retry=setTimeout(()=>{if(S.online===false&&KEY&&!S._inflight)loadAll()},d*1000)}
   finally{if(tok===S._loadTok)S._inflight=false}
   if(tok!==S._loadTok)return;
-  setSync();flush();flushUploads();
+  setSync();flush();flushUploads();syncPush();
 }
 function setSync(){
   const d=$('#sync'),t=$('#syncTxt');if(!d)return;
@@ -881,7 +909,7 @@ const GAME_DESC={mc:'שאלות על מה שקראת',fill:'משלימים את 
 
 /* ============ RENDER ============ */
 function render(){
-  _trk=null;
+  _trk=null;if(UPD.pendingReload)setTimeout(maybeReload,0);
   document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-current',t.dataset.tab===S.tab?'page':'false'));
   $('#soundBtn').setAttribute('aria-pressed',String(S.sound));
   const v=$('#view');
@@ -985,7 +1013,7 @@ function viewMap(){
   const arch=T.filter(t=>!t.fixed).flatMap(t=>[...t.started,...t.done].map(i=>({i,t}))).filter(x=>x.i.id!==(x.t.active||{}).id);
   const archive=arch.length?`<details class="shelf" ${LS.get('shelfOpen',false)?'open':''}><summary data-act="shelfTog">${TW('arch')} <small>${arch.filter(x=>isDone(x.i)).length} נכבשו · אפשר לחזור ולתרגל</small></summary><div class="shelfl">${arch.map(({i,t})=>`<button class="shelfi" data-act="island" data-id="${esc(i.id)}"><span>${t.ic}</span><span class="en" style="font-family:inherit">${esc(i.name)}</span><b>${isDone(i)?'⭐'.repeat(Math.max(1,islandStars(i.id))):'בתהליך'}</b></button>`).join('')}</div></details>`:'';
   const refb=LANG()==='ar'?`<button class="btn small" data-act="ref" style="justify-self:start">🔤 טבלת אותיות ומספרים</button>`:'';
-  return meterHTML()+fleetCardHTML()+refb+banner+`<section class="map" aria-label="מפת האיים">
+  return meterHTML()+fleetCardHTML()+refb+banner+pushCardHTML()+`<section class="map" aria-label="מפת האיים">
     <svg viewBox="0 0 ${W} ${H}" role="group">
       <defs><pattern id="wv" width="40" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="#174260" stroke-width="1.2"/></pattern></defs>
       ${ds?`<defs><linearGradient id="sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7d79a"/><stop offset="1" stop-color="#d9a35a"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#sand)"/>
@@ -1806,6 +1834,8 @@ function viewParent(){
   return `<div class="ihead"><span class="eyebrow">${EB('cap')}</span><h2>יומן הורה</h2><p>דוח מלא נשלח במייל בכל ערב ב־20:00.</p></div>
   ${S.online===false?`<p class="maphint" style="text-align:start;color:#ffb4a2">⚠️ השרת לא ענה בפתיחה האחרונה: ${esc(S.lastErr||'')}</p>`:''}
   <p class="maphint" style="text-align:start"><button class="syncbtn" data-act="conntest">🔌 בדיקת חיבור</button> <span id="conntest">${CONN.okAt?'חיבור אחרון תקין: '+new Date(CONN.okAt).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})+' ('+CONN.ch+')':''}</span></p>
+  <p class="maphint" style="text-align:start">🔔 תזכורות: ${S.profile&&S.profile.pushDevices!=null?(S.profile.pushDevices?`מופעלות ב-${S.profile.pushDevices} מכשירים`:'עוד לא הופעלו בטלפון שלה'):'—'} <button class="syncbtn" data-act="pushTest">📨 לשלוח תזכורת לבדיקה</button></p>
+  <p class="maphint" style="text-align:start">גרסה ${APP_VERSION}</p>
   <p class="maphint" style="text-align:start">מצב הורה: מה שעושים בטלפון הזה לא נספר כתרגול שלה. הנתונים מתעדכנים מהטלפון שלה בכל פתיחה.</p>
   <section class="card">
     <h2>היום</h2>
@@ -1903,6 +1933,8 @@ document.addEventListener('click',e=>{
     case 'home':navTo({act:'home'});break;
     case 'kid':switchChild(el.dataset.id);break;
     case 'conntest':connTest();break;
+    case 'pushOn':enablePush();break;
+    case 'pushTest':(async()=>{toast('שולח…');try{const r=await apiPost({action:'pushTest'});toast(r.devices?`נשלח ל-${r.sent} מתוך ${r.devices} מכשירים`:'עוד אין מכשיר עם תזכורות מופעלות')}catch(e){toast('לא נשלח: '+String(e.message||e).slice(0,50))}})();break;
     case 'retry':toast('מתחבר…');S.online=null;setSync();loadAll();break;
     case 'world':switchWorld(el.dataset.id);break;
     case 'ref':S.refTab=S.refTab||'letters';S.ref=true;render();break;
@@ -2206,6 +2238,7 @@ document.addEventListener('submit',e=>{
 
 /* ============ START ============ */
 if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+checkStatus();
 render();
 loadAll();
 </script>
