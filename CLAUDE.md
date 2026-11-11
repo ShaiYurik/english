@@ -19,6 +19,7 @@ More than one conversation may work on it, so **never overwrite someone else's w
 ## What must always exist (tools/smoke.js checks it)
 - yuvik: worlds `en` (sea theme) and `ar` (desert theme, Arabic).
 - gil: worlds `en` (tennis theme) and `math` (client-side math islands, `mathFixedIslands`).
+- ariel: world `en` (bakery theme). Her Drive folders are created by the server on first use (`provision_`).
 If you add or remove a world on purpose, update `EXPECT` in tools/smoke.js in the same commit.
 
 ## Architecture (short)

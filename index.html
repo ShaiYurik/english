@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script>(function(){var r='child',c='yuvik';try{r=JSON.parse(localStorage.getItem('voy:role'))||r;c=JSON.parse(localStorage.getItem('voy:child'))||c}catch(e){}var m=r==='parent'?['manifest-boss.webmanifest','Boss']:c==='gil'?['manifest-gil.webmanifest','GilGul']:['manifest.webmanifest','Yuvik'];document.write('<meta name="apple-mobile-web-app-title" content="'+m[1]+'"><link rel="manifest" href="'+m[0]+'">')})()</script>
+<script>(function(){var r='child',c='yuvik';try{r=JSON.parse(localStorage.getItem('voy:role'))||r;c=JSON.parse(localStorage.getItem('voy:child'))||c}catch(e){}var m=r==='parent'?['manifest-boss.webmanifest','Boss']:c==='gil'?['manifest-gil.webmanifest','GilGul']:c==='ariel'?['manifest-ariel.webmanifest','Ariel']:['manifest.webmanifest','Yuvik'];document.write('<meta name="apple-mobile-web-app-title" content="'+m[1]+'"><link rel="manifest" href="'+m[0]+'">')})()</script>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,6 +39,13 @@
   --brass:#f2a93b; --brass2:#ffd78a; --signal:#d8572a; --kelp:#2f8a63; --kelp2:#dcefe0; --redsoft:#f8dccd;
   --foam:#fff3dd; --muted:#e0c49a;
 }
+:root[data-theme="bakery"]{
+  --abyss:#3b2210; --sea:#8b4f24; --sea2:#a3622e; --swell:#c4844a;
+  --chart:#fff8ec; --chart2:#f6e6cc; --ink:#3b2210; --ink2:#74512f;
+  --brass:#f0b44c; --brass2:#ffd98c; --signal:#c8553d; --kelp:#4f8a3a; --kelp2:#e3f0d8; --redsoft:#f9ddd2;
+  --foam:#fff4e2; --muted:#e6c9a0;
+}
+:root[data-theme="bakery"] body{background-image:linear-gradient(180deg,#e0a35a 0%,#8b4f24 40%,#3b2210 85%)}
 :root[data-theme="desert"] body{background-image:linear-gradient(180deg,#f0b35a 0%,#a86d36 35%,#3a2414 80%)}
 :root[data-lang="ar"] .en{font-family:"Noto Naskh Arabic","Amiri","Geeza Pro",serif;direction:rtl;unicode-bidi:isolate}
 :root[data-lang="ar"] .read,:root[data-lang="ar"] .opt.en,:root[data-lang="ar"] .qblock .q{direction:rtl;text-align:right}
@@ -447,7 +454,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='31';
+const APP_VERSION='32';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -461,7 +468,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 const VAPID_PUB='BBR4fkFfpsYjeBt2gwMCR-f8Uo7xR7Eao2UVjioVPr4f7Q7ysexQZKy707C-etOaB7fGALonLbWB_i9Mb8DCzMU';
 const pushOK=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&window.isSecureContext;
 function u8b64(b){const p='='.repeat((4-b.length%4)%4);const raw=atob((b+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0))}
-async function notifPrefs(){try{const c=await caches.open('notif');const nm=(S.profile&&S.profile.name)||'';await c.put('name',new Response(nm));await c.put('icon',new Response(((S.profile&&S.profile.child)||CHILD)==='gil'?'./icon-gil-192.png':'./icon-192.png'));await c.put('api',new Response(JSON.stringify({api:API,key:KEY})))}catch(e){}}
+async function notifPrefs(){try{const c=await caches.open('notif');const nm=(S.profile&&S.profile.name)||'';await c.put('name',new Response(nm));await c.put('icon',new Response(({gil:'./icon-gil-192.png',ariel:'./icon-ariel-192.png'})[(S.profile&&S.profile.child)||CHILD]||'./icon-192.png'));await c.put('api',new Response(JSON.stringify({api:API,key:KEY})))}catch(e){}}
 async function enablePush(){if(!pushOK()){toast('בטלפון הזה אין תמיכה בתזכורות. באייפון: צריך להתקין את האפליקציה למסך הבית.');return}
   try{const perm=await Notification.requestPermission();if(perm!=='granted'){LS.set('pushOff',1);toast('התזכורות לא הופעלו. אפשר להפעיל אחר כך בהגדרות הדפדפן.');render();return}
     await notifPrefs();const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
@@ -633,26 +640,27 @@ const SR_LANG=()=>LANG()==='ar'?'ar-SA':'en-US';
 const LETTER_RE=()=>LANG()==='ar'?/[^\u0621-\u064A\u0660-\u0669]/g:/[^A-Za-z0-9'-]/g;
 const plainW=w=>LANG()==='ar'?String(w).replace(/[\u064B-\u0652\u0640]/g,'').replace(/[^\u0621-\u064A]/g,''):String(w).toLowerCase();
 const spellable=w=>LANG()==='ar'?(()=>{const p=plainW(w);return p.length>=2&&p.length<=8&&!/\s/.test(String(w).trim())})():/^[a-z]{3,10}$/i.test(w);
-const THEME=()=>WORLD==='ar'?'desert':S.profile&&S.profile.child==='gil'?'tennis':'sea';
+const THEME=()=>WORLD==='ar'?'desert':S.profile&&S.profile.child==='gil'?'tennis':S.profile&&S.profile.child==='ariel'?'bakery':'sea';
 const WORDS={sea:{day:'המסע היומי',done:'הגעת לנמל היום. ',goal:'הספינה מגיעה לנמל אחרי {G} משימות. ',newT:'אי חדש מחכה לך!',go:'להפליג ⛵',late:'יאללה ⛵',arch:'🏆 איים שכבשת',back:'חזרה למפה',win:'כבשת את האי!',full:'האי הושלם במלואו!',flags:'🏝️⚓🏝️',tab:'מפה',loading:'מכינים את הספינה…',waits:'מחכה לך',isl:'האי'},
   desert:{day:'המסע במדבר',done:'הגעת לנווה המדבר היום! ',goal:'השיירה מגיעה לנווה המדבר אחרי {G} משימות. ',newT:'נווה מדבר חדש מחכה לך!',go:'לרכוב 🐪',late:'יאללה 🐪',arch:'🏆 נווי מדבר שכבשת',back:'חזרה למדבר',win:'כבשת את נווה המדבר!',full:'נווה המדבר הושלם במלואו!',flags:'🌴🐪🌴',tab:'מדבר',loading:'מעמיסים את הגמלים…',waits:'מחכה לך',isl:'נווה המדבר'},
+  bakery:{day:'האפייה היומית',done:'המאפה יצא מהתנור היום! ',goal:'המאפה מוכן אחרי {G} משימות. ',newT:'מתכון חדש מחכה לך!',go:'לאפות 🥐',late:'יאללה 🥐',arch:'🏆 מאפים שאפית',back:'חזרה למאפייה',win:'המאפה יצא מושלם!',full:'מאפה מושלם, ישר מהתנור!',flags:'🥐🍞🥐',tab:'מאפייה',loading:'מחממים את התנור…',waits:'מחכה לך',isl:'המאפה'},
   tennis:{day:'האימון היומי',done:'סיימת את האימון היום! ',goal:'האימון היומי נגמר אחרי {G} משימות. ',newT:'מגרש חדש מחכה לך!',go:'לעלות למגרש 🎾',late:'יאללה 🎾',arch:'🏆 משחקים שניצחת',back:'חזרה למגרשים',win:'ניצחת במשחק!',full:'ניצחון מושלם! Game, set, match!',flags:'🎾🏆🎾',tab:'מגרשים',loading:'מכינים את המגרש…',waits:'מחכה לך',isl:'המגרש'}};
 const TW=k=>WORDS[THEME()][k];
-const EBW={sea:{log:"Ship's Log",radio:'Radio Room',hunt:'Treasure Hunt',cap:"Captain's Log",anc:'⚓'},tennis:{log:'Match Schedule',radio:'Commentary Box',hunt:'Ball Hunt',cap:"Coach's Notes",anc:'🎾'},desert:{log:'Caravan Log',radio:'Radio Tent',hunt:'Treasure Hunt',cap:"Caravan Master's Log",anc:'🐪'}};
+const EBW={sea:{log:"Ship's Log",radio:'Radio Room',hunt:'Treasure Hunt',cap:"Captain's Log",anc:'⚓'},tennis:{log:'Match Schedule',radio:'Commentary Box',hunt:'Ball Hunt',cap:"Coach's Notes",anc:'🎾'},bakery:{log:'Recipe Book',radio:'Kitchen Radio',hunt:'Crumb Hunt',cap:"Baker's Notes",anc:'🥐'},desert:{log:'Caravan Log',radio:'Radio Tent',hunt:'Treasure Hunt',cap:"Caravan Master's Log",anc:'🐪'}};
 const EB=k=>(EBW[THEME()]||EBW.sea)[k];
 const feat=k=>!S.profile||!S.profile.features||S.profile.features[k]!==false;
 const kidName=()=>S.profile?S.profile.name:'יוביק';
 function applyProfile(){
-  const n=kidName();const short=isParent()?'Boss':(S.profile&&S.profile.child==='gil')?'GilGul':'Yuvik';
+  const n=kidName();const short=isParent()?'Boss':(S.profile&&S.profile.child==='gil')?'GilGul':(S.profile&&S.profile.child==='ariel')?'Ariel':'Yuvik';
   document.title='לומדים בכיף · '+(isParent()?'Boss':n);const h=document.querySelector('.brand h1');if(h)h.textContent='לומדים בכיף';
   const sub=document.querySelector('.brand .who');if(sub)sub.textContent=isParent()?'Boss · '+n:n;
   document.documentElement.dataset.theme=THEME();document.documentElement.dataset.lang=LANG();
-  const tn=THEME()==='tennis';const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=tn?'#0b2147':'#0a1a29';
+  const tn=THEME()==='tennis',bk=THEME()==='bakery';const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=tn?'#0b2147':bk?'#3b2210':'#0a1a29';
   const at=document.querySelector('meta[name="apple-mobile-web-app-title"]');if(at)at.content=short;
-  const want=isParent()?'manifest-boss.webmanifest':tn?'manifest-gil.webmanifest':'manifest.webmanifest';
+  const want=isParent()?'manifest-boss.webmanifest':tn?'manifest-gil.webmanifest':bk?'manifest-ariel.webmanifest':'manifest.webmanifest';
   const m=document.querySelector('link[rel="manifest"]');if(m&&m.getAttribute('href')!==want)m.setAttribute('href',want);
-  const ic=tn&&!isParent()?'icon-gil-512.png':'icon-512.png';const bi=document.querySelector('.brand img');if(bi&&bi.getAttribute('src')!==ic)bi.setAttribute('src',ic);
-  const ap=document.querySelector('link[rel="apple-touch-icon"]');if(ap)ap.setAttribute('href',tn&&!isParent()?'apple-touch-gil.png':'apple-touch-icon.png');
+  const ic=isParent()?'icon-512.png':tn?'icon-gil-512.png':bk?'icon-ariel-512.png':'icon-512.png';const bi=document.querySelector('.brand img');if(bi&&bi.getAttribute('src')!==ic)bi.setAttribute('src',ic);
+  const ap=document.querySelector('link[rel="apple-touch-icon"]');if(ap)ap.setAttribute('href',isParent()?'apple-touch-icon.png':tn?'apple-touch-gil.png':bk?'apple-touch-ariel.png':'apple-touch-icon.png');
   const mt2=document.querySelector('.tab[data-tab="map"] .lbl');if(mt2)mt2.textContent=TW('tab');
 }
 function resetChildState(){Object.assign(S,{progress:{unlocked:1,best:{},xp:0},session:newSession(),sessions:[],classWords:[],zoom:[],lessons:[],pendingPhotos:0,scheduleState:null,transcripts:[],screen:{name:'map'},calDay:null,editLesson:null,shots:[]});_trk=null}
@@ -824,13 +832,13 @@ function bookIslands(){
 }
 function allIslands(){
   if(WORLD==='math')return mathFixedIslands();
-  if(LANG()==='ar'){const list=[...arFixedIslands()];(S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule||l.roundsFor||l.dailyStory)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'נווה מדבר חדש',en:l.en||'',topic:l.topic||'מחומר שצילמת',words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],created:l.created||''})});return list}
+  if(LANG()==='ar'){const list=[...arFixedIslands()];(S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule||l.roundsFor||l.dailyStory)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'נווה מדבר חדש',en:l.en||'',topic:l.topic||'מחומר שצילמת',words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,stories:Array.isArray(l.stories)?l.stories.filter(x=>x&&x.qs&&x.qs.length&&(x.text||x.paras)):[],mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],created:l.created||''})});return list}
   const book=bookIslands();
   const legacy=!S.profile||S.profile.child==='yuvik';
   const list=book.length?book:legacy?ISLANDS.map(i=>({...i,kind:'base'})):[];
   if(S.classWords.length>=4)list.push({id:'cove',kind:'class',name:'מפרץ המטמון',en:'Treasure Cove',topic:'מילים מהכיתה',words:S.classWords.map(w=>({en:w.en,he:w.he,ex:w.ex||''}))});
   dailyIslands().forEach(x=>list.push(x));
-  (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule||l.roundsFor||l.dailyStory)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],zoomId:l.zoomId||'',zoomDate:l.zoomDate||'',created:l.created||''})});
+  (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule||l.roundsFor||l.dailyStory)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,stories:Array.isArray(l.stories)?l.stories.filter(x=>x&&x.qs&&x.qs.length&&(x.text||x.paras)):[],mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],zoomId:l.zoomId||'',zoomDate:l.zoomDate||'',created:l.created||''})});
   return list;
 }
 /* ---- סיפור יומי: קטע אחד ביום. הקטע הבא נפתח ביום שאחרי שקראו את הקטע הקודם ---- */
@@ -877,7 +885,7 @@ function tracks(){
   const dc=dailyCurrent();if(dc)_trk.push({k:'daily',t:'סיפור יומי',ic:'📖',flag:'#f0c35e',active:dc.isl,done:[],started:[],queue:[],quiet:true,dailyDone:dc.doneToday,dailyLast:dc.last,none:''});
   return _trk;
 }
-const classSlots=()=>((S.profile&&S.profile.child)||CHILD)==='gil'?2:1;
+const classSlots=()=>['gil','ariel'].includes((S.profile&&S.profile.child)||CHILD)?2:1;
 const activeIds=()=>{const T=tracks();return T?T.filter(t=>t.active).map(t=>t.active.id):[]};
 const daysSince=d=>d?Math.max(0,Math.round((new Date(today())-new Date(d))/864e5)):0;
 function waitInfo(i){const p=S.progress;const since=(p.activeSince||{})[i.id];const touch=(p.touch||{})[i.id];const last=[since,touch].filter(Boolean).sort().pop();return {days:daysSince(last),touched:!!(touch||p.best[i.id])}}
@@ -912,6 +920,7 @@ function stationsOf(i){
   if(i.mistakes&&i.mistakes.length)st.push({k:'fix',ic:I.fix,t:'מתקנים טעויות',d:'משפטים מהשיעור: איך אומרים נכון?',m:pct('fix'),scored:1});
   if(i.kind==='base')st.push({k:'sounds',ic:I.ear,t:'מה שמעת?',d:'להבדיל בין מילים שנשמעות דומה',m:pct('sounds'),scored:1});
   if(i.story)st.push({k:'unseen',ic:I.book,t:'אנסין',d:i.story.title,m:pct('unseen'),scored:1});
+  (i.stories||[]).forEach((s,n)=>st.push({k:'u'+n,ic:I.book,t:'אנסין '+(n+1),d:s.title,m:pct('u'+n),scored:1}));
   return st;
 }
 function islandRatio(i){const st=stationsOf(i).filter(s=>s.scored);if(!st.length)return 1;const b=S.progress.best[i.id]||{};return st.filter(s=>(b[s.k]||0)>=70).length/st.length}
@@ -967,8 +976,8 @@ function meterHTML(){
   return `<section class="voyage" aria-label="${TW('day')}">
     <div class="row"><span class="lbl">${TW('day')}</span><span class="num" id="mNum"></span></div>
     <div class="track"><div class="line"></div><div class="done" id="mDone"></div>
-      ${tn||THEME()==='desert'?`<span class="port" aria-hidden="true" style="font-size:16px;line-height:18px">${tn?'🏆':'🌴'}</span>`:'<svg class="port" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v11M4 9a5 5 0 0 0 10 0M6 5h6" stroke="#d6a64a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'}
-      <div class="ship" id="mShip">${!tn&&fleetOn()?vehSVG(fleetState().lv,34):tn?'<svg viewBox="0 0 30 30" width="30" height="30"><circle cx="15" cy="15" r="12" fill="#d7f23c" stroke="#9fb61f" stroke-width="1.5"/><path d="M5 9 C11 12 11 18 5 21 M25 9 C19 12 19 18 25 21" stroke="#fff" stroke-width="2" fill="none"/></svg>':I.ship}</div></div>
+      ${tn||THEME()==='desert'||THEME()==='bakery'?`<span class="port" aria-hidden="true" style="font-size:16px;line-height:18px">${tn?'🏆':THEME()==='bakery'?'🎂':'🌴'}</span>`:'<svg class="port" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v11M4 9a5 5 0 0 0 10 0M6 5h6" stroke="#d6a64a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'}
+      <div class="ship" id="mShip">${THEME()==='bakery'?'<span style="font-size:26px;line-height:30px">🥐</span>':!tn&&fleetOn()?vehSVG(fleetState().lv,34):tn?'<svg viewBox="0 0 30 30" width="30" height="30"><circle cx="15" cy="15" r="12" fill="#d7f23c" stroke="#9fb61f" stroke-width="1.5"/><path d="M5 9 C11 12 11 18 5 21 M25 9 C19 12 19 18 25 21" stroke="#fff" stroke-width="2" fill="none"/></svg>':I.ship}</div></div>
     <div class="streak" id="mStreak"></div>
     ${examHTML()}
   </section>`;
@@ -1003,23 +1012,23 @@ function viewMap(){
   updateAlerts();
   const W=360,H=T.length===2?330:470;const pos=T.length===2?[{x:240,y:240},{x:120,y:95}]:[{x:248,y:385},{x:110,y:235},{x:250,y:95}];
   const depths=Array.from({length:7},(_,k)=>[[40,320,180,30,330,200][k%6],k*70+40,String(5+(k*7)%27)]).map(([x,y,t])=>`<text x="${x}" y="${y}" font-size="10" fill="#5f84a0" font-family="Assistant" font-style="italic">${t}</text>`).join('');
-  const tn=THEME()==='tennis',ds=THEME()==='desert';
+  const tn=THEME()==='tennis',ds=THEME()==='desert',bk=THEME()==='bakery';const BK=['🥐','🍞','🥖','🥨','🧁','🥯','🍰','🥧'];
   const nodes=T.map((t,k)=>{const {x,y}=pos[k];const i=t.active;
-    if(!i)return `<g transform="translate(${x},${y})" opacity=".75"><text x="0" y="-44" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="${ds?'#6e4e2f':'#c9d6de'}">${t.ic} ${t.t}</text>
-      <ellipse cx="0" cy="4" rx="40" ry="20" fill="none" stroke="#2a6a92" stroke-dasharray="3 4"/><text x="0" y="9" text-anchor="middle" font-size="22">${ds?'🏜️':tn?'🎾':'🌊'}</text>
-      <text x="0" y="44" text-anchor="middle" font-family="Assistant" font-size="12" fill="${ds?'#6e4e2f':'#86a2b6'}">${esc(t.none)}</text></g>`;
+    if(!i)return `<g transform="translate(${x},${y})" opacity=".75"><text x="0" y="-44" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="${ds||bk?'#6e4e2f':'#c9d6de'}">${t.ic} ${t.t}</text>
+      <ellipse cx="0" cy="4" rx="40" ry="20" fill="none" stroke="#2a6a92" stroke-dasharray="3 4"/><text x="0" y="9" text-anchor="middle" font-size="22">${ds?'🏜️':tn?'🎾':bk?'🥣':'🌊'}</text>
+      <text x="0" y="44" text-anchor="middle" font-family="Assistant" font-size="12" fill="${ds||bk?'#6e4e2f':'#86a2b6'}">${esc(t.none)}</text></g>`;
     const st=islandStars(i.id);const fresh=isNewIsland(i);const w=waitInfo(i);const late=!fresh&&w.days>=2;
     return `<g class="isl" tabindex="0" role="button" aria-label="${esc(t.t+': '+i.name)}" data-act="island" data-id="${esc(i.id)}" transform="translate(${x},${y})">
       <g transform="translate(0,-58)"><rect x="-62" y="-14" width="124" height="26" rx="13" fill="#0b1c2b" stroke="${t.flag}" stroke-width="1.5"/><text x="0" y="4" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="${t.flag}">${t.ic} ${t.t}</text></g>
       ${fresh?`<ellipse class="glow" cx="0" cy="4" rx="54" ry="32" fill="rgba(240,195,94,.18)" stroke="#f0c35e" stroke-width="2.5"/>`:''}
       <ellipse class="ring" cx="0" cy="4" rx="48" ry="27" fill="none" stroke="#2a6a92" stroke-width="1" stroke-dasharray="3 4"/>
-      ${ds?`<ellipse cx="0" cy="12" rx="40" ry="14" fill="#e8c27a"/><ellipse cx="2" cy="10" rx="24" ry="8" fill="#38a3c9"/><ellipse cx="-4" cy="8" rx="10" ry="3" fill="#8fd6ec"/><text x="-26" y="6" font-size="30">🌴</text><text x="12" y="0" font-size="24">🌴</text>`:tn?`<ellipse cx="0" cy="22" rx="26" ry="6" fill="rgba(0,0,0,.25)"/><circle cx="0" cy="0" r="26" fill="#d7f23c" stroke="#a3bb1c" stroke-width="2"/><path d="M-22 -13 C-8 -6 -8 6 -22 13 M22 -13 C8 -6 8 6 22 13" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+      ${bk?`<ellipse cx="0" cy="20" rx="40" ry="10" fill="rgba(60,30,10,.25)"/><ellipse cx="0" cy="10" rx="40" ry="16" fill="#fffaf2" stroke="#e3cba8" stroke-width="2"/><ellipse cx="0" cy="10" rx="28" ry="10" fill="none" stroke="#efdcc0" stroke-width="1.5"/><text x="0" y="14" text-anchor="middle" font-size="34">${BK[[...String(i.id)].reduce((a,c)=>a+c.charCodeAt(0),0)%BK.length]}</text>`:ds?`<ellipse cx="0" cy="12" rx="40" ry="14" fill="#e8c27a"/><ellipse cx="2" cy="10" rx="24" ry="8" fill="#38a3c9"/><ellipse cx="-4" cy="8" rx="10" ry="3" fill="#8fd6ec"/><text x="-26" y="6" font-size="30">🌴</text><text x="12" y="0" font-size="24">🌴</text>`:tn?`<ellipse cx="0" cy="22" rx="26" ry="6" fill="rgba(0,0,0,.25)"/><circle cx="0" cy="0" r="26" fill="#d7f23c" stroke="#a3bb1c" stroke-width="2"/><path d="M-22 -13 C-8 -6 -8 6 -22 13 M22 -13 C8 -6 8 6 22 13" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
       :`<path d="M-38 6 C-34 -16 -9 -22 7 -18 C29 -13 42 -2 36 11 C27 24 -25 26 -38 6Z" fill="${i.kind==='lesson'?'#f2dfae':'#e8d6a4'}"/>
       <path d="M-25 2 C-20 -13 -2 -16 9 -11 C22 -7 25 4 16 9 C2 15 -20 13 -25 2Z" fill="${i.kind==='lesson'?'#2f9f8a':'#3f8f6b'}"/>
       <path d="M7 -11 v-24" stroke="#0f2233" stroke-width="1.6"/><path d="M7 -35 l15 5 -15 5z" fill="${t.flag}"/>`}
       ${fresh?`<text class="spark" x="40" y="-14" font-size="16">✨</text><text class="spark b" x="-54" y="-2" font-size="13">✨</text><text class="spark c" x="24" y="28" font-size="12">✨</text><g transform="translate(-34,-24)"><rect x="-18" y="-10" width="36" height="18" rx="9" fill="#e2553b"/><text x="0" y="3" text-anchor="middle" font-size="11" font-family="Assistant" font-weight="800" fill="#fff">חדש</text></g>`:''}
       ${late?`<text x="-46" y="-16" font-size="18">⏰</text>`:''}
-      <text x="0" y="46" text-anchor="middle" font-family="Secular One, Assistant" font-size="15" fill="${ds?'#3a2414':'#eef2ea'}">${esc(i.name)}</text>
+      <text x="0" y="46" text-anchor="middle" font-family="Secular One, Assistant" font-size="15" fill="${ds||bk?'#3a2414':'#eef2ea'}">${esc(i.name)}</text>
       <g transform="translate(-27,54)">${[0,1,2].map(n=>`<path transform="translate(${n*18},0) scale(.62)" d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" fill="${n<st?'#d6a64a':'#2a5878'}"/>`).join('')}</g>
       ${t.queue.length?`<text x="0" y="84" text-anchor="middle" font-family="Assistant" font-size="11" fill="#86a2b6">עוד ${t.queue.length} בתור</text>`:t.replay?`<text x="0" y="84" text-anchor="middle" font-family="Assistant" font-size="11" fill="#86a2b6">🏆 לתרגול חוזר עד שיעלה חדש</text>`:t.k==='daily'&&t.dailyDone?`<text x="0" y="84" text-anchor="middle" font-family="Assistant" font-size="11" fill="#86a2b6">${t.dailyLast?'✓ סיימת את כל הסיפור!':'✓ קראת היום · הקטע הבא מחר'}</text>`:''}
     </g>`}).join('');
@@ -1033,7 +1042,11 @@ function viewMap(){
   return meterHTML()+fleetCardHTML()+refb+banner+pushCardHTML()+`<section class="map" aria-label="מפת האיים">
     <svg viewBox="0 0 ${W} ${H}" role="group">
       <defs><pattern id="wv" width="40" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="#174260" stroke-width="1.2"/></pattern></defs>
-      ${ds?`<defs><linearGradient id="sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7d79a"/><stop offset="1" stop-color="#d9a35a"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#sand)"/>
+      ${bk?`<defs><linearGradient id="wood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2b47a"/><stop offset="1" stop-color="#c58b52"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#wood)"/>
+      <g stroke="#b47a43" stroke-width="1.2" fill="none" opacity=".55">${[0.12,0.3,0.48,0.66,0.84].map(f=>`<path d="M0 ${H*f} Q${W*0.3} ${H*f-10} ${W*0.55} ${H*f+6} T${W} ${H*f-4}"/>`).join('')}</g>
+      <g opacity=".5" fill="#fff">${[[60,70],[300,140],[90,300],[260,380],[180,220],[320,470],[40,500]].map(([a,b])=>`<circle cx="${a}" cy="${b}" r="2.2"/><circle cx="${a+8}" cy="${b+5}" r="1.4"/><circle cx="${a-6}" cy="${b+9}" r="1.8"/>`).join('')}</g>
+      <text x="${W-46}" y="40" font-size="26">🌾</text><text x="18" y="${H-20}" font-size="24">🧈</text><text x="${W-44}" y="${H*0.58}" font-size="20">🥚</text><text x="20" y="${H*0.42}" font-size="20">🍫</text>
+      <polyline points="${pos.slice(0,T.length).map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#fff6e6" stroke-width="2.5" stroke-dasharray="1 7" stroke-linecap="round" opacity=".9"/>`:ds?`<defs><linearGradient id="sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7d79a"/><stop offset="1" stop-color="#d9a35a"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#sand)"/>
       <circle cx="${W-50}" cy="44" r="22" fill="#ffd36b"/><circle cx="${W-50}" cy="44" r="30" fill="none" stroke="#ffe7a8" stroke-width="3" stroke-dasharray="3 7"/>
       <path d="M0 ${H*0.35} Q80 ${H*0.27} 160 ${H*0.36} T360 ${H*0.33}" fill="none" stroke="#c98d45" stroke-width="2" opacity=".6"/>
       <path d="M0 ${H*0.62} Q90 ${H*0.54} 190 ${H*0.64} T360 ${H*0.6}" fill="none" stroke="#c98d45" stroke-width="2" opacity=".6"/>
@@ -1048,7 +1061,7 @@ function viewMap(){
       <g stroke="#1d4a6a" stroke-width=".6">${[60,120,180,240,300].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="${H}"/>`).join('')}${[100,200,300,400].map(y=>`<line x1="0" y1="${y}" x2="${W}" y2="${y}"/>`).join('')}</g>
       ${depths}
       <polyline points="${pos.slice(0,T.length).map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#d6a64a" stroke-width="2" stroke-dasharray="6 6" opacity=".5"/>`}
-      ${tn||ds?'':`<g transform="translate(40,${H-40})" opacity=".85"><circle r="22" fill="none" stroke="#5f84a0"/><path d="M0 -20 L4 0 L0 20 L-4 0Z" fill="#d6a64a"/><path d="M-20 0 L0 -4 L20 0 L0 4Z" fill="#5f84a0"/><text y="-26" text-anchor="middle" font-size="10" fill="#d6a64a" font-family="Assistant" font-weight="700">N</text></g>`}
+      ${tn||ds||bk?'':`<g transform="translate(40,${H-40})" opacity=".85"><circle r="22" fill="none" stroke="#5f84a0"/><path d="M0 -20 L4 0 L0 20 L-4 0Z" fill="#d6a64a"/><path d="M-20 0 L0 -4 L20 0 L0 4Z" fill="#5f84a0"/><text y="-26" text-anchor="middle" font-size="10" fill="#d6a64a" font-family="Assistant" font-weight="700">N</text></g>`}
       ${nodes}
     </svg></section>
     ${archive}
@@ -1107,7 +1120,7 @@ function viewIsland(id){
   ${i.kind==='lesson'&&i.source==='זום'?`<span class="zbadge">💻 מהשיעור בזום${i.zoomDate?' · '+dayName(i.zoomDate)+' '+fmtDate(i.zoomDate):''}${zl&&zl.teacher?' · עם '+esc(zl.teacher):''}</span>`:i.kind!=='base'?`<span class="zbadge" style="background:${trackOf(i)==='unseen'?'#ffe1da;color:#9a2f1c':'#d8f3e8;color:#1d6b4f'}">${trackLabel(i)}${i.kind==='lesson'&&i.created?' · '+fmtDate(String(i.created).slice(0,10)):''}</span>`:''}
   <div class="ihead">${i.en?`<span class="eyebrow en">${esc(i.en)}</span>`:''}<h2>${esc(i.name)}</h2><p>${esc(i.topic)}</p></div>
   ${i.howto?`<section class="card howto"><h2>איך עושים את זה?</h2>${i.howto}</section>`:''}
-  ${anyScore?`<section class="card rep-card"><h2>${THEME()==='tennis'?'דוח המאמן':'דוח קפטן'} · היום</h2>${islandReportHTML(i)}</section>`:''}
+  ${anyScore?`<section class="card rep-card"><h2>${THEME()==='tennis'?'דוח המאמן':THEME()==='bakery'?'דוח השף':'דוח קפטן'} · היום</h2>${islandReportHTML(i)}</section>`:''}
   <div class="stations">${st.map(s=>`<button class="station" data-act="station" data-k="${s.k}" data-id="${esc(id)}"><span class="ic">${s.ic}</span><span class="tx"><b>${s.t}</b><span>${esc(s.d)}</span></span><span class="mark">${s.m}</span></button>`).join('')}</div>`;
 }
 
@@ -1184,15 +1197,16 @@ function viewRead(){
     <div class="btns"><button class="btn brass" data-act="readMark" data-v="ok">קראתי נכון</button><button class="btn ghost" data-act="readMark" data-v="help">נעזרתי בהקראה</button></div>
   </section>`;
 }
+function unseenOf(sc){const i=islandById(sc.id);const st=sc.si!=null?i.stories[sc.si]:i.story;if(st&&st.paras&&!st.text)st.text=st.paras.join(' ');return st}
 function viewUnseen(){
-  const sc=S.screen;const i=islandById(sc.id);const st=i.story;
+  const sc=S.screen;const i=islandById(sc.id);const st=unseenOf(sc);
   return `<button class="back" data-act="island" data-id="${esc(sc.id)}">${I.back} ${esc(i.name)}</button>
   <section class="card">
     <h2 class="en" style="text-align:left">${esc(st.title)}</h2>
     <p class="tip">לחיצה על מילה משמיעה אותה. אפשר גם להשמיע את כל הטקסט.</p>
     <div class="btns"><button class="btn small" data-act="say" data-text="${esc(st.text)}">${I.speaker} השמע את הסיפור</button><button class="btn ghost small" data-act="stopSay">עצור</button></div>
-    <div class="read story">${wordsHTML(st.text)}</div>
-    ${st.qs.map((q,k)=>{const a=sc.answers[k];return `<div class="qblock"><div class="q">${k+1}. ${esc(q.q)}</div><div class="opts">${q.o.map((o,j)=>{let cls='opt en';if(sc.checked){if(j===q.a)cls+=' ok';else if(a===j)cls+=' bad'}else if(a===j)cls+=' ok';return `<button class="${cls}" data-act="uAns" data-q="${k}" data-o="${j}" ${sc.checked?'disabled':''}>${esc(o)}</button>`}).join('')}</div></div>`}).join('')}
+    <div class="read story">${st.paras?st.paras.map(p=>`<p style="margin:0 0 .8em">${wordsHTML(p)}</p>`).join(''):wordsHTML(st.text)}</div>
+    ${st.qs.map((q,k)=>{const a=sc.answers[k];return `<div class="qblock"><div class="q">${k+1}. ${esc(q.q)}</div>${sc.checked&&q.why?`<p class="sub" style="margin:4px 0">${a===q.a?'✅':'💡'} ${esc(q.why)}</p>`:''}<div class="opts">${q.o.map((o,j)=>{let cls='opt en';if(sc.checked){if(j===q.a)cls+=' ok';else if(a===j)cls+=' bad'}else if(a===j)cls+=' ok';return `<button class="${cls}" data-act="uAns" data-q="${k}" data-o="${j}" ${sc.checked?'disabled':''}>${esc(o)}</button>`}).join('')}</div></div>`}).join('')}
     ${sc.checked?`<button class="btn brass" data-act="uDone">לתוצאות</button>`:`<button class="btn brass" data-act="uCheck">בדוק תשובות</button>`}
   </section>`;
 }
@@ -1982,6 +1996,7 @@ document.addEventListener('click',e=>{
       else if(k==='fix'){S.screen={name:'fix',id,idx:0,qs:buildFixQuiz(i),correct:0,missed:[]}}
       else if(k==='readaloud'){const items=shuffle([...i.words.filter(w=>w.ex).map(w=>w.ex),...(i.mistakes||[]).map(m=>m.correct)]).slice(0,5);if(!items.length){toast('אין משפטים באי הזה');break}S.screen={name:'readaloud',id,idx:0,items,ok:0,help:0}}
       else if(k==='unseen'){S.screen={name:'unseen',id,answers:[],checked:false}}
+      else if(/^u\d+$/.test(k)){S.screen={name:'unseen',id,si:+k.slice(1),answers:[],checked:false}}
       render();scrollTo({top:0});
       const q=S.screen.qs&&S.screen.qs[0];if(q&&q.autoSay)setTimeout(()=>say(q.say),350);
       break;}
@@ -2004,9 +2019,9 @@ document.addEventListener('click',e=>{
     case 'readMark':{if(el.dataset.v==='ok'){sc.ok++;S.session.readOk++;sfx.ok()}else{sc.help++;S.session.readHelp++}
       if(sc.idx<sc.items.length-1){sc.idx++;render()}else finishActivity('read','קריאה בקול',sc.ok,sc.items.length,[]);break;}
     case 'uAns':sc.answers[+el.dataset.q]=+el.dataset.o;render();break;
-    case 'uCheck':{const st=islandById(sc.id).story;if(sc.answers.filter(x=>x!=null).length<st.qs.length){toast('יש לענות על כל השאלות');break}
+    case 'uCheck':{const st=unseenOf(sc);if(sc.answers.filter(x=>x!=null).length<st.qs.length){toast('יש לענות על כל השאלות');break}
       sc.checked=true;const c=st.qs.filter((q,k)=>sc.answers[k]===q.a).length;sc.correct=c;c===st.qs.length?sfx.ok():sfx.bad();render();break;}
-    case 'uDone':{const st=islandById(sc.id).story;finishActivity('unseen','אנסין: '+st.title,sc.correct,st.qs.length,[]);break;}
+    case 'uDone':{const st=unseenOf(sc);finishActivity(sc.si!=null?'u'+sc.si:'unseen','אנסין: '+st.title,sc.correct,st.qs.length,[]);break;}
     case 'copyRep':{const txt=buildReport();const sel=()=>{const r=$('#rep');const g=getSelection();const rg=document.createRange();rg.selectNodeContents(r);g.removeAllRanges();g.addRange(rg);toast('הטקסט מסומן, אפשר להעתיק')};
       if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>toast('הדוח הועתק')).catch(sel);else sel();break;}
     case 'delWord':{const id=el.dataset.id;S.classWords=S.classWords.filter(w=>w.id!==id);saveState('classwords');render();break;}

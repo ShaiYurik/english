@@ -6,10 +6,11 @@ const BASE = (process.argv[2] || 'https://shaiyurik.github.io/english/').replace
 const lesson = { id: 'smoke', name: 'בדיקה', source: 'כיתה', created: '2026-01-01', words: [{ en: 'cat', he: 'חתול' }, { en: 'dog', he: 'כלב' }, { en: 'sun', he: 'שמש' }, { en: 'sea', he: 'ים' }], games: [{ kind: 'pairs', title: 'זיכרון', pairs: [['cat', 'חתול'], ['dog', 'כלב']] }] };
 const prof = {
   yuvik: { child: 'yuvik', name: 'יוביק', grade: 'ז׳', features: { zoom: true, cal: true, camera: true, readtext: true }, world: 'en', worlds: [{ id: 'en', label: 'אנגלית' }, { id: 'ar', label: 'ערבית' }] },
-  gil: { child: 'gil', name: 'גיל', grade: 'ה׳', features: { zoom: false, cal: true, camera: true, readtext: true }, world: 'en', worlds: [{ id: 'en', label: 'אנגלית' }] }
+  gil: { child: 'gil', name: 'גיל', grade: 'ה׳', features: { zoom: false, cal: true, camera: true, readtext: true }, world: 'en', worlds: [{ id: 'en', label: 'אנגלית' }] },
+  ariel: { child: 'ariel', name: 'אריאל', grade: 'ט׳', features: { zoom: false, cal: true, camera: true, readtext: true }, world: 'en', worlds: [{ id: 'en', label: 'אנגלית' }] }
 };
 // what each girl must have. Update this list when a world is added or removed on purpose.
-const EXPECT = { yuvik: ['en', 'ar'], gil: ['en', 'math'] };
+const EXPECT = { yuvik: ['en', 'ar'], gil: ['en', 'math'], ariel: ['en'] };
 (async () => {
   const b = await chromium.launch(); let fail = 0;
   const status = await (await fetch(BASE + 'status.json?t=' + Date.now())).json().catch(() => null);
@@ -17,7 +18,7 @@ const EXPECT = { yuvik: ['en', 'ar'], gil: ['en', 'math'] };
   const ver = (html.match(/APP_VERSION='([^']+)'/) || [])[1];
   console.log('version index=' + ver + ' status=' + (status && status.version) + ' updating=' + (status && status.updating));
   if (!status || String(status.version) !== ver) { console.log('FAIL: status.json version does not match index.html'); fail++; }
-  for (const kid of ['yuvik', 'gil']) {
+  for (const kid of Object.keys(EXPECT)) {
     for (const w of EXPECT[kid]) {
       const ctx = await b.newContext({ viewport: { width: 400, height: 860 }, serviceWorkers: 'block' });
       await ctx.addInitScript(([k, w]) => { localStorage.setItem('voy:world:' + k, JSON.stringify(w)); }, [kid, w]);
