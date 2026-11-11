@@ -454,7 +454,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='32';
+const APP_VERSION='33';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1286,7 +1286,7 @@ function buildGame(i,n){
   if(['mc','fill','odd','pic'].includes(g.kind)){
     let items;
     if(g.kind==='mc')items=g.items.map(it=>({q:it.q,o:it.o,a:Array.isArray(it.a)?it.a:[it.a],why:it.why,say:WORLD==='math'?null:it.q}));
-    else if(g.kind==='fill')items=shuffle(g.items).map(it=>({q:it.t,gap:true,o:shuffle(it.o),a:null,ans:it.a,say:it.t.replace('___',it.a)}));
+    else if(g.kind==='fill')items=shuffle(g.items).map(it=>({q:it.t,gap:true,o:shuffle(it.o),a:null,ans:it.a,why:it.why,say:it.t.replace('___',it.a)}));
     else if(g.kind==='odd'){const tr={};[...(i.words||[]),...WORDS_ALL()].forEach(w=>{if(w&&w.en&&w.he&&!tr[w.en.toLowerCase()])tr[w.en.toLowerCase()]=w.he});
       items=shuffle(g.items).map(it=>({q:'איזו מילה לא שייכת?',o:shuffle(it.o),ans:it.a,why:it.why,odd:true,tr:it.o.map(w=>tr[String(w).toLowerCase()]?`${w} = ${tr[String(w).toLowerCase()]}`:'').filter(Boolean).join(' · ')}))}
     else{const all=g.items.map(x=>x[1]);items=shuffle(g.items).map(([e,w])=>({pic:e,q:'מה בתמונה?',o:shuffle([w,...shuffle(all.filter(x=>x!==w)).slice(0,3)]),ans:w,say:w}))}
@@ -1301,7 +1301,7 @@ function buildGame(i,n){
 function gameHead(sc,i,total,idx){
   return `<button class="back" data-act="island" data-id="${esc(sc.id)}">${I.back} ${esc(i.name)}</button>
   <section class="card"><div class="qtop"><span>${esc(sc.title||'')}</span><span>${Math.min(idx+1,total)} / ${total} · ${sc.correct||0} נכונות</span></div>
-  <div class="bar"><i style="width:${idx/total*100}%"></i></div>`;
+  <div class="bar"><i style="width:${idx/total*100}%"></i></div>${(()=>{const g=(i.games||[])[sc.n];return g&&g.help?`<details class="tips" style="margin:8px 0"${idx?'':' open'}><summary style="cursor:pointer;font-weight:700">💡 מה עושים כאן?</summary>${String(g.help).split('\n').map(x=>`<p>${esc(x).replace(/[A-Za-z][A-Za-z ,'-]*[A-Za-z]/g,m=>`<bdi dir="ltr">${m}</bdi>`)}</p>`).join('')}</details>`:''})()}`;
 }
 function WORDS_ALL(){try{return allIslands().flatMap(x=>x.words||[])}catch(e){return []}}
 function oddFeedback(q,sc){const pk=q.o[sc.picked[0]];
