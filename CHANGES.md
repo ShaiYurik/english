@@ -1,5 +1,6 @@
 # Changes
 
+- v34 (2026-11-12): Ariel's theme changed from bakery to a fashion mall: stores on the map, a wallet (₪ earned from station scores), a ₪50 coupon for every island finished at 85%+, a shop with 8 stores and a closet of bought items (`progress.mall`). New shopping-bag icon.
 - v33 (2026-11-11): a game can carry `help` (a "💡 מה עושים כאן?" box above the questions, open on the first question); `fill` items show `why`.
 - v32 (2026-11-11): new profile Ariel (grade 9, bakery theme, croissant icon, manifest-ariel). Lessons can hold several unseen texts (`stories`), each its own station, with `why` shown after checking. 2 class islands open at once for Ariel.
 - v31 (2026-11-07): smart reminder text: the service worker asks the server how many tasks she did today (action `today`) and picks a random message: praise (≥ half the goal), a small push (some), or "time to practice" (none). Server: push permission granted, duplicate subscriptions per phone removed.

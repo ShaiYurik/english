@@ -7,8 +7,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#3b2210",
-  "theme_color": "#3b2210",
+  "background_color": "#2b1830",
+  "theme_color": "#2b1830",
   "icons": [
     {
       "src": "icon-ariel-192.png",

@@ -39,13 +39,24 @@
   --brass:#f2a93b; --brass2:#ffd78a; --signal:#d8572a; --kelp:#2f8a63; --kelp2:#dcefe0; --redsoft:#f8dccd;
   --foam:#fff3dd; --muted:#e0c49a;
 }
-:root[data-theme="bakery"]{
-  --abyss:#3b2210; --sea:#8b4f24; --sea2:#a3622e; --swell:#c4844a;
-  --chart:#fff8ec; --chart2:#f6e6cc; --ink:#3b2210; --ink2:#74512f;
-  --brass:#f0b44c; --brass2:#ffd98c; --signal:#c8553d; --kelp:#4f8a3a; --kelp2:#e3f0d8; --redsoft:#f9ddd2;
-  --foam:#fff4e2; --muted:#e6c9a0;
+:root[data-theme="shop"]{
+  --abyss:#2b1830; --sea:#a8336a; --sea2:#c24a82; --swell:#e07aa8;
+  --chart:#fff6f9; --chart2:#fbe4ee; --ink:#2b1830; --ink2:#6e4a63;
+  --brass:#f2b94a; --brass2:#ffd98c; --signal:#e0395f; --kelp:#2f9468; --kelp2:#dcf3e8; --redsoft:#fcdde4;
+  --foam:#fff4f8; --muted:#e9bfd3;
 }
-:root[data-theme="bakery"] body{background-image:linear-gradient(180deg,#e0a35a 0%,#8b4f24 40%,#3b2210 85%)}
+:root[data-theme="shop"] body{background-image:linear-gradient(180deg,#f3a6c4 0%,#a8336a 40%,#2b1830 85%)}
+.mallcard{display:flex;align-items:center;gap:12px;width:100%;border:1px solid var(--swell);background:linear-gradient(135deg,var(--sea),var(--abyss));color:var(--foam);border-radius:var(--r);padding:10px 12px;font:inherit;text-align:start}
+.mallcard .mw{font-size:40px;line-height:1}.mallcard b{color:var(--brass2);font-size:18px}.mallcard .ft{display:grid;gap:2px;flex:1}.mallcard small{color:var(--muted);font-weight:600}
+.mallbox{max-height:84vh;overflow:auto;text-align:start}.mallbox h3{margin:0}
+.mtabs{display:flex;gap:6px;flex-wrap:wrap}.mtabs button{border:1px solid var(--swell);background:#fff;color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-weight:700}.mtabs button.on{background:var(--sea);color:#fff;border-color:var(--sea)}
+.stores{display:grid;grid-template-columns:1fr 1fr;gap:8px}.store{border:0;border-radius:12px;padding:0;overflow:hidden;background:#fff;box-shadow:0 2px 8px -4px rgba(0,0,0,.35);font:inherit;color:var(--ink)}
+.store .aw{height:14px;background:repeating-linear-gradient(90deg,var(--sc) 0 12px,#fff 12px 24px)}.store .sn{display:block;font-weight:900;letter-spacing:.06em;font-size:17px;padding:8px 6px 2px;direction:ltr}.store .sx{display:block;font-size:12px;color:var(--ink2);padding:0 6px 8px}
+.items{display:grid;grid-template-columns:1fr 1fr;gap:8px}.item{background:#fff;border-radius:12px;padding:10px;display:grid;gap:4px;justify-items:center;text-align:center;box-shadow:0 2px 8px -5px rgba(0,0,0,.35)}
+.item .ie{font-size:42px;line-height:1.1}.item .ip{font-weight:800;color:var(--sea)}.item .ip s{color:var(--ink2);font-weight:600}.item button{font:inherit;font-weight:800;border:0;border-radius:999px;padding:6px 12px;background:var(--brass);color:var(--ink)}.item button[disabled]{background:#eee;color:#999}.item.own{outline:2px solid var(--kelp)}
+.coupon{display:flex;align-items:center;gap:10px;border:2px dashed var(--sea);border-radius:12px;padding:8px 12px;background:#fff}.coupon b{font-size:20px;color:var(--sea)}.coupon.used{opacity:.45}
+.closet{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.closet div{background:#fff;border-radius:10px;text-align:center;padding:6px 2px;font-size:30px}.closet small{display:block;font-size:10px;color:var(--ink2)}
+.wallet{font-weight:900;color:var(--sea);font-size:20px}
 :root[data-theme="desert"] body{background-image:linear-gradient(180deg,#f0b35a 0%,#a86d36 35%,#3a2414 80%)}
 :root[data-lang="ar"] .en{font-family:"Noto Naskh Arabic","Amiri","Geeza Pro",serif;direction:rtl;unicode-bidi:isolate}
 :root[data-lang="ar"] .read,:root[data-lang="ar"] .opt.en,:root[data-lang="ar"] .qblock .q{direction:rtl;text-align:right}
@@ -454,7 +465,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='33';
+const APP_VERSION='34';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -640,13 +651,13 @@ const SR_LANG=()=>LANG()==='ar'?'ar-SA':'en-US';
 const LETTER_RE=()=>LANG()==='ar'?/[^\u0621-\u064A\u0660-\u0669]/g:/[^A-Za-z0-9'-]/g;
 const plainW=w=>LANG()==='ar'?String(w).replace(/[\u064B-\u0652\u0640]/g,'').replace(/[^\u0621-\u064A]/g,''):String(w).toLowerCase();
 const spellable=w=>LANG()==='ar'?(()=>{const p=plainW(w);return p.length>=2&&p.length<=8&&!/\s/.test(String(w).trim())})():/^[a-z]{3,10}$/i.test(w);
-const THEME=()=>WORLD==='ar'?'desert':S.profile&&S.profile.child==='gil'?'tennis':S.profile&&S.profile.child==='ariel'?'bakery':'sea';
+const THEME=()=>WORLD==='ar'?'desert':S.profile&&S.profile.child==='gil'?'tennis':S.profile&&S.profile.child==='ariel'?'shop':'sea';
 const WORDS={sea:{day:'המסע היומי',done:'הגעת לנמל היום. ',goal:'הספינה מגיעה לנמל אחרי {G} משימות. ',newT:'אי חדש מחכה לך!',go:'להפליג ⛵',late:'יאללה ⛵',arch:'🏆 איים שכבשת',back:'חזרה למפה',win:'כבשת את האי!',full:'האי הושלם במלואו!',flags:'🏝️⚓🏝️',tab:'מפה',loading:'מכינים את הספינה…',waits:'מחכה לך',isl:'האי'},
   desert:{day:'המסע במדבר',done:'הגעת לנווה המדבר היום! ',goal:'השיירה מגיעה לנווה המדבר אחרי {G} משימות. ',newT:'נווה מדבר חדש מחכה לך!',go:'לרכוב 🐪',late:'יאללה 🐪',arch:'🏆 נווי מדבר שכבשת',back:'חזרה למדבר',win:'כבשת את נווה המדבר!',full:'נווה המדבר הושלם במלואו!',flags:'🌴🐪🌴',tab:'מדבר',loading:'מעמיסים את הגמלים…',waits:'מחכה לך',isl:'נווה המדבר'},
-  bakery:{day:'האפייה היומית',done:'המאפה יצא מהתנור היום! ',goal:'המאפה מוכן אחרי {G} משימות. ',newT:'מתכון חדש מחכה לך!',go:'לאפות 🥐',late:'יאללה 🥐',arch:'🏆 מאפים שאפית',back:'חזרה למאפייה',win:'המאפה יצא מושלם!',full:'מאפה מושלם, ישר מהתנור!',flags:'🥐🍞🥐',tab:'מאפייה',loading:'מחממים את התנור…',waits:'מחכה לך',isl:'המאפה'},
+  shop:{day:'הקניות של היום',done:'סל הקניות מלא היום! ',goal:'הסל מתמלא אחרי {G} משימות. ',newT:'קולקציה חדשה הגיעה!',go:'לקניון 🛍️',late:'יאללה 🛍️',arch:'🏆 חנויות שסיימת',back:'חזרה לקניון',win:'וואו, איזה לוק!',full:'סל מלא, קנייה מושלמת!',flags:'🛍️👗🛍️',tab:'קניון',loading:'פותחים את הקניון…',waits:'מחכה לך',isl:'החנות'},
   tennis:{day:'האימון היומי',done:'סיימת את האימון היום! ',goal:'האימון היומי נגמר אחרי {G} משימות. ',newT:'מגרש חדש מחכה לך!',go:'לעלות למגרש 🎾',late:'יאללה 🎾',arch:'🏆 משחקים שניצחת',back:'חזרה למגרשים',win:'ניצחת במשחק!',full:'ניצחון מושלם! Game, set, match!',flags:'🎾🏆🎾',tab:'מגרשים',loading:'מכינים את המגרש…',waits:'מחכה לך',isl:'המגרש'}};
 const TW=k=>WORDS[THEME()][k];
-const EBW={sea:{log:"Ship's Log",radio:'Radio Room',hunt:'Treasure Hunt',cap:"Captain's Log",anc:'⚓'},tennis:{log:'Match Schedule',radio:'Commentary Box',hunt:'Ball Hunt',cap:"Coach's Notes",anc:'🎾'},bakery:{log:'Recipe Book',radio:'Kitchen Radio',hunt:'Crumb Hunt',cap:"Baker's Notes",anc:'🥐'},desert:{log:'Caravan Log',radio:'Radio Tent',hunt:'Treasure Hunt',cap:"Caravan Master's Log",anc:'🐪'}};
+const EBW={sea:{log:"Ship's Log",radio:'Radio Room',hunt:'Treasure Hunt',cap:"Captain's Log",anc:'⚓'},tennis:{log:'Match Schedule',radio:'Commentary Box',hunt:'Ball Hunt',cap:"Coach's Notes",anc:'🎾'},shop:{log:'Style Diary',radio:'Mall Radio',hunt:'Bargain Hunt',cap:'Stylist Notes',anc:'🛍️'},desert:{log:'Caravan Log',radio:'Radio Tent',hunt:'Treasure Hunt',cap:"Caravan Master's Log",anc:'🐪'}};
 const EB=k=>(EBW[THEME()]||EBW.sea)[k];
 const feat=k=>!S.profile||!S.profile.features||S.profile.features[k]!==false;
 const kidName=()=>S.profile?S.profile.name:'יוביק';
@@ -655,7 +666,7 @@ function applyProfile(){
   document.title='לומדים בכיף · '+(isParent()?'Boss':n);const h=document.querySelector('.brand h1');if(h)h.textContent='לומדים בכיף';
   const sub=document.querySelector('.brand .who');if(sub)sub.textContent=isParent()?'Boss · '+n:n;
   document.documentElement.dataset.theme=THEME();document.documentElement.dataset.lang=LANG();
-  const tn=THEME()==='tennis',bk=THEME()==='bakery';const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=tn?'#0b2147':bk?'#3b2210':'#0a1a29';
+  const tn=THEME()==='tennis',bk=THEME()==='shop';const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=tn?'#0b2147':bk?'#2b1830':'#0a1a29';
   const at=document.querySelector('meta[name="apple-mobile-web-app-title"]');if(at)at.content=short;
   const want=isParent()?'manifest-boss.webmanifest':tn?'manifest-gil.webmanifest':bk?'manifest-ariel.webmanifest':'manifest.webmanifest';
   const m=document.querySelector('link[rel="manifest"]');if(m&&m.getAttribute('href')!==want)m.setAttribute('href',want);
@@ -958,7 +969,7 @@ function render(){
   }
   if(S.confirm&&S.tab==='map')v.insertAdjacentHTML('beforeend',confirmHTML());
   if(S.ref&&LANG()==='ar')v.insertAdjacentHTML('beforeend',refHTML());
-  if(S.tab==='map'&&!S.confirm&&(S.screen.name==='map'||S.screen.name==='result')){checkFleet();if(S.boatModal)v.insertAdjacentHTML('beforeend',boatModalHTML())}
+  if(S.tab==='map'&&!S.confirm&&(S.screen.name==='map'||S.screen.name==='result')){checkFleet();if(S.boatModal)v.insertAdjacentHTML('beforeend',boatModalHTML());checkMall();if(S.mallModal&&!S.boatModal)v.insertAdjacentHTML('beforeend',mallModalHTML())}
   updateMeter();refreshRecUI();setSync();armBack();
   if(S.tab==='map'&&S.screen.name==='map'){const c=document.querySelector('.isl.cur');if(c&&!S._scrolledMap){S._scrolledMap=true;c.scrollIntoView({block:'center'})}}else S._scrolledMap=false;
   const cb=$('#camBadge');const n=S.shots.filter(s=>s.status!=='ok').length;cb.hidden=!n;cb.textContent=n;
@@ -976,8 +987,8 @@ function meterHTML(){
   return `<section class="voyage" aria-label="${TW('day')}">
     <div class="row"><span class="lbl">${TW('day')}</span><span class="num" id="mNum"></span></div>
     <div class="track"><div class="line"></div><div class="done" id="mDone"></div>
-      ${tn||THEME()==='desert'||THEME()==='bakery'?`<span class="port" aria-hidden="true" style="font-size:16px;line-height:18px">${tn?'🏆':THEME()==='bakery'?'🎂':'🌴'}</span>`:'<svg class="port" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v11M4 9a5 5 0 0 0 10 0M6 5h6" stroke="#d6a64a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'}
-      <div class="ship" id="mShip">${THEME()==='bakery'?'<span style="font-size:26px;line-height:30px">🥐</span>':!tn&&fleetOn()?vehSVG(fleetState().lv,34):tn?'<svg viewBox="0 0 30 30" width="30" height="30"><circle cx="15" cy="15" r="12" fill="#d7f23c" stroke="#9fb61f" stroke-width="1.5"/><path d="M5 9 C11 12 11 18 5 21 M25 9 C19 12 19 18 25 21" stroke="#fff" stroke-width="2" fill="none"/></svg>':I.ship}</div></div>
+      ${tn||THEME()==='desert'||THEME()==='shop'?`<span class="port" aria-hidden="true" style="font-size:16px;line-height:18px">${tn?'🏆':THEME()==='shop'?'👗':'🌴'}</span>`:'<svg class="port" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v11M4 9a5 5 0 0 0 10 0M6 5h6" stroke="#d6a64a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'}
+      <div class="ship" id="mShip">${THEME()==='shop'?'<span style="font-size:26px;line-height:30px">🛍️</span>':!tn&&fleetOn()?vehSVG(fleetState().lv,34):tn?'<svg viewBox="0 0 30 30" width="30" height="30"><circle cx="15" cy="15" r="12" fill="#d7f23c" stroke="#9fb61f" stroke-width="1.5"/><path d="M5 9 C11 12 11 18 5 21 M25 9 C19 12 19 18 25 21" stroke="#fff" stroke-width="2" fill="none"/></svg>':I.ship}</div></div>
     <div class="streak" id="mStreak"></div>
     ${examHTML()}
   </section>`;
@@ -1012,17 +1023,17 @@ function viewMap(){
   updateAlerts();
   const W=360,H=T.length===2?330:470;const pos=T.length===2?[{x:240,y:240},{x:120,y:95}]:[{x:248,y:385},{x:110,y:235},{x:250,y:95}];
   const depths=Array.from({length:7},(_,k)=>[[40,320,180,30,330,200][k%6],k*70+40,String(5+(k*7)%27)]).map(([x,y,t])=>`<text x="${x}" y="${y}" font-size="10" fill="#5f84a0" font-family="Assistant" font-style="italic">${t}</text>`).join('');
-  const tn=THEME()==='tennis',ds=THEME()==='desert',bk=THEME()==='bakery';const BK=['🥐','🍞','🥖','🥨','🧁','🥯','🍰','🥧'];
+  const tn=THEME()==='tennis',ds=THEME()==='desert',bk=THEME()==='shop';const BK=['👗','👠','👜','🧥','👟','🕶️','👒','💍'];
   const nodes=T.map((t,k)=>{const {x,y}=pos[k];const i=t.active;
     if(!i)return `<g transform="translate(${x},${y})" opacity=".75"><text x="0" y="-44" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="${ds||bk?'#6e4e2f':'#c9d6de'}">${t.ic} ${t.t}</text>
-      <ellipse cx="0" cy="4" rx="40" ry="20" fill="none" stroke="#2a6a92" stroke-dasharray="3 4"/><text x="0" y="9" text-anchor="middle" font-size="22">${ds?'🏜️':tn?'🎾':bk?'🥣':'🌊'}</text>
+      <ellipse cx="0" cy="4" rx="40" ry="20" fill="none" stroke="#2a6a92" stroke-dasharray="3 4"/><text x="0" y="9" text-anchor="middle" font-size="22">${ds?'🏜️':tn?'🎾':bk?'🏬':'🌊'}</text>
       <text x="0" y="44" text-anchor="middle" font-family="Assistant" font-size="12" fill="${ds||bk?'#6e4e2f':'#86a2b6'}">${esc(t.none)}</text></g>`;
     const st=islandStars(i.id);const fresh=isNewIsland(i);const w=waitInfo(i);const late=!fresh&&w.days>=2;
     return `<g class="isl" tabindex="0" role="button" aria-label="${esc(t.t+': '+i.name)}" data-act="island" data-id="${esc(i.id)}" transform="translate(${x},${y})">
       <g transform="translate(0,-58)"><rect x="-62" y="-14" width="124" height="26" rx="13" fill="#0b1c2b" stroke="${t.flag}" stroke-width="1.5"/><text x="0" y="4" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="${t.flag}">${t.ic} ${t.t}</text></g>
       ${fresh?`<ellipse class="glow" cx="0" cy="4" rx="54" ry="32" fill="rgba(240,195,94,.18)" stroke="#f0c35e" stroke-width="2.5"/>`:''}
       <ellipse class="ring" cx="0" cy="4" rx="48" ry="27" fill="none" stroke="#2a6a92" stroke-width="1" stroke-dasharray="3 4"/>
-      ${bk?`<ellipse cx="0" cy="20" rx="40" ry="10" fill="rgba(60,30,10,.25)"/><ellipse cx="0" cy="10" rx="40" ry="16" fill="#fffaf2" stroke="#e3cba8" stroke-width="2"/><ellipse cx="0" cy="10" rx="28" ry="10" fill="none" stroke="#efdcc0" stroke-width="1.5"/><text x="0" y="14" text-anchor="middle" font-size="34">${BK[[...String(i.id)].reduce((a,c)=>a+c.charCodeAt(0),0)%BK.length]}</text>`:ds?`<ellipse cx="0" cy="12" rx="40" ry="14" fill="#e8c27a"/><ellipse cx="2" cy="10" rx="24" ry="8" fill="#38a3c9"/><ellipse cx="-4" cy="8" rx="10" ry="3" fill="#8fd6ec"/><text x="-26" y="6" font-size="30">🌴</text><text x="12" y="0" font-size="24">🌴</text>`:tn?`<ellipse cx="0" cy="22" rx="26" ry="6" fill="rgba(0,0,0,.25)"/><circle cx="0" cy="0" r="26" fill="#d7f23c" stroke="#a3bb1c" stroke-width="2"/><path d="M-22 -13 C-8 -6 -8 6 -22 13 M22 -13 C8 -6 8 6 22 13" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+      ${bk?(()=>{const st=mallStoreOf(i.id);return `<rect x="-40" y="-22" width="80" height="50" rx="6" fill="#fff" stroke="${st.c}" stroke-width="2"/><path d="M-44 -22 h88 l-6 12 h-76z" fill="${st.c}"/>${[-30,-10,10,30].map(x=>`<path d="M${x-8} -10 q8 10 16 0z" fill="${st.c}" opacity=".85"/>`).join('')}<text x="0" y="-13" text-anchor="middle" font-family="Assistant" font-weight="900" font-size="10" fill="#fff" style="direction:ltr">${esc(st.n)}</text><text x="0" y="22" text-anchor="middle" font-size="28">${BK[[...String(i.id)].reduce((a,c)=>a+c.charCodeAt(0),0)%BK.length]}</text>`})():ds?`<ellipse cx="0" cy="12" rx="40" ry="14" fill="#e8c27a"/><ellipse cx="2" cy="10" rx="24" ry="8" fill="#38a3c9"/><ellipse cx="-4" cy="8" rx="10" ry="3" fill="#8fd6ec"/><text x="-26" y="6" font-size="30">🌴</text><text x="12" y="0" font-size="24">🌴</text>`:tn?`<ellipse cx="0" cy="22" rx="26" ry="6" fill="rgba(0,0,0,.25)"/><circle cx="0" cy="0" r="26" fill="#d7f23c" stroke="#a3bb1c" stroke-width="2"/><path d="M-22 -13 C-8 -6 -8 6 -22 13 M22 -13 C8 -6 8 6 22 13" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
       :`<path d="M-38 6 C-34 -16 -9 -22 7 -18 C29 -13 42 -2 36 11 C27 24 -25 26 -38 6Z" fill="${i.kind==='lesson'?'#f2dfae':'#e8d6a4'}"/>
       <path d="M-25 2 C-20 -13 -2 -16 9 -11 C22 -7 25 4 16 9 C2 15 -20 13 -25 2Z" fill="${i.kind==='lesson'?'#2f9f8a':'#3f8f6b'}"/>
       <path d="M7 -11 v-24" stroke="#0f2233" stroke-width="1.6"/><path d="M7 -35 l15 5 -15 5z" fill="${t.flag}"/>`}
@@ -1039,14 +1050,13 @@ function viewMap(){
   const arch=T.filter(t=>!t.fixed).flatMap(t=>[...t.started,...t.done].map(i=>({i,t}))).filter(x=>x.i.id!==(x.t.active||{}).id);
   const archive=arch.length?`<details class="shelf" ${LS.get('shelfOpen',false)?'open':''}><summary data-act="shelfTog">${TW('arch')} <small>${arch.filter(x=>isDone(x.i)).length} נכבשו · אפשר לחזור ולתרגל</small></summary><div class="shelfl">${arch.map(({i,t})=>`<button class="shelfi" data-act="island" data-id="${esc(i.id)}"><span>${t.ic}</span><span class="en" style="font-family:inherit">${esc(i.name)}</span><b>${isDone(i)?'⭐'.repeat(Math.max(1,islandStars(i.id))):'בתהליך'}</b></button>`).join('')}</div></details>`:'';
   const refb=LANG()==='ar'?`<button class="btn small" data-act="ref" style="justify-self:start">🔤 טבלת אותיות ומספרים</button>`:'';
-  return meterHTML()+fleetCardHTML()+refb+banner+pushCardHTML()+`<section class="map" aria-label="מפת האיים">
+  return meterHTML()+fleetCardHTML()+mallCardHTML()+refb+banner+pushCardHTML()+`<section class="map" aria-label="מפת האיים">
     <svg viewBox="0 0 ${W} ${H}" role="group">
       <defs><pattern id="wv" width="40" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="#174260" stroke-width="1.2"/></pattern></defs>
-      ${bk?`<defs><linearGradient id="wood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2b47a"/><stop offset="1" stop-color="#c58b52"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#wood)"/>
-      <g stroke="#b47a43" stroke-width="1.2" fill="none" opacity=".55">${[0.12,0.3,0.48,0.66,0.84].map(f=>`<path d="M0 ${H*f} Q${W*0.3} ${H*f-10} ${W*0.55} ${H*f+6} T${W} ${H*f-4}"/>`).join('')}</g>
-      <g opacity=".5" fill="#fff">${[[60,70],[300,140],[90,300],[260,380],[180,220],[320,470],[40,500]].map(([a,b])=>`<circle cx="${a}" cy="${b}" r="2.2"/><circle cx="${a+8}" cy="${b+5}" r="1.4"/><circle cx="${a-6}" cy="${b+9}" r="1.8"/>`).join('')}</g>
-      <text x="${W-46}" y="40" font-size="26">🌾</text><text x="18" y="${H-20}" font-size="24">🧈</text><text x="${W-44}" y="${H*0.58}" font-size="20">🥚</text><text x="20" y="${H*0.42}" font-size="20">🍫</text>
-      <polyline points="${pos.slice(0,T.length).map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#fff6e6" stroke-width="2.5" stroke-dasharray="1 7" stroke-linecap="round" opacity=".9"/>`:ds?`<defs><linearGradient id="sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7d79a"/><stop offset="1" stop-color="#d9a35a"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#sand)"/>
+      ${bk?`<defs><pattern id="tile" width="48" height="48" patternUnits="userSpaceOnUse"><rect width="48" height="48" fill="#fbf1f4"/><path d="M48 0H0V48" fill="none" stroke="#ecd3dd" stroke-width="1.5"/></pattern></defs><rect width="${W}" height="${H}" fill="url(#tile)"/>
+      <g opacity=".9">${['#111','#d6001c','#2d6fb7','#7a1f3d','#2f5d50'].map((c,k)=>`<rect x="${k*W/5}" y="0" width="${W/5-4}" height="16" fill="${c}"/>`).join('')}</g>
+      <text x="${W-44}" y="${H*0.5}" font-size="22">🪴</text><text x="16" y="${H-18}" font-size="22">🪞</text><text x="18" y="${H*0.36}" font-size="20">🎀</text><text x="${W-40}" y="${H-24}" font-size="22">🛒</text>
+      <polyline points="${pos.slice(0,T.length).map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#e07aa8" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round" opacity=".9"/>`:ds?`<defs><linearGradient id="sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7d79a"/><stop offset="1" stop-color="#d9a35a"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#sand)"/>
       <circle cx="${W-50}" cy="44" r="22" fill="#ffd36b"/><circle cx="${W-50}" cy="44" r="30" fill="none" stroke="#ffe7a8" stroke-width="3" stroke-dasharray="3 7"/>
       <path d="M0 ${H*0.35} Q80 ${H*0.27} 160 ${H*0.36} T360 ${H*0.33}" fill="none" stroke="#c98d45" stroke-width="2" opacity=".6"/>
       <path d="M0 ${H*0.62} Q90 ${H*0.54} 190 ${H*0.64} T360 ${H*0.6}" fill="none" stroke="#c98d45" stroke-width="2" opacity=".6"/>
@@ -1120,7 +1130,7 @@ function viewIsland(id){
   ${i.kind==='lesson'&&i.source==='זום'?`<span class="zbadge">💻 מהשיעור בזום${i.zoomDate?' · '+dayName(i.zoomDate)+' '+fmtDate(i.zoomDate):''}${zl&&zl.teacher?' · עם '+esc(zl.teacher):''}</span>`:i.kind!=='base'?`<span class="zbadge" style="background:${trackOf(i)==='unseen'?'#ffe1da;color:#9a2f1c':'#d8f3e8;color:#1d6b4f'}">${trackLabel(i)}${i.kind==='lesson'&&i.created?' · '+fmtDate(String(i.created).slice(0,10)):''}</span>`:''}
   <div class="ihead">${i.en?`<span class="eyebrow en">${esc(i.en)}</span>`:''}<h2>${esc(i.name)}</h2><p>${esc(i.topic)}</p></div>
   ${i.howto?`<section class="card howto"><h2>איך עושים את זה?</h2>${i.howto}</section>`:''}
-  ${anyScore?`<section class="card rep-card"><h2>${THEME()==='tennis'?'דוח המאמן':THEME()==='bakery'?'דוח השף':'דוח קפטן'} · היום</h2>${islandReportHTML(i)}</section>`:''}
+  ${anyScore?`<section class="card rep-card"><h2>${THEME()==='tennis'?'דוח המאמן':THEME()==='shop'?'דוח הסטייליסטית':'דוח קפטן'} · היום</h2>${islandReportHTML(i)}</section>`:''}
   <div class="stations">${st.map(s=>`<button class="station" data-act="station" data-k="${s.k}" data-id="${esc(id)}"><span class="ic">${s.ic}</span><span class="tx"><b>${s.t}</b><span>${esc(s.d)}</span></span><span class="mark">${s.m}</span></button>`).join('')}</div>`;
 }
 
@@ -1905,6 +1915,10 @@ document.addEventListener('click',e=>{
   const a=el.dataset.act;const sc=S.screen;
   if(a!=='answer')sfx.tap();
   switch(a){
+    case 'mall':S.mallModal={kind:'mall',tab:el.dataset.tab||'stores'};render();break;
+    case 'mallStore':S.mallModal={kind:'mall',tab:'store',store:el.dataset.id};render();break;
+    case 'mallBuy':{const r=mallBuy(el.dataset.id);if(r){S.mallModal={kind:'bought',item:el.dataset.id,cp:r.cp,store:S.mallModal&&S.mallModal.store};sfx.win()}render();break;}
+    case 'mallClose':{const m=S.mallModal;S.mallModal=null;if(m&&m.kind==='intro'){mallP().intro=1;saveState('progress')}render();break;}
     case 'sound':S.sound=!S.sound;LS.set('sound',S.sound);render();break;
     case 'relinkCancel':S.relink=false;render();break;
     case 'shelfTog':setTimeout(()=>{const d=document.querySelector('.shelf');if(d)LS.set('shelfOpen',d.open)},0);break;
@@ -2180,6 +2194,54 @@ function boatSVG(i,size){
     if(b.pirate){g+=`<rect x="54" y="${wl-58}" width="12" height="7" fill="#111"/><circle cx="60" cy="${wl-55}" r="1.6" fill="#fff"/>`}}
   return `<svg viewBox="0 0 ${W} ${H}" width="${size}" height="${Math.round(size*H/W)}" aria-hidden="true"><path d="M0 ${wl+3} q10 -4 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 V${H} H0Z" fill="#1f8fb3" opacity=".55"/>${g}</svg>`;
 }
+/* ---------- הקניון של אריאל: כסף, קופונים וארון ---------- */
+const MALL_STORES=[{id:'zara',n:'ZARA',c:'#111111'},{id:'hm',n:'H&M',c:'#d6001c'},{id:'castro',n:'CASTRO',c:'#3b3b3b'},{id:'fox',n:'FOX',c:'#2d6fb7'},{id:'renuar',n:'RENUAR',c:'#7a1f3d'},{id:'mango',n:'MANGO',c:'#8a6a3d'},{id:'pull',n:'PULL&BEAR',c:'#2f5d50'},{id:'bershka',n:'BERSHKA',c:'#5b3a8c'}];
+const MALL_ITEMS=[['zara','z1','👗','שמלה שחורה',180],['zara','z2','🧥','מעיל צמר',250],['zara','z3','👠','נעלי עקב',160],['zara','z4','👜','תיק צד',120],
+ ['hm','h1','👚','חולצה פרחונית',60],['hm','h2','🧣','צעיף',40],['hm','h3','👖','ג׳ינס',90],['hm','h4','🧦','גרביים מצחיקות',20],
+ ['castro','c1','🧥','ג׳קט ג׳ינס',200],['castro','c2','👕','טי־שירט',50],['castro','c3','🕶️','משקפי שמש',90],['castro','c4','👛','ארנק',70],
+ ['fox','f1','🩳','מכנס קצר',60],['fox','f2','👕','קפוצ׳ון',120],['fox','f3','🩱','בגד ים',100],['fox','f4','🧢','כובע מצחייה',40],
+ ['renuar','r1','👗','שמלת ערב',240],['renuar','r2','👚','חולצת סאטן',130],['renuar','r3','👢','מגפיים',220],['renuar','r4','💍','טבעת',60],
+ ['mango','m1','🧥','בלייזר',210],['mango','m2','👡','סנדלים',110],['mango','m3','👒','כובע קש',70],['mango','m4','📿','שרשרת',50],
+ ['pull','p1','👟','סניקרס',190],['pull','p2','🎒','תיק גב',130],['pull','p3','👖','מכנס קרגו',120],['pull','p4','🧤','כפפות',35],
+ ['bershka','b1','👗','חצאית מיני',80],['bershka','b2','🧥','מעיל פוך',230],['bershka','b3','👙','ביקיני',90],['bershka','b4','💄','שפתון',30]
+].map(([st,id,e,he,pr])=>({st,id,e,he,pr}));
+const COUPON=50;
+const mallOn=()=>THEME()==='shop'&&!!S.profile&&!isParent();
+function mallStoreOf(id){return MALL_STORES[[...String(id)].reduce((a,c)=>a+c.charCodeAt(0),0)%MALL_STORES.length]}
+function mallP(){const p=S.progress;if(!p.mall||typeof p.mall!=='object')p.mall={earn:0,cps:[],buys:[]};const m=p.mall;m.cps=m.cps||[];m.buys=m.buys||[];m.earn=m.earn||0;return m}
+function mallEarnNow(){let e=0;allIslands().filter(i=>i.kind!=='daily').forEach(i=>{const b=S.progress.best[i.id]||{};stationsOf(i).filter(x=>x.scored).forEach(x=>{if(b[x.k]!=null)e+=Math.round(b[x.k]/5)})});return e}
+function mallState(){const m=mallP();const earn=Math.max(m.earn,mallEarnNow());const spent=m.buys.reduce((n,b)=>n+(b.cash||0),0);return {m,earn,spent,bal:Math.max(0,earn-spent),cps:m.cps.filter(c=>!c.used)}}
+function checkMall(){if(!mallOn()||!S.loaded)return;const m=mallP();let ch=false;const now=mallEarnNow();if(now>m.earn){m.earn=now;ch=true}
+  allIslands().filter(i=>i.kind!=='daily').filter(isGreat).forEach(i=>{if(!m.cps.some(c=>c.iid===i.id)){const st=mallStoreOf(i.id);m.cps.push({iid:i.id,st:st.id,amt:COUPON,isl:i.name,at:new Date().toISOString().slice(0,10)});ch=true;if(!S.mallModal&&m.intro)S.mallModal={kind:'coupon',st:st.id,isl:i.name}}});
+  if(!m.intro&&!S.mallModal)S.mallModal={kind:'intro'};
+  if(ch)saveState('progress')}
+function mallBuy(id){const it=MALL_ITEMS.find(x=>x.id===id);if(!it)return null;const st=mallState();const cp=st.cps.find(c=>c.st===it.st);const off=cp?Math.min(cp.amt,it.pr):0;const cash=it.pr-off;if(cash>st.bal)return null;
+  if(cp)cp.used=1;st.m.buys.push({id,cash,cp:off,at:new Date().toISOString().slice(0,10)});saveState('progress');return {cp:off}}
+function mallCardHTML(){if(!mallOn())return '';const s=mallState();const n=s.m.buys.length;
+  return `<button class="mallcard" data-act="mall"><span class="mw">🛍️</span><span class="ft"><b>₪${s.bal} בארנק</b><span>${s.cps.length?`🎟️ ${s.cps.length} ${s.cps.length===1?'קופון מחכה':'קופונים מחכים'} · `:''}${n?`${n} פריטים בארון`:'כל תחנה שאת מסיימת מכניסה כסף לארנק'}</span><small>אי מצוין (85%+) = קופון ₪${COUPON} לחנות</small></span></button>`}
+function itemCard(it,s,owned){const cp=s.cps.find(c=>c.st===it.st);const off=cp?Math.min(cp.amt,it.pr):0;const cash=it.pr-off;const ok=cash<=s.bal;
+  return `<div class="item ${owned?'own':''}"><span class="ie">${it.e}</span><span>${esc(it.he)}</span><span class="ip">${off?`<s>₪${it.pr}</s> ₪${cash}`:`₪${it.pr}`}</span>${owned?'<small>✅ בארון</small>':''}<button data-act="mallBuy" data-id="${it.id}" ${ok?'':'disabled'}>${ok?(off?'לקנות עם קופון':'לקנות'):`חסר ₪${cash-s.bal}`}</button></div>`}
+function mallModalHTML(){const M=S.mallModal;if(!M)return '';const s=mallState();const wrap=x=>`<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox mallbox">${x}</div></div>`;
+  const nm=(isParent()?'':(S.profile&&S.profile.name))||'';
+  if(M.kind==='intro')return wrap(`<div class="bpop" style="font-size:70px">🛍️</div><h3 style="text-align:center">${esc(nm)}, ברוכה הבאה לקניון!</h3>
+    <p>כל תחנה שאת מסיימת מכניסה <b>כסף לארנק</b>. ככל שהציון גבוה יותר, נכנס יותר: עד ₪20 לתחנה.</p>
+    <p>כשאת מסיימת אי <b>מצוין</b>, כל התחנות ב־85% ומעלה, את מקבלת <b>קופון ₪${COUPON}</b> לחנות של האי.</p>
+    <p>עם הכסף והקופונים קונים בגדים, נעליים ואקססוריז, והם נשמרים לך <b>בארון</b>. (זה כסף של המשחק 😉)</p>
+    <div class="btns"><button class="btn brass" data-act="mallClose">יאללה לקניות! 🛍️</button></div>`);
+  if(M.kind==='coupon'){const st=MALL_STORES.find(x=>x.id===M.st)||MALL_STORES[0];return wrap(`<div class="bpop" style="font-size:60px">🎟️</div><h3 style="text-align:center">קיבלת קופון!</h3>
+    <div class="coupon" style="--sc:${st.c}"><b>₪${COUPON}</b><span>ב־<b style="color:${st.c};font-size:17px;direction:ltr;display:inline-block">${esc(st.n)}</b><br><small>על סיום מצוין של "${esc(M.isl)}"</small></span></div>
+    <div class="btns"><button class="btn brass" data-act="mallStore" data-id="${st.id}">לחנות עכשיו</button><button class="btn ghost" data-act="mallClose">אחר כך</button></div>`)}
+  if(M.kind==='bought'){const it=MALL_ITEMS.find(x=>x.id===M.item);return wrap(`<div class="bpop" style="font-size:80px">${it?it.e:'🛍️'}</div><h3 style="text-align:center">${it?esc(it.he):''} בארון! 🎉</h3>${M.cp?`<p style="text-align:center">השתמשת בקופון של ₪${M.cp}</p>`:''}<p style="text-align:center">נשאר בארנק: <span class="wallet">₪${s.bal}</span></p>
+    <div class="btns"><button class="btn brass" data-act="mall" data-tab="closet">לארון שלי</button><button class="btn ghost" data-act="${M.store?'mallStore':'mall'}" data-id="${M.store||''}">להמשיך לקנות</button></div>`)}
+  const tabs=`<div class="mtabs"><button class="${M.tab!=='closet'&&M.tab!=='coupons'?'on':''}" data-act="mall">🏬 חנויות</button><button class="${M.tab==='coupons'?'on':''}" data-act="mall" data-tab="coupons">🎟️ קופונים (${s.cps.length})</button><button class="${M.tab==='closet'?'on':''}" data-act="mall" data-tab="closet">👗 הארון (${s.m.buys.length})</button></div>`;
+  const head=`<div style="display:flex;justify-content:space-between;align-items:center"><h3>הקניון</h3><span class="wallet">₪${s.bal}</span></div>`;
+  const close=`<div class="btns"><button class="btn ghost" data-act="mallClose">סגירה</button></div>`;
+  const own=new Set(s.m.buys.map(b=>b.id));
+  if(M.tab==='store'){const st=MALL_STORES.find(x=>x.id===M.store)||MALL_STORES[0];const c=s.cps.filter(x=>x.st===st.id);
+    return wrap(head+tabs+`<div class="store" style="--sc:${st.c}"><div class="aw"></div><span class="sn" style="color:${st.c}">${esc(st.n)}</span><span class="sx">${c.length?`🎟️ יש לך ${c.length===1?'קופון':c.length+' קופונים'} של ₪${COUPON} כאן, הוא יורד אוטומטית מהמחיר`:'אין קופון לחנות הזאת כרגע'}</span></div><div class="items">${MALL_ITEMS.filter(x=>x.st===st.id).map(it=>itemCard(it,s,own.has(it.id))).join('')}</div>`+`<div class="btns"><button class="btn ghost" data-act="mall">חזרה לחנויות</button></div>`)}
+  if(M.tab==='coupons'){const all=s.m.cps;return wrap(head+tabs+(all.length?all.map(c=>{const st=MALL_STORES.find(x=>x.id===c.st)||MALL_STORES[0];return `<div class="coupon ${c.used?'used':''}"><b>₪${c.amt}</b><span style="flex:1"><b style="color:${st.c};font-size:16px;direction:ltr;display:inline-block">${esc(st.n)}</b><br><small>${c.used?'נוצל ✓':'על "'+esc(c.isl||'')+'"'}</small></span>${c.used?'':`<button class="btn brass" style="padding:6px 12px" data-act="mallStore" data-id="${st.id}">לחנות</button>`}</div>`}).join(''):`<p>עוד אין קופונים. סיימי אי עם כל התחנות ב־85% ומעלה, ותקבלי קופון ₪${COUPON} 🎟️</p>`)+close)}
+  if(M.tab==='closet'){const b=s.m.buys;return wrap(head+tabs+(b.length?`<div class="closet">${b.map(x=>{const it=MALL_ITEMS.find(y=>y.id===x.id);const st=it&&MALL_STORES.find(z=>z.id===it.st);return it?`<div>${it.e}<small>${esc(it.he)}</small><small style="direction:ltr">${esc(st.n)}</small></div>`:''}).join('')}</div><p style="text-align:center">${b.length} פריטים · שווי ₪${b.reduce((n,x)=>n+(x.cash||0)+(x.cp||0),0)}</p>`:'<p>הארון עוד ריק. בואי נקנה משהו 🛍️</p>')+close)}
+  return wrap(head+tabs+`<div class="stores">${MALL_STORES.map(st=>{const c=s.cps.filter(x=>x.st===st.id).length;return `<button class="store" style="--sc:${st.c}" data-act="mallStore" data-id="${st.id}"><div class="aw"></div><span class="sn" style="color:${st.c}">${esc(st.n)}</span><span class="sx">${c?`🎟️ קופון ₪${COUPON}`:'4 פריטים'}</span></button>`}).join('')}</div>`+close)}
 function isGreat(i){const st=stationsOf(i).filter(x=>x.scored);if(!st.length)return false;const b=S.progress.best[i.id]||{};if(st.some(x=>b[x.k]==null))return false;return st.reduce((n,x)=>n+b[x.k],0)/st.length>=85}
 const fleetOn=()=>(THEME()==='sea'||THEME()==='desert')&&!!S.profile;
 function fleetState(){const F=FLEETS();const q=allIslands().filter(i=>i.kind!=='daily').filter(isGreat).length;const lv=Math.min(F.length-1,Math.floor(q/5));return {q,lv,next:lv>=F.length-1?0:5-(q%5),inStep:q%5}}
