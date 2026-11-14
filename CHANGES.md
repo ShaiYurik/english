@@ -1,5 +1,6 @@
 # Changes
 
+- v37 (2026-11-14): Yuval's math world gets a boat path: starts on a raft, every conquered island upgrades the boat (10 vessels), super yacht only after all 8 islands + the mixed test at 80%+; intro story, upgrade pop-ups, fleet view, boat card on the map (`progress.ym.boat`, `progress.ym.intro`).
 - v36 (2026-11-14): Yuval's math path is drawn as an island map (each stage an island to conquer, boat at the current one, level dots, flag when done); day plan folded below.
 - v35 (2026-11-14): Yuval gets a math world: a path to the 18.11 test (8 stages + mixed test + smart review), each stage one practice card with levels, keypad answers, hints, full solutions and mistake-type diagnosis; plan by day; parent card with progress and mistake types.
 - v34 (2026-11-12): Ariel's theme changed from bakery to a fashion mall: stores on the map, a wallet (₪ earned from station scores), a ₪50 coupon for every island finished at 85%+, a shop with 8 stores and a closet of bought items (`progress.mall`). New shopping-bag icon.
