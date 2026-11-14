@@ -17,7 +17,7 @@ More than one conversation may work on it, so **never overwrite someone else's w
    (the app shows "האפליקציה מתעדכנת"), deploy the server, then push the client with `"updating": false`.
 
 ## What must always exist (tools/smoke.js checks it)
-- yuvik: worlds `en` (sea theme) and `ar` (desert theme, Arabic).
+- yuvik: worlds `en` (sea theme), `ar` (desert theme, Arabic) and `math` (client-side test-prep path `YM_STAGES`: one practice card per stage, levels, hints, step-by-step solutions, mistake tags; state in `progress.ym`).
 - gil: worlds `en` (tennis theme) and `math` (client-side math islands, `mathFixedIslands`).
 - ariel: world `en` (shop theme: fashion mall, wallet ₪ from station scores, ₪50 coupon per great island, closet; state in `progress.mall`). Her Drive folders are created by the server on first use (`provision_`).
 If you add or remove a world on purpose, update `EXPECT` in tools/smoke.js in the same commit.

@@ -10,7 +10,7 @@ const prof = {
   ariel: { child: 'ariel', name: 'אריאל', grade: 'ט׳', features: { zoom: false, cal: true, camera: true, readtext: true }, world: 'en', worlds: [{ id: 'en', label: 'אנגלית' }] }
 };
 // what each girl must have. Update this list when a world is added or removed on purpose.
-const EXPECT = { yuvik: ['en', 'ar'], gil: ['en', 'math'], ariel: ['en'] };
+const EXPECT = { yuvik: ['en', 'ar', 'math'], gil: ['en', 'math'], ariel: ['en'] };
 (async () => {
   const b = await chromium.launch(); let fail = 0;
   const status = await (await fetch(BASE + 'status.json?t=' + Date.now())).json().catch(() => null);
@@ -27,7 +27,7 @@ const EXPECT = { yuvik: ['en', 'ar'], gil: ['en', 'math'], ariel: ['en'] };
       await page.route('https://script.google.com/**', r => r.fulfill({ contentType: 'application/json', body: r.request().method() === 'GET' || JSON.parse(r.request().postData()).action === 'load' ? body : '{"ok":true}' }));
       await page.route('**/status.json*', r => r.fulfill({ contentType: 'application/json', body: '{"updating":false}' }));
       await page.goto(BASE + 'index.html#k=SMOKE-' + kid); await page.waitForTimeout(2500);
-      const r = await page.evaluate(() => ({ world: WORLD, worlds: (typeof worldsOf === 'function' ? worldsOf() : (S.profile.worlds || [])).map(x => x.id), isl: document.querySelectorAll('g.isl').length }));
+      const r = await page.evaluate(() => ({ world: WORLD, worlds: (typeof worldsOf === 'function' ? worldsOf() : (S.profile.worlds || [])).map(x => x.id), isl: document.querySelectorAll('g.isl, .ystage').length }));
       const ok = r.world === w && EXPECT[kid].every(x => r.worlds.includes(x)) && r.isl > 0 && !errors.length;
       console.log((ok ? 'OK  ' : 'FAIL') + ` ${kid}/${w}: world=${r.world} worlds=${r.worlds} islands=${r.isl} errors=${JSON.stringify(errors)}`);
       if (!ok) fail++; await ctx.close();

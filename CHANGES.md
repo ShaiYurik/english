@@ -1,5 +1,6 @@
 # Changes
 
+- v35 (2026-11-14): Yuval gets a math world: a path to the 18.11 test (8 stages + mixed test + smart review), each stage one practice card with levels, keypad answers, hints, full solutions and mistake-type diagnosis; plan by day; parent card with progress and mistake types.
 - v34 (2026-11-12): Ariel's theme changed from bakery to a fashion mall: stores on the map, a wallet (₪ earned from station scores), a ₪50 coupon for every island finished at 85%+, a shop with 8 stores and a closet of bought items (`progress.mall`). New shopping-bag icon.
 - v33 (2026-11-11): a game can carry `help` (a "💡 מה עושים כאן?" box above the questions, open on the first question); `fill` items show `why`.
 - v32 (2026-11-11): new profile Ariel (grade 9, bakery theme, croissant icon, manifest-ariel). Lessons can hold several unseen texts (`stories`), each its own station, with `why` shown after checking. 2 class islands open at once for Ariel.

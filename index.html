@@ -346,6 +346,23 @@ textarea.paste{width:100%;min-height:80px;border-radius:12px;border:1px solid va
 .rbar i.top{background:var(--kelp)}.rbar i.good{background:var(--brass)}.rbar i.low{background:var(--signal)}
 .rl{font-size:12px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
 .rl.top{color:var(--kelp)}.rl.good{color:#9a6f14}.rl.low{color:var(--signal)}.rl.none{color:var(--ink2)}
+.ymhead{flex-direction:row;align-items:center;justify-content:space-between}.ymhead h2{margin:2px 0}.ymhead p{margin:0;color:var(--ink2)}.ymgoal{font-size:34px}
+.ymplan h3,.ymwatch h3{margin:0}.ymday{display:grid;gap:6px;padding:8px 10px;border-radius:12px;background:#fff}.ymday.now{outline:2.5px solid var(--brass);background:#fffbe9}.ymday.past{opacity:.75}.ymday span{display:flex;flex-wrap:wrap;gap:6px}
+.ymchip{border:1px solid #cfdbe4;background:#f4f8fb;color:var(--ink);border-radius:999px;padding:6px 10px;font:inherit;font-size:14px;font-weight:700}.ymchip.done{background:#dcf3e8;border-color:#9fd7bd;color:#1d6b4f}
+.ymwatch p{margin:4px 0}.ympath{display:grid;gap:10px;margin:12px 0}
+.ystage{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:16px;padding:10px 12px;background:var(--chart);color:var(--ink);font:inherit;text-align:start;box-shadow:0 8px 20px -14px #000}
+.ystage.next{outline:3px solid var(--brass)}.ystage.done{background:#e9f7ef}.ystage .yst{display:grid;gap:1px;flex:1}.ystage small{color:var(--ink2)}.ystage b{font-size:17px}.ymbig{font-size:34px;width:46px;text-align:center}
+.ylv{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;border:1px solid #dbe4ea;background:#fff;color:var(--ink);border-radius:12px;padding:10px 12px;font:inherit;font-weight:700;text-align:start}.ylv.now{border-color:var(--brass);background:#fffbe9}.ylv.done{background:#eef9f3}
+.ydots{display:flex;gap:4px}.ydots i{width:10px;height:10px;border-radius:50%;border:2px solid #2f9468;display:block}.ydots i.on{background:#2f9468}
+.ymrule p{margin:6px 0;line-height:1.6}.ymsteps{margin:8px 0;padding-inline-start:20px;display:grid;gap:6px}.ymsm{font-weight:700;display:inline-block}
+.ymtop{display:flex;gap:10px;justify-content:space-between;color:var(--foam);font-weight:700;margin:6px 2px}
+.ymcard{gap:12px}.ymhe{font-size:18px;font-weight:700;line-height:1.5}.ymm{font-size:24px;font-weight:800;text-align:center;padding:6px 0;line-height:1.6}
+.ymfig text{direction:ltr;unicode-bidi:embed}.ymfig{max-width:100%;height:auto;background:#fff;border-radius:12px;align-self:center}
+.ymans{min-height:54px;border:2.5px solid #cfdbe4;border-radius:14px;background:#fff;font-size:26px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:6px}.ymans.bad{border-color:var(--signal)}.ymans.okb{border-color:#2f9468;background:#eef9f3}.ymans .ph{color:#a7b6c2;font-size:17px;font-weight:600}
+.ymkeys{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.ymk{border:0;border-radius:12px;background:#eef3f7;color:var(--ink);font-size:22px;font-weight:800;padding:11px 0}.ymk:active{background:#d6e3ec}
+.ymopts{display:grid;gap:8px}.ymopts .opt{text-align:center;font-size:20px}.ymopts .opt.sel{border-color:var(--sea);background:#e6f3f9}
+.ymsol{background:#f6f9fb;border-radius:12px;padding:10px 12px}.ymsol summary{font-weight:700;cursor:pointer}
+.ymend{align-items:center;text-align:center}.ymend .ymwatch,.ymby{text-align:start;width:100%}
 .tips{display:grid;gap:6px;width:100%;text-align:start;background:#fff;border-radius:12px;padding:10px 12px;font-size:15px}
 .tips p{margin:0}
 button.chip{border:0;cursor:pointer}
@@ -465,7 +482,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='34';
+const APP_VERSION='35';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -675,7 +692,7 @@ function applyProfile(){
   const mt2=document.querySelector('.tab[data-tab="map"] .lbl');if(mt2)mt2.textContent=TW('tab');
 }
 function resetChildState(){Object.assign(S,{progress:{unlocked:1,best:{},xp:0},session:newSession(),sessions:[],classWords:[],zoom:[],lessons:[],pendingPhotos:0,scheduleState:null,transcripts:[],screen:{name:'map'},calDay:null,editLesson:null,shots:[]});_trk=null}
-function worldsOf(){const w=(S.profile&&S.profile.worlds)||[{id:'en',label:'אנגלית'}];return ((S.profile&&S.profile.child)||CHILD)==='gil'&&!w.some(x=>x.id==='math')?[...w,{id:'math',label:'חשבון'}]:w}
+function worldsOf(){const w=(S.profile&&S.profile.worlds)||[{id:'en',label:'אנגלית'}];return ['gil','yuvik'].includes((S.profile&&S.profile.child)||CHILD)&&!w.some(x=>x.id==='math')?[...w,{id:'math',label:'חשבון'}]:w}
 function switchWorld(w){if(w===WORLD)return;WORLD=w;LS.set('world:'+(CHILD||'yuvik'),w);if(S.profile)S.profile={...S.profile,world:w};resetChildState();applyProfile();S.loaded=false;render();loadAll()}
 function switchChild(id){if(!isParent()||id===CHILD)return;CHILD=id;LS.set('child',id);WORLD='en';LS.set('world:'+id,'en');const ch=(S.children||[]).find(c=>c.id===id);S.profile={child:id,name:ch?ch.name:id,grade:ch?ch.grade:'',world:'en',worlds:[{id:'en',label:'אנגלית'}],features:{zoom:id==='yuvik',cal:true,camera:true,readtext:true}};LS.set('profile',S.profile);resetChildState();applyProfile();S.loaded=false;render();loadAll()}
 function setRole(r){
@@ -842,7 +859,7 @@ function bookIslands(){
   return out.sort((a,b)=>(a.order||0)-(b.order||0)).map(i=>({...i,kind:'book',words:(i.words||[]).filter(w=>w&&w.en&&w.he),games:i.games||[],story:null,mistakes:[]}));
 }
 function allIslands(){
-  if(WORLD==='math')return mathFixedIslands();
+  if(WORLD==='math')return isYM()?[]:mathFixedIslands();
   if(LANG()==='ar'){const list=[...arFixedIslands()];(S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule||l.roundsFor||l.dailyStory)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'נווה מדבר חדש',en:l.en||'',topic:l.topic||'מחומר שצילמת',words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,stories:Array.isArray(l.stories)?l.stories.filter(x=>x&&x.qs&&x.qs.length&&(x.text||x.paras)):[],mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],created:l.created||''})});return list}
   const book=bookIslands();
   const legacy=!S.profile||S.profile.child==='yuvik';
@@ -871,6 +888,7 @@ let _trk=null;
 function tracks(){
   if(_trk)return _trk;
   const all=allIslands();const book=all.filter(i=>i.kind==='book');
+  if(WORLD==='math'&&isYM()){_trk=[];return _trk}
   if(WORLD==='math'){_trk=MATH_TRACKS.map(t=>{const isl=mathFixedIslands().find(x=>x.track===t.k);return {...t,fixed:1,active:isl,done:[],started:[],queue:[],none:''}});return _trk}
   if(LANG()==='ar'){const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));const F=arFixedIslands();
     const T=[{k:'letters',t:'אותיות',ic:'🔤',flag:'#f2a93b',fixed:1,list:[F[0]]},{k:'numbers',t:'מספרים',ic:'🔢',flag:'#2f8a63',fixed:1,list:[F[1]]},{k:'class',t:'מהכיתה',ic:'🏫',flag:'#d8572a',none:'כל נווי המדבר נכבשו!',empty:'יופיע כשיעלה צילום מהכיתה',list:all.filter(i=>i.kind==='lesson').sort(byC)}];
@@ -964,8 +982,8 @@ function render(){
   else if(S.tab==='parent') v.innerHTML=viewParent();
   else{
     const sc=S.screen;
-    const map={readtext:viewReadText,game:viewGame,spell:viewSpell,karaoke:viewKaraoke,read2:viewRead2,island:()=>viewIsland(sc.id),learn:viewLearn,quiz:viewQuiz,sounds:viewQuiz,fix:viewQuiz,readaloud:viewRead,unseen:viewUnseen,result:viewResult};
-    v.innerHTML=(map[sc.name]||viewMap)();
+    const map={readtext:viewReadText,game:viewGame,spell:viewSpell,karaoke:viewKaraoke,read2:viewRead2,island:()=>viewIsland(sc.id),learn:viewLearn,quiz:viewQuiz,sounds:viewQuiz,fix:viewQuiz,readaloud:viewRead,unseen:viewUnseen,result:viewResult,ym:viewYM,ymStage:viewYMStage,ymEnd:viewYMEnd};
+    v.innerHTML=(isYM()&&(sc.name==='map'||sc.name==='island'||!map[sc.name])?viewYMMap:map[sc.name]||viewMap)();
   }
   if(S.confirm&&S.tab==='map')v.insertAdjacentHTML('beforeend',confirmHTML());
   if(S.ref&&LANG()==='ar')v.insertAdjacentHTML('beforeend',refHTML());
@@ -1882,7 +1900,7 @@ function viewParent(){
   ${S.online===false?`<p class="maphint" style="text-align:start;color:#ffb4a2">⚠️ השרת לא ענה בפתיחה האחרונה: ${esc(S.lastErr||'')}</p>`:''}
   <p class="maphint" style="text-align:start"><button class="syncbtn" data-act="conntest">🔌 בדיקת חיבור</button> <span id="conntest">${CONN.okAt?'חיבור אחרון תקין: '+new Date(CONN.okAt).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})+' ('+CONN.ch+')':''}</span></p>
   <p class="maphint" style="text-align:start">🔔 תזכורות: ${S.profile&&S.profile.pushDevices!=null?(S.profile.pushDevices?`מופעלות ב-${S.profile.pushDevices} מכשירים`:'עוד לא הופעלו בטלפון שלה'):'—'} <button class="syncbtn" data-act="pushTest">📨 לשלוח תזכורת לבדיקה</button></p>
-  <p class="maphint" style="text-align:start">גרסה ${APP_VERSION}</p>
+  ${ymParentHTML()}<p class="maphint" style="text-align:start">גרסה ${APP_VERSION}</p>
   <p class="maphint" style="text-align:start">מצב הורה: מה שעושים בטלפון הזה לא נספר כתרגול שלה. הנתונים מתעדכנים מהטלפון שלה בכל פתיחה.</p>
   <section class="card">
     <h2>היום</h2>
@@ -1919,6 +1937,15 @@ document.addEventListener('click',e=>{
     case 'mallStore':S.mallModal={kind:'mall',tab:'store',store:el.dataset.id};render();break;
     case 'mallBuy':{const r=mallBuy(el.dataset.id);if(r){S.mallModal={kind:'bought',item:el.dataset.id,cp:r.cp,store:S.mallModal&&S.mallModal.store};sfx.win()}render();break;}
     case 'mallClose':{const m=S.mallModal;S.mallModal=null;if(m&&m.kind==='intro'){mallP().intro=1;saveState('progress')}render();break;}
+    case 'ymStage':S.tab='map';S.screen={name:'ymStage',id:el.dataset.id};render();scrollTo({top:0});break;
+    case 'ymGo':ymStart(el.dataset.id);break;
+    case 'ymLv':ymStart(el.dataset.id,{lv:+el.dataset.lv});break;
+    case 'ymBack':{const sc2=S.screen;navTo(sc2.mode==='stage'?{act:'ymStage',id:sc2.id}:{act:'home'});break;}
+    case 'ymKey':{const sc2=S.screen;if(!sc2||sc2.name!=='ym'||sc2.state==='ok'||sc2.state==='show')break;const k=el.dataset.k;if(k==='⌫')sc2.inp=sc2.inp.slice(0,-1);else if(k==='␣')sc2.inp+=' ';else if(k===MI)sc2.inp+='-';else if(sc2.inp.length<14)sc2.inp+=k;render();break;}
+    case 'ymPick':{const sc2=S.screen;if(sc2.state==='ok'||sc2.state==='show')break;sc2.pickO=+el.dataset.k;render();break;}
+    case 'ymCheck':ymCheck();break;
+    case 'ymHint':S.screen.showHint=true;S.screen.hinted=true;render();break;
+    case 'ymNext':ymAdvance();break;
     case 'sound':S.sound=!S.sound;LS.set('sound',S.sound);render();break;
     case 'relinkCancel':S.relink=false;render();break;
     case 'shelfTog':setTimeout(()=>{const d=document.querySelector('.shelf');if(d)LS.set('shelfOpen',d.open)},0);break;
@@ -2083,6 +2110,319 @@ function mathFixedIslands(){
     words:[],games:[g0,g1,g2,g3,g4],mistakes:[],source:'',created:'0'}];
 }
 
+/* ============ YUVAL MATH: a guided path to the test (מבחן 18.11) ============ */
+// עולם חשבון של יובל: מסלול שלבים, בכל שלב כרטיסייה אחת לתרגול עם רמות, רמזים, פתרון מלא וזיהוי סוג הטעות.
+// הכול בצד הלקוח. ההתקדמות נשמרת ב-S.progress.ym (נשמר יחד עם עולם האנגלית שלה).
+const isYM=()=>WORLD==='math'&&((S.profile&&S.profile.child)||CHILD)==='yuvik';
+const YM_TEST={date:'2026-11-18',label:'רביעי 18.11'};
+const MI='−';
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const nz=(a,b)=>{let x=0;while(!x)x=ri(a,b);return x};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const gcdN=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a||1};
+function Q(n,d=1){if(d<0){n=-n;d=-d}if(n===0)return {n:0,d:1};const g=gcdN(n,d);return {n:n/g,d:d/g}}
+const qI=n=>Q(n,1);
+const qA=(x,y)=>Q(x.n*y.d+y.n*x.d,x.d*y.d),qS=(x,y)=>Q(x.n*y.d-y.n*x.d,x.d*y.d),qM=(x,y)=>Q(x.n*y.n,x.d*y.d),qD=(x,y)=>Q(x.n*y.d,x.d*y.n);
+const qN=x=>Q(-x.n,x.d),qAbs=x=>Q(Math.abs(x.n),x.d),qEq=(x,y)=>!!x&&!!y&&x.n===y.n&&x.d===y.d,qV=x=>x.n/x.d;
+// display: integer, fraction or mixed number; dec=true shows a decimal
+function qt(x,dec){if(typeof x==='number')x=qI(x);const s=x.n<0?MI:'';const a=Math.abs(x.n);if(x.d===1)return s+a;
+  if(dec)return s+String(+(a/x.d).toFixed(4));
+  return a>x.d?s+Math.floor(a/x.d)+' '+(a%x.d)+'/'+x.d:s+a+'/'+x.d}
+const qp=(x,dec)=>{if(typeof x==='number')x=qI(x);return '('+(x.n<0?MI:'+')+qt(qAbs(x),dec)+')'};   // (−5) / (+3)
+const qf=(x,dec)=>{if(typeof x==='number')x=qI(x);return x.n<0?'('+qt(x,dec)+')':qt(x,dec)};       // (−5) / 3
+const bd=s=>`<bdi dir="ltr">${s}</bdi>`;
+function qParse(s){s=String(s||'').replace(/[−–]/g,'-').replace(/\s+/g,' ').trim();let m;
+  const sg=(neg,v)=>neg==='-'?qN(v):v;
+  if((m=s.match(/^([+-]?) ?(\d+) (\d+)\/(\d+)$/))){if(!+m[4])return null;return sg(m[1],Q(+m[2]*+m[4]+ +m[3],+m[4]))}
+  if((m=s.match(/^([+-]?) ?(\d+)\/(\d+)$/))){if(!+m[3])return null;return sg(m[1],Q(+m[2],+m[3]))}
+  if((m=s.match(/^([+-]?) ?(\d*)\.(\d+)$/))){const p=10**m[3].length;return sg(m[1],Q(+(m[2]||0)*p+ +m[3],p))}
+  if((m=s.match(/^([+-]?) ?(\d+)$/)))return sg(m[1],qI(+m[2]));
+  return null}
+
+/* ---- סוגי טעויות: מה לבדוק ואיך לתקן ---- */
+const YM_TAGS={
+  sign:{t:'סימן התוצאה',tip:'המספר יצא נכון, רק הסימן לא. לפני שמחשבים, מחליטים קודם על הסימן.'},
+  arith:{t:'חישוב',tip:'הסימן נכון, אבל יש טעות בחישוב עצמו. כדאי לחשב לאט ולבדוק שוב.'},
+  opp:{t:'מספר נגדי',tip:'המספר הנגדי נמצא באותו מרחק מ־0, בצד השני. מחליפים רק את הסימן.'},
+  abs:{t:'ערך מוחלט',tip:'ערך מוחלט הוא המרחק מ־0, ולכן הוא תמיד חיובי (או 0).'},
+  absout:{t:'מינוס מחוץ לערך מוחלט',tip:`קודם מחשבים את מה שבתוך ${bd('| |')}, ורק אז מוסיפים את המינוס שבחוץ.`},
+  negcmp:{t:'השוואת מספרים שליליים',tip:`במספרים שליליים, מי שקרוב יותר ל־0 הוא הגדול יותר. למשל ${bd('−3 > −8')}.`},
+  samesign:{t:'חיבור באותו סימן',tip:'כששני המספרים באותו סימן: מחברים את המרחקים ושומרים על הסימן.'},
+  diffsign:{t:'חיבור בסימנים שונים',tip:'כשהסימנים שונים: מחסרים את המרחק הקטן מהגדול, והסימן הוא של המספר הרחוק יותר מ־0.'},
+  minusminus:{t:'חיסור מספר שלילי',tip:`חיסור הופכים לחיבור של המספר הנגדי: ${bd('−(−7) = +7')}.`},
+  brackets:{t:'השמטת סוגריים',tip:`סימנים זהים נותנים +: ${bd('+(+)')}, ${bd('−(−)')}. סימנים שונים נותנים −: ${bd('+(−)')}, ${bd('−(+)')}.`},
+  word:{t:'תרגום שאלה מילולית לתרגיל',tip:'כותבים קודם תרגיל: עלייה/הפקדה זה +, ירידה/משיכה זה −. רק אז מחשבים.'},
+  axis:{t:'סדר השיעורים (x, y)',tip:'x תמיד ראשון (ימינה או שמאלה), y שני (למעלה או למטה).'},
+  quad:{t:'רביעים',tip:`רביע ראשון ${bd('(+,+)')}, שני ${bd('(−,+)')}, שלישי ${bd('(−,−)')}, רביעי ${bd('(+,−)')}.`},
+  length:{t:'אורך קטע',tip:'כשהקטע חוצה את הציר, המרחק עובר דרך 0: מחברים את שני המרחקים. אורך תמיד חיובי.'},
+  areaperim:{t:'היקף מול שטח',tip:'היקף = סכום כל הצלעות. שטח = אורך × רוחב.'},
+  tri2:{t:'שטח משולש',tip:'שטח משולש ישר־זווית = (ניצב × ניצב) : 2. לא לשכוח לחלק ב־2.'},
+  mulsign:{t:'סימן בכפל ובחילוק',tip:'סימנים זהים נותנים +, סימנים שונים נותנים −.'},
+  count:{t:'סימן של כמה גורמים',tip:'סופרים את הגורמים השליליים: מספר זוגי נותן +, מספר אי־זוגי נותן −.'},
+  zero:{t:'אפס בכפל',tip:'אם אחד הגורמים הוא 0, כל המכפלה היא 0. ואסור לחלק ב־0.'},
+  frac:{t:'שברים',tip:'בכפל שברים: מונה כפול מונה ומכנה כפול מכנה, ומצמצמים. מספר מעורב הופכים קודם לשבר.'},
+  muldiv:{t:'כפל במקום חילוק',tip:'קראי שוב את סימן הפעולה: ":" זה חילוק.'},
+  recip:{t:'חילוק בשבר',tip:`חילוק בשבר = כפל בשבר ההפוך. למשל ${bd('12 : (1/3) = 12 · 3')}.`},
+  order:{t:'סדר פעולות בכפל וחילוק',tip:'כשיש רק כפל וחילוק מחשבים משמאל לימין, לפי הסדר.'},
+  missing:{t:'מספר חסר',tip:'מציבים את התשובה בתרגיל ובודקים אם יוצא שוויון.'},
+  adj180:{t:'זוויות צמודות',tip:'זוויות צמודות משלימות זו את זו ל־180°.'},
+  vertadj:{t:'קודקודית מול צמודה',tip:'קודקודיות נמצאות זו מול זו והן שוות. צמודות נמצאות זו ליד זו וסכומן 180°.'},
+  equation:{t:'משוואה עם זוויות',tip:'כותבים משוואה: צמודות → הסכום 180. קודקודיות → שוות זו לזו. ואז פותרים.'},
+  equi:{t:'משולש שווה צלעות',tip:'שלוש צלעות שוות ושלוש זוויות של 60°. היקף = 3 × צלע.'},
+  concept:{t:'הבנת המושג',tip:'קראי שוב את הכלל בכרטיס "מה צריך לדעת".'},
+  other:{t:'טעות אחרת',tip:'שווה לעבור על הפתרון המלא צעד אחר צעד.'}};
+
+/* ---- ציורים: מערכת צירים וזוויות ---- */
+function ymGrid(o){const R=6,c=22,W=(2*R+1)*c+20,ox=W/2,oy=W/2,X=x=>ox+x*c,Y=y=>oy-y*c;let g='';
+  for(let k=-R;k<=R;k++){g+=`<line x1="${X(k)}" y1="${Y(-R)}" x2="${X(k)}" y2="${Y(R)}" stroke="#dfe7ee"/><line x1="${X(-R)}" y1="${Y(k)}" x2="${X(R)}" y2="${Y(k)}" stroke="#dfe7ee"/>`;
+    if(k&&k%2===0)g+=`<text x="${X(k)}" y="${oy+14}" font-size="10" text-anchor="middle" fill="#6b7f8e">${k<0?MI+(-k):k}</text><text x="${ox-6}" y="${Y(k)+3}" font-size="10" text-anchor="end" fill="#6b7f8e">${k<0?MI+(-k):k}</text>`}
+  g+=`<line x1="${X(-R)-6}" y1="${oy}" x2="${X(R)+8}" y2="${oy}" stroke="#334" stroke-width="1.6"/><line x1="${ox}" y1="${Y(-R)+6}" x2="${ox}" y2="${Y(R)-8}" stroke="#334" stroke-width="1.6"/><text x="${X(R)+6}" y="${oy-6}" font-size="12" font-style="italic">x</text><text x="${ox+6}" y="${Y(R)-2}" font-size="12" font-style="italic">y</text><text x="${ox-4}" y="${oy+12}" font-size="10" text-anchor="end" fill="#6b7f8e">0</text>`;
+  (o.poly||[]).forEach(p=>{g+=`<polygon points="${p.map(([x,y])=>X(x)+','+Y(y)).join(' ')}" fill="rgba(31,143,179,.18)" stroke="#1f8fb3" stroke-width="2"/>`});
+  (o.seg||[]).forEach(([a,b])=>{g+=`<line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="#1f8fb3" stroke-width="3"/>`});
+  (o.pts||[]).forEach(p=>{g+=`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="4.5" fill="#e0395f"/><text x="${X(p.x)+6}" y="${Y(p.y)-6}" font-size="13" font-weight="800" fill="#c2213f">${p.l||''}</text>`});
+  return `<svg class="ymfig" viewBox="0 0 ${W} ${W}" width="${W}" height="${W}" dir="ltr">${g}</svg>`}
+function ymAngles(a,lab){// two lines; angle 1 = a (between ray 0° and ray a°), 2 = 180−a, 3 = a, 4 = 180−a
+  const W=260,H=200,cx=130,cy=100,L=110,pt=(d,r)=>[cx+r*Math.cos(d*Math.PI/180),cy-r*Math.sin(d*Math.PI/180)];let g='';
+  [[0,180],[a,a+180]].forEach(([d1,d2])=>{const p=pt(d1,L),q=pt(d2,L);g+=`<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="#334" stroke-width="2.2"/>`});
+  const mids=[a/2,a+(180-a)/2,180+a/2,180+a+(180-a)/2];
+  mids.forEach((m,k)=>{const [x,y]=pt(m,k%2?34:40);g+=`<text x="${x}" y="${y+5}" font-size="${lab[k]?14:13}" font-weight="800" text-anchor="middle" fill="${lab[k]&&lab[k]!==String(k+1)?'#c2213f':'#1f6f8b'}">${lab[k]||k+1}</text>`});
+  const arc=(s,e,r,col)=>{const [x1,y1]=pt(s,r),[x2,y2]=pt(e,r);return `<path d="M${x1} ${y1} A${r} ${r} 0 0 0 ${x2} ${y2}" fill="none" stroke="${col}" stroke-width="1.6"/>`};
+  [[0,a],[a,180],[180,180+a],[180+a,360]].forEach(([s0,e0],k)=>{if(lab[k])g+=arc(s0,e0,k%2?18:24,lab[k]==='?'?'#e0a000':'#c2213f')});
+  return `<svg class="ymfig" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" dir="ltr">${g}</svg>`}
+function ymTri(lab){const W=220,H=190;return `<svg class="ymfig" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" dir="ltr"><polygon points="110,18 200,170 20,170" fill="rgba(31,143,179,.14)" stroke="#334" stroke-width="2.2"/>
+  <text x="44" y="92" font-size="14" font-weight="800" fill="#c2213f" text-anchor="middle">${lab[0]||''}</text><text x="178" y="92" font-size="14" font-weight="800" fill="#c2213f" text-anchor="middle">${lab[1]||''}</text><text x="110" y="188" font-size="14" font-weight="800" fill="#c2213f" text-anchor="middle">${lab[2]||''}</text></svg>`}
+
+/* ---- עזרים לבניית תרגילים ---- */
+const yq=(o)=>o; // item: {he, m, a|o+ai, alt, tag, steps:[[he,math]], hint, fig, oTags}
+const mcItem=(he,m,opts,correct,extra)=>{const o=shuffle(opts.filter((x,k,a)=>a.indexOf(x)===k));return {he,m,o,ai:o.indexOf(correct),...(extra||{})}};
+const cmpSym=(x,y)=>qV(x)>qV(y)?'>':qV(x)<qV(y)?'<':'=';
+const signOf=x=>x.n>0?'+':x.n<0?MI:'0';
+function smallFrac(){const d=pick([2,3,4,5,6,8]);return Q(nz(-2*d+1,2*d-1),d)}
+
+/* ---- השלבים: לפי סדר הנושאים למבחן ---- */
+const YM_STAGES=[
+{id:'s1',ic:'↔️',t:'מספרים נגדיים וערך מוחלט',pages:'עמ׳ 58–59',
+ rule:`<p><b>מספרים נגדיים</b> נמצאים באותו מרחק מ־0, משני הצדדים. ${bd('7')} ו־${bd(MI+'7')} נגדיים. הנגדי של 0 הוא 0.</p><p><b>ערך מוחלט</b> הוא המרחק של מספר מ־0, ולכן הוא תמיד חיובי (או 0): ${bd('|'+MI+'7| = 7')}, ${bd('|7| = 7')}.</p><p><b>השוואה:</b> בשליליים, מי שקרוב יותר ל־0 גדול יותר: ${bd(MI+'3 > '+MI+'8')}.</p>`,
+ ex:[['הנגדי של',qp(-9)+' → '+qp(9)],['ערך מוחלט:','|'+MI+'12| = 12'],['מינוס בחוץ נשאר:',MI+'|'+MI+'5| = '+MI+'5']],
+ levels:[
+  {n:'המספר הנגדי',gen(){const v=Math.random()<.75?qI(nz(-30,30)):Q(nz(-9,9),pick([2,3,4]));return {he:'מהו המספר הנגדי?',m:qp(v)+' → ?',a:qN(v),alt:[[v,'opp']],tag:'opp',hint:'מחליפים רק את הסימן.',steps:[['נגדי = אותו מרחק מ־0, בצד השני:',qp(v)+' → '+qp(qN(v))]]}}},
+  {n:'ערך מוחלט',gen(){const v=Math.random()<.8?qI(nz(-40,40)):Q(nz(-9,9),pick([2,4,5]));return {he:'חשבי:',m:'|'+qt(v)+'| =',a:qAbs(v),alt:[[qN(qAbs(v)),'abs']],tag:'abs',hint:'כמה צעדים מ־0?',steps:[['ערך מוחלט = המרחק מ־0, תמיד חיובי:','|'+qt(v)+'| = '+qt(qAbs(v))]]}}},
+  {n:'ביטויים עם ערך מוחלט',gen(){const a=nz(-15,15),b=nz(-15,15),t=ri(0,2),A=Math.abs(a),B=Math.abs(b);
+    if(t===0)return {he:'חשבי:',m:`|${qt(a)}| + |${qt(b)}| =`,a:qI(A+B),alt:[[qI(a+b),'abs']],tag:'abs',hint:'קודם כל ערך מוחלט לחוד.',steps:[['קודם הערכים המוחלטים:',`|${qt(a)}| = ${A},  |${qt(b)}| = ${B}`],['ואז מחברים:',`${A} + ${B} = ${A+B}`]]};
+    if(t===1)return {he:'חשבי:',m:`|${qt(a)}| ${MI} |${qt(b)}| =`,a:qI(A-B),alt:[[qI(a-b),'abs']],tag:'abs',hint:'קודם כל ערך מוחלט לחוד.',steps:[['קודם הערכים המוחלטים:',`|${qt(a)}| = ${A},  |${qt(b)}| = ${B}`],['ואז מחסרים:',`${A} ${MI} ${B} = ${qt(A-B)}`]]};
+    const v=-Math.abs(a);return {he:'חשבי:',m:`${MI}|${qt(v)}| =`,a:qI(-A),alt:[[qI(A),'absout']],tag:'absout',hint:'המינוס שמחוץ ל־| | נשאר.',steps:[['קודם בתוך | |:',`|${qt(v)}| = ${A}`],['המינוס שבחוץ נשאר:',`${MI}${A}`]]}}},
+  {n:'השוואה: > < =',gen(){const t=ri(0,3);let L,R,Lv,Rv,tag='negcmp';
+    if(t===0){const a=nz(-20,20),b=nz(-20,20);L=`|${qt(a)}|`;R=`|${qt(b)}|`;Lv=qI(Math.abs(a));Rv=qI(Math.abs(b));tag='abs'}
+    else if(t===1){const a=-ri(1,20),b=-ri(1,20);L=qt(a);R=qt(b);Lv=qI(a);Rv=qI(b)}
+    else if(t===2){const a=ri(1,15);L=`${MI}|${MI}${a}|`;R=`|${MI}${a}|`;Lv=qI(-a);Rv=qI(a);tag='absout'}
+    else{const a=-ri(2,15),b=ri(1,15);L=qt(a);R=`|${qt(b)}|`;Lv=qI(a);Rv=qI(b);tag='abs'}
+    const c=cmpSym(Lv,Rv);return mcItem('איזה סימן מתאים?',`${L} ☐ ${R}`,['>','<','='],c,{tag,steps:[['משווים ערכים:',`${qt(Lv)} ${c} ${qt(Rv)}`]],hint:'מה הערך של כל צד?'})}}]},
+{id:'s2',ic:'➕',t:'חיבור וחיסור מספרים מכוונים',pages:'עמ׳ 69–75, 82–87',
+ rule:`<p><b>אותו סימן:</b> מחברים את המרחקים ושומרים על הסימן. ${bd('(−4) + (−6) = −10')}</p><p><b>סימנים שונים:</b> מחסרים את המרחק הקטן מהגדול. הסימן הוא של המספר הרחוק יותר מ־0. ${bd('(−9) + (+4) = −5')}</p><p><b>חיסור:</b> הופכים לחיבור של המספר הנגדי. ${bd('(−5) − (−7) = (−5) + (+7) = 2')}</p>`.replace(/−/g,MI),
+ ex:[['משנים חיסור לחיבור הנגדי:',qp(-5)+' '+MI+' '+qp(-7)+' = '+qp(-5)+' + '+qp(7)],['מחשבים:','= 2']],
+ levels:[
+  {n:'חיבור באותו סימן',gen(){const s=pick([1,-1]),a=s*ri(2,40),b=s*ri(2,40);const A=Math.abs(a),B=Math.abs(b);return {he:'חשבי:',m:`${qp(a)} + ${qp(b)} =`,a:qI(a+b),alt:[[qI(s*Math.abs(A-B)),'samesign'],[qI(-s*Math.abs(A-B)),'samesign']],tag:'samesign',hint:'אותו סימן: מחברים ושומרים על הסימן.',steps:[['אותו סימן, מחברים את המרחקים:',`${A} + ${B} = ${A+B}`],['ושומרים על הסימן:',qt(a+b)]]}}},
+  {n:'חיבור בסימנים שונים',gen(){let a=ri(2,40),b=ri(2,40);while(a===b)b=ri(2,40);if(Math.random()<.5)a=-a;else b=-b;if(Math.random()<.5)[a,b]=[b,a];const A=Math.abs(a),B=Math.abs(b),big=A>B?a:b;
+    return {he:'חשבי:',m:`${qp(a)} + ${qp(b)} =`,a:qI(a+b),alt:[[qI(Math.sign(big)*(A+B)),'diffsign'],[qI(-Math.sign(big)*(A+B)),'diffsign']],tag:'diffsign',hint:'מחסרים את המרחקים. של מי הסימן?',steps:[['סימנים שונים, מחסרים את המרחקים:',`${Math.max(A,B)} ${MI} ${Math.min(A,B)} = ${Math.abs(A-B)}`],[`הסימן של ${qt(big)}, כי הוא רחוק יותר מ־0:`,qt(a+b)]]}}},
+  {n:'חיסור: הופכים לחיבור הנגדי',gen(){const a=nz(-25,25),b=nz(-25,25);return {he:'חשבי:',m:`${qp(a)} ${MI} ${qp(b)} =`,a:qI(a-b),alt:[[qI(a+b),b<0?'minusminus':'brackets']],tag:'minusminus',hint:'הופכים את החיסור לחיבור של הנגדי.',steps:[['משנים חיסור לחיבור המספר הנגדי:',`${qp(a)} ${MI} ${qp(b)} = ${qp(a)} + ${qp(-b)}`],['מחשבים:',`= ${qt(a-b)}`]]}}},
+  {n:'מספר חסר',gen(){const t=ri(0,2),b=nz(-15,15),c=nz(-15,15);
+    if(t===0)return {he:'מהו המספר החסר?',m:`☐ ${MI} ${qp(b)} = ${qp(c)}`,a:qI(c+b),alt:[[qI(c-b),'minusminus']],tag:'missing',hint:'איזה מספר, אם מחסרים ממנו '+bd(qp(b))+', נותן '+bd(qp(c))+'?',steps:[['☐ = התוצאה + המספר שחיסרנו:',`☐ = ${qp(c)} + ${qp(b)} = ${qt(c+b)}`],['בדיקה:',`${qp(c+b)} ${MI} ${qp(b)} = ${qt(c)}`]]};
+    if(t===1){let a=nz(-15,15);while(a===c)a=nz(-15,15);return {he:'מהו המספר החסר?',m:`${qp(a)} ${MI} ☐ = ${qp(c)}`,a:qI(a-c),alt:[[qI(c-a),'sign']],tag:'missing',hint:'כמה צריך להוריד מ־'+bd(qp(a))+' כדי להגיע ל־'+bd(qp(c))+'?',steps:[['☐ = המספר הראשון פחות התוצאה:',`☐ = ${qp(a)} ${MI} ${qp(c)} = ${qt(a-c)}`],['בדיקה:',`${qp(a)} ${MI} ${qp(a-c)} = ${qt(c)}`]]}}
+    return {he:'מהו המספר החסר?',m:`☐ + ${qp(b)} = ${qp(c)}`,a:qI(c-b),alt:[[qI(c+b),'sign']],tag:'missing',hint:'מה מוסיפים ל־'+bd(qp(b))+' כדי לקבל '+bd(qp(c))+'?',steps:[['☐ = התוצאה פחות המספר:',`☐ = ${qp(c)} ${MI} ${qp(b)} = ${qt(c-b)}`]]}}},
+  {n:'שברים ועשרוניים',gen(){const op=pick(['+',MI]);let a,b,dec=false;
+    if(Math.random()<.5){dec=true;a=Q(nz(-99,99),10);b=Q(nz(-99,99),10)}else{const d=pick([2,3,4,5,6,8]);a=Q(nz(-3*d,3*d),d);b=Q(nz(-2*d,2*d),pick([d,d,2]))}
+    const r=op==='+'?qA(a,b):qS(a,b);return {he:'חשבי:',m:`${qp(a,dec)} ${op} ${qp(b,dec)} =`,a:r,dec,alt:[[op==='+'?qS(a,b):qA(a,b),op==='+'?'sign':'minusminus']],tag:'arith',hint:dec?'אפשר לחשב כמו במספרים שלמים ולשים לב לנקודה.':'מכנה משותף, ואז חיבור או חיסור.',
+      steps:[op===MI?['משנים חיסור לחיבור הנגדי:',`${qp(a,dec)} + ${qp(qN(b),dec)}`]:['מחברים:',`${qp(a,dec)} + ${qp(b,dec)}`],['התוצאה:',qt(r,dec)]]}}}]},
+{id:'s3',ic:'🧮',t:'השמטת סוגריים ותרגילים ארוכים',pages:'עמ׳ 91–97',
+ rule:`<p><b>השמטת סוגריים:</b> ${bd('+(+) → +')} · ${bd('−(−) → +')} · ${bd('+(−) → −')} · ${bd('−(+) → −')}</p><p><b>תרגיל ארוך בלי סוגריים:</b> הסימן משמאל למספר שייך לו. אפשר לחבר את כל החיוביים, את כל השליליים, ואז לחבר את שתי התוצאות.</p><p><b>שאלה מילולית:</b> עלייה, הפקדה ← +. ירידה, משיכה ← −. כותבים תרגיל ואז מחשבים.</p>`.replace(/−/g,MI),
+ ex:[['בלי סוגריים:',`${qp(-5)} ${MI} ${qp(-7)} = ${MI}5 + 7`],['חיוביים לחוד, שליליים לחוד:',`${MI}3 + 2 + 9 ${MI} 2 = (2 + 9) + (${MI}3 ${MI} 2) = 11 ${MI} 5 = 6`]],
+ levels:[
+  {n:'כותבים בלי סוגריים',gen(){const a=nz(-12,12),b=nz(-12,12),op=pick(['+',MI]);const first=qt(a);const s2=(op==='+')===(b>0)?'+':MI;
+    const right=`${first} ${s2} ${Math.abs(b)}`,flip=`${first} ${s2==='+'?MI:'+'} ${Math.abs(b)}`,f1=`${qt(-a)} ${s2} ${Math.abs(b)}`,f2=`${qt(-a)} ${s2==='+'?MI:'+'} ${Math.abs(b)}`;
+    return mcItem('איך כותבים בלי סוגריים?',`${qp(a)} ${op} ${qp(b)}`,[right,flip,f1,f2],right,{tag:'brackets',hint:'שני סימנים זהים → +. שונים → −.',steps:[[`${op} ו־${b<0?MI:'+'}: ${s2==='+'?'סימנים זהים נותנים +':'סימנים שונים נותנים −'}`,right]]})}},
+  {n:'משמיטים סוגריים ומחשבים',gen(){const v=[nz(-15,15),nz(-15,15),nz(-15,15)],ops=[pick(['+',MI]),pick(['+',MI])];
+    let r=v[0],wr=v[0];ops.forEach((o,k)=>{const x=v[k+1];r+=o==='+'?x:-x;wr+=o==='+'?x:-Math.abs(x)});
+    const flat=qt(v[0])+ops.map((o,k)=>{const x=v[k+1];return ` ${(o==='+')===(x>0)?'+':MI} ${Math.abs(x)}`}).join('');
+    return {he:'השמיטי סוגריים וחשבי:',m:`${qp(v[0])} ${ops[0]} ${qp(v[1])} ${ops[1]} ${qp(v[2])} =`,a:qI(r),alt:wr!==r?[[qI(wr),'minusminus']]:[],tag:'brackets',hint:'כותבים קודם בלי סוגריים.',steps:[['בלי סוגריים:',flat],['מחשבים:',`= ${qt(r)}`]]}}},
+  {n:'תרגיל ארוך בלי סוגריים',gen(){const k=ri(4,6),v=[];for(let i=0;i<k;i++)v.push(nz(-12,12));const pos=v.filter(x=>x>0).reduce((a,b)=>a+b,0),neg=v.filter(x=>x<0).reduce((a,b)=>a+b,0);
+    const m=qt(v[0])+v.slice(1).map(x=>` ${x<0?MI:'+'} ${Math.abs(x)}`).join('')+' =';
+    return {he:'חשבי:',m,a:qI(pos+neg),tag:'arith',hint:'חברי קודם את כל החיוביים, ואחר כך את כל השליליים.',steps:[['החיוביים:',String(pos)],['השליליים:',qt(neg)],['ביחד:',`${pos} ${MI} ${Math.abs(neg)} = ${qt(pos+neg)}`]]}}},
+  {n:'שאלות מילוליות',gen(){const t=ri(0,2);
+    if(t===0){const t0=nz(-12,4),up=ri(3,12),dn=ri(4,16),r=t0+up-dn;return {he:`בבוקר הטמפרטורה הייתה ${bd(qt(t0)+'°C')}. בצהריים היא עלתה ב־${up} מעלות, ובלילה ירדה ב־${dn} מעלות. מה הטמפרטורה בלילה?`,m:'? °C',a:qI(r),tag:'word',hint:'עלתה ← +, ירדה ← −.',steps:[['כותבים תרגיל:',`${qt(t0)} + ${up} ${MI} ${dn}`],['מחשבים:',`= ${qt(r)}°C`]]}}
+    if(t===1){const b0=-ri(2,9)*100,dep=ri(3,12)*100,wd=ri(1,8)*100,r=b0+dep-wd;return {he:`בחשבון הבנק של נועה הייתה יתרה של ${bd(qt(b0))} ₪. היא הפקידה ${dep} ₪, ואחר כך משכה ${wd} ₪. מה היתרה עכשיו?`,m:'? ₪',a:qI(r),tag:'word',hint:'הפקדה ← +, משיכה ← −.',steps:[['כותבים תרגיל:',`${qt(b0)} + ${dep} ${MI} ${wd}`],['מחשבים:',`= ${qt(r)} ₪ ${r<0?'(בחובה)':'(בזכות)'}`]]}}
+    const f0=-ri(1,3),up=ri(3,8),dn=ri(1,6),r=f0+up-dn;return {he:`דנה החנתה בקומה ${bd(qt(f0))} בחניון של קניון. היא עלתה במעלית ${up} קומות, ואחר כך ירדה ${dn} קומות. באיזו קומה היא עכשיו?`,m:'קומה ?',a:qI(r),tag:'word',hint:'עלתה ← +, ירדה ← −.',steps:[['כותבים תרגיל:',`${qt(f0)} + ${up} ${MI} ${dn}`],['מחשבים:',`= ${qt(r)}`]]}}}]},
+{id:'s4',ic:'📍',t:'מערכת צירים: נקודות, קטעים, היקף ושטח',pages:'עמ׳ 102–114',
+ rule:`<p><b>שיעורי נקודה:</b> ${bd('(x, y)')}. x ראשון: ימינה + / שמאלה −. y שני: למעלה + / למטה −.</p><p><b>רביעים:</b> ראשון ${bd('(+,+)')}, שני ${bd('(−,+)')}, שלישי ${bd('(−,−)')}, רביעי ${bd('(+,−)')}.</p><p><b>אורך קטע</b> אופקי: מחסרים את שיעורי ה־x (הגדול פחות הקטן). אנכי: את שיעורי ה־y. אורך תמיד חיובי.</p><p><b>היקף</b> = סכום הצלעות. <b>שטח מלבן</b> = אורך × רוחב. <b>שטח משולש ישר־זווית</b> = ניצב × ניצב : 2.</p>`.replace(/−/g,MI),
+ ex:[['A(−3, 2), B(4, 2): קטע אופקי'.replace(/−/g,MI),`4 ${MI} (${MI}3) = 4 + 3 = 7`]],
+ levels:[
+  {n:'קוראים שיעורי נקודה',gen(){let x=nz(-6,6),y=nz(-6,6);while(Math.abs(x)===Math.abs(y))y=nz(-6,6);const P=(a,b)=>`(${qt(a)}, ${qt(b)})`;const right=P(x,y);
+    return mcItem('מהם שיעורי הנקודה A?','',[right,P(y,x),P(-x,y),P(x,-y)],right,{fig:ymGrid({pts:[{x,y,l:'A'}]}),oTags:{[P(y,x)]:'axis',[P(-x,y)]:'sign',[P(x,-y)]:'sign'},tag:'axis',hint:'כמה צעדים ימינה/שמאלה (x), ואחר כך למעלה/למטה (y)?',steps:[[`x: ${Math.abs(x)} ${x>0?'ימינה':'שמאלה'}, y: ${Math.abs(y)} ${y>0?'למעלה':'למטה'}`,right]]})}},
+  {n:'באיזה רביע?',gen(){const x=nz(-9,9),y=nz(-9,9);const Qs=['רביע ראשון','רביע שני','רביע שלישי','רביע רביעי'];const k=x>0&&y>0?0:x<0&&y>0?1:x<0?2:3;
+    return mcItem('באיזה רביע נמצאת הנקודה?',`(${qt(x)}, ${qt(y)})`,Qs,Qs[k],{tag:'quad',hint:'מה הסימן של x ומה הסימן של y?',steps:[[`x ${x>0?'חיובי':'שלילי'}, y ${y>0?'חיובי':'שלילי'}:`,`(${x>0?'+':MI}, ${y>0?'+':MI}) → ${Qs[k]}`]]})}},
+  {n:'אורך קטע',gen(){const hz=Math.random()<.5;let a=ri(-6,5),b=ri(a+1,6);if(Math.random()<.6&&a>=0){a=-ri(1,5)}const c=nz(-5,5);const A=hz?[a,c]:[c,a],B=hz?[b,c]:[c,b],L=b-a;
+    const P=p=>`(${qt(p[0])}, ${qt(p[1])})`;return {he:`מה אורך הקטע AB?`,m:`A${P(A)}  B${P(B)}`,a:qI(L),alt:[[qI(Math.abs(Math.abs(b)-Math.abs(a))),'length']],tag:'length',fig:ymGrid({seg:[[A,B]],pts:[{x:A[0],y:A[1],l:'A'},{x:B[0],y:B[1],l:'B'}]}),hint:hz?'הקטע אופקי: מסתכלים על שיעורי ה־x.':'הקטע אנכי: מסתכלים על שיעורי ה־y.',
+      steps:[[hz?'קטע אופקי, מחסרים את שיעורי ה־x:':'קטע אנכי, מחסרים את שיעורי ה־y:',`${qt(b)} ${MI} ${qf(a)} = ${L}`]]}}},
+  {n:'היקף ושטח של מלבן',gen(){const x1=ri(-6,3),x2=ri(x1+2,6),y1=ri(-6,3),y2=ri(y1+2,6),w=x2-x1,h=y2-y1,ar=Math.random()<.5;const P=(a,b)=>`(${qt(a)}, ${qt(b)})`;
+    return {he:`מה ${ar?'השטח':'ההיקף'} של המלבן ABCD?`,m:`A${P(x1,y1)} B${P(x2,y1)} C${P(x2,y2)} D${P(x1,y2)}`,a:qI(ar?w*h:2*(w+h)),alt:[[qI(ar?2*(w+h):w*h),'areaperim']],tag:ar?'areaperim':'arith',fig:ymGrid({poly:[[[x1,y1],[x2,y1],[x2,y2],[x1,y2]]],pts:[{x:x1,y:y1,l:'A'},{x:x2,y:y1,l:'B'},{x:x2,y:y2,l:'C'},{x:x1,y:y2,l:'D'}]}),hint:'קודם מוצאים אורך ורוחב.',
+      steps:[['אורך AB:',`${qt(x2)} ${MI} ${qf(x1)} = ${w}`],['רוחב BC:',`${qt(y2)} ${MI} ${qf(y1)} = ${h}`],ar?['שטח = אורך × רוחב:',`${w} × ${h} = ${w*h}`]:['היקף = 2 × (אורך + רוחב):',`2 × (${w} + ${h}) = ${2*(w+h)}`]]}}},
+  {n:'שטח משולש ישר־זווית',gen(){const x1=ri(-6,3),x2=ri(x1+2,6),y1=ri(-6,3),y2=ri(y1+2,6),w=x2-x1,h=y2-y1;if((w*h)%2)return this.gen();const P=(a,b)=>`(${qt(a)}, ${qt(b)})`;
+    return {he:'מה השטח של המשולש ABC?',m:`A${P(x1,y1)} B${P(x2,y1)} C${P(x1,y2)}`,a:qI(w*h/2),alt:[[qI(w*h),'tri2']],tag:'tri2',fig:ymGrid({poly:[[[x1,y1],[x2,y1],[x1,y2]]],pts:[{x:x1,y:y1,l:'A'},{x:x2,y:y1,l:'B'},{x:x1,y:y2,l:'C'}]}),hint:'ניצב × ניצב, ואז לחלק ב־2.',
+      steps:[['ניצב AB:',`${qt(x2)} ${MI} ${qf(x1)} = ${w}`],['ניצב AC:',`${qt(y2)} ${MI} ${qf(y1)} = ${h}`],['שטח:',`${w} × ${h} : 2 = ${w*h/2}`]]}}}]},
+{id:'s5',ic:'✖️',t:'כפל מספרים מכוונים',pages:'עמ׳ 122–128',
+ rule:`<p><b>שני מספרים:</b> סימנים זהים ← +. סימנים שונים ← −. ${bd('(−5) · (−9) = 45')}, ${bd('17 · (−1) = −17')}</p><p><b>הרבה גורמים:</b> סופרים כמה גורמים שליליים. זוגי ← +, אי־זוגי ← −. אם יש 0, המכפלה 0.</p><p><b>שברים:</b> קודם קובעים סימן, אחר כך מונה × מונה, מכנה × מכנה, ומצמצמים. מספר מעורב הופכים לשבר.</p>`.replace(/−/g,MI),
+ ex:[['3 גורמים שליליים (אי־זוגי) ← התוצאה שלילית:',`${MI}2 · 5 · (${MI}3) · (${MI}1) = ${MI}30`],['שברים:',`2/5 · (${MI}15/8) = ${MI}(2·15)/(5·8) = ${MI}3/4`]],
+ levels:[
+  {n:'כפל שני מספרים',gen(){let a=nz(-12,12),b=nz(-12,12);if(a>0&&b>0)a=-a;return {he:'חשבי:',m:`${qf(a)} · ${qf(b)} =`,a:qI(a*b),tag:'mulsign',alt:[[qI(-a*b),'mulsign']],hint:'קודם הסימן: זהים ← +, שונים ← −.',steps:[[`${a<0===b<0?'סימנים זהים ← +':'סימנים שונים ← −'}`,''],['ואז בלי סימנים:',`${Math.abs(a)} · ${Math.abs(b)} = ${Math.abs(a*b)}`],['התוצאה:',qt(a*b)]]}}},
+  {n:'מה הסימן של המכפלה?',gen(){const k=ri(4,7),v=[];for(let i=0;i<k;i++)v.push(nz(-12,12)*(Math.random()<.6?-1:1));const z=Math.random()<.18;if(z)v[ri(1,k-1)]=0;const neg=v.filter(x=>x<0).length;
+    const c=z?'אפס':neg%2?'שלילית':'חיובית';return mcItem('מה הסימן של המכפלה? (בלי לחשב)',v.map((x,i)=>i?qf(x):qt(x)).join(' · '),['חיובית','שלילית','אפס'],c,{tag:z?'zero':'count',hint:'סופרים גורמים שליליים. ויש 0?',steps:[[z?'יש גורם 0 ← המכפלה 0':`יש ${neg} גורמים שליליים (${neg%2?'אי־זוגי':'זוגי'}):`,z?'0':`המכפלה ${c}`]]})}},
+  {n:'כפל של כמה גורמים',gen(){const k=ri(3,4),v=[];for(let i=0;i<k;i++)v.push(nz(-6,6));const r=v.reduce((a,b)=>a*b,1),neg=v.filter(x=>x<0).length;
+    return {he:'חשבי:',m:v.map((x,i)=>i?qf(x):qt(x)).join(' · ')+' =',a:qI(r),alt:[[qI(-r),'count']],tag:'count',hint:'קודם הסימן לפי מספר השליליים, אחר כך המכפלה.',steps:[[`${neg} גורמים שליליים ← ${neg%2?'−':'+'}`,''],['מכפלה בלי סימנים:',v.map(x=>Math.abs(x)).join(' · ')+' = '+Math.abs(r)],['התוצאה:',qt(r)]]}}},
+  {n:'כפל שברים ומספרים מעורבים',gen(){let x,y;const t=ri(0,2);
+    if(t===0){const d=pick([2,3,4,5]);x=Q(nz(-3,3)*d+pick([1,-1]),d);y=qI(nz(-6,6))}
+    else if(t===1){x=Q(nz(-9,9),pick([3,4,5,7]));y=Q(nz(-15,15),pick([2,3,4,8,10]))}
+    else{x=qI(nz(-40,40));y=Q(pick([1,1,2,3]),pick([2,3,4,5,10]));if(Math.random()<.5)y=qN(y)}
+    const r=qM(x,y);return {he:'חשבי (אפשר לענות בשבר או במספר מעורב):',m:`${qf(x)} · ${qf(y)} =`,a:r,alt:[[qN(r),'sign']],tag:'frac',hint:'מספר מעורב הופכים לשבר. מצמצמים לפני שכופלים.',
+      steps:[[`הסימן: ${(x.n<0)===(y.n<0)?'+':MI}`,''],['כשברים:',`${Math.abs(x.n)}/${x.d} · ${Math.abs(y.n)}/${y.d}`],['התוצאה:',qt(r)]]}}},
+  {n:'מספר חסר בכפל',gen(){const a=nz(-12,12),b=nz(-12,12);const left=Math.random()<.5;return {he:'מהו המספר החסר?',m:left?`☐ · ${qf(b)} = ${qf(a*b)}`:`${qf(a)} · ☐ = ${qf(a*b)}`,a:qI(left?a:b),alt:[[qI(left?-a:-b),'mulsign']],tag:'missing',hint:'מחלקים את התוצאה במספר הידוע.',steps:[['☐ = התוצאה : המספר הידוע',`${qf(a*b)} : ${qf(left?b:a)} = ${qt(left?a:b)}`]]}}}]},
+{id:'s6',ic:'➗',t:'חילוק, וכפל וחילוק ביחד',pages:'עמ׳ 130, 132–136',
+ rule:`<p><b>חילוק:</b> אותו חוק סימנים כמו בכפל. ${bd('(−33) : (−11) = 3')}, ${bd('−21 : 7 = −3')}. <b>אסור לחלק ב־0.</b></p><p><b>חילוק בשבר:</b> כופלים בשבר ההפוך. ${bd('12 : (1/2) = 12 · 2 = 24')}</p><p><b>כפל וחילוק ביחד:</b> מחשבים משמאל לימין. קודם אפשר לקבוע את הסימן לפי מספר השליליים.</p>`.replace(/−/g,MI),
+ ex:[['חילוק בשבר:',`3/8 : (${MI}2 1/4) = 3/8 : (${MI}9/4) = 3/8 · (${MI}4/9) = ${MI}1/6`],['משמאל לימין:',`${MI}18 : (${MI}9) · 3 = 2 · 3 = 6`]],
+ levels:[
+  {n:'חילוק מספרים שלמים',gen(){const q=nz(-12,12);let b=nz(-12,12);while(Math.abs(b)<2)b=nz(-12,12);const a=q*b;return {he:'חשבי:',m:`${qt(a)} : ${qf(b)} =`,a:qI(q),alt:[[qI(-q),'mulsign'],[qI(a*b),'muldiv']],tag:'mulsign',hint:'סימן קודם, ואז חילוק.',steps:[[`${(a<0)===(b<0)?'סימנים זהים ← +':'סימנים שונים ← −'}`,''],['בלי סימנים:',`${Math.abs(a)} : ${Math.abs(b)} = ${Math.abs(q)}`],['התוצאה:',qt(q)]]}}},
+  {n:'חילוק בשבר',gen(){const a=qI(nz(-15,15));const fd=pick([2,3,4,5]);let fn=pick([1,1,2,3]);while(fn>=fd||gcdN(fn,fd)>1)fn=pick([1,1,2,3]);let f=Q(fn*pick([1,-1]),fd);const r=qD(a,f);return {he:'חשבי:',m:`${qt(a)} : ${qf(f)} =`,a:r,alt:[[qM(a,f),'recip'],[qN(r),'sign']],tag:'recip',hint:'חילוק בשבר = כפל בהפוך שלו.',steps:[['הופכים לכפל בשבר ההפוך:',`${qt(a)} · ${qf(Q(f.d,f.n))}`],['התוצאה:',qt(r)]]}}},
+  {n:'חילוק שברים ומספרים מעורבים',gen(){const x=Q(nz(-9,9),pick([2,3,4,5,8]));let y=Math.random()<.5?Q(nz(-9,9),pick([2,3,4,5,6,25])):Q(pick([1,-1])*(ri(1,2)*4+pick([1,3])),4);while(y.d===1)y=Q(nz(-9,9),pick([2,3,4,5,6]));const r=qD(x,y);
+    return {he:'חשבי (אפשר לענות בשבר או במספר מעורב):',m:`${qf(x)} : ${qf(y)} =`,a:r,alt:[[qM(x,y),'recip'],[qN(r),'sign']],tag:'recip',hint:'מעורב ← שבר. ואז כפל בהפוך.',steps:[['חילוק ← כפל בשבר ההפוך:',`${qf(x)} · ${qf(Q(y.d,y.n))}`],['התוצאה:',qt(r)]]}}},
+  {n:'מספר חסר בחילוק',gen(){const q=nz(-10,10);let b=nz(-10,10);while(Math.abs(b)<2)b=nz(-10,10);const a=q*b,t=ri(0,1);
+    if(t===0)return {he:'מהו המספר החסר?',m:`${qt(a)} : ☐ = ${qf(q)}`,a:qI(b),alt:[[qI(-b),'mulsign']],tag:'missing',hint:'במה צריך לחלק את '+bd(qt(a))+' כדי לקבל '+bd(qt(q))+'?',steps:[['☐ = '+qt(a)+' : '+qf(q),`= ${qt(b)}`]]};
+    return {he:'מהו המספר החסר?',m:`☐ : ${qf(b)} = ${qf(q)}`,a:qI(a),alt:[[qI(-a),'mulsign'],[qD(qI(q),qI(b)),'muldiv']],tag:'missing',hint:'☐ = התוצאה × המחלק.',steps:[['☐ = '+qf(q)+' · '+qf(b),`= ${qt(a)}`]]}}},
+  {n:'כפל וחילוק משמאל לימין',gen(){let v=nz(-9,9),m=qt(v),r=qI(v);const ops=[],vals=[];const k=ri(2,3);
+    for(let i=0;i<k;i++){const cur=r.n;const divs=[];for(let d=2;d<=12;d++)if(cur%d===0)divs.push(d);let op=divs.length&&Math.random()<.55?':':'·';let x=op===':'?pick(divs)*pick([1,-1]):nz(-6,6);if(op==='·'&&Math.abs(x)<2)x=pick([2,-2,3,-3]);ops.push(op);vals.push(x);r=op===':'?qD(r,qI(x)):qM(r,qI(x));m+=` ${op} ${qf(x)}`}
+    let w=qI(vals[vals.length-1]);for(let i=vals.length-2;i>=0;i--)w=ops[i+1]===':'?qD(qI(vals[i]),w):qM(qI(vals[i]),w);const rl=ops[0]===':'?qD(qI(v),w):qM(qI(v),w);
+    let run=qI(v);const st=[];ops.forEach((o,i)=>{const nx=o===':'?qD(run,qI(vals[i])):qM(run,qI(vals[i]));st.push(['שלב '+(i+1)+':',`${qf(run)} ${o} ${qf(vals[i])} = ${qt(nx)}`]);run=nx});
+    return {he:'חשבי (משמאל לימין):',m:m+' =',a:r,alt:qEq(rl,r)?[]:[[rl,'order']],tag:'order',hint:'מתחילים מהשמאלי ומתקדמים לפי הסדר.',steps:st}}}]},
+{id:'s7',ic:'📐',t:'זוויות צמודות וזוויות קודקודיות',pages:'עמ׳ 274–290',
+ rule:`<p><b>זוויות צמודות</b> נמצאות זו ליד זו על ישר אחד, וסכומן <b>180°</b>.</p><p><b>זוויות קודקודיות</b> נמצאות זו מול זו כששני ישרים נחתכים, והן <b>שוות</b>.</p><p>בחיתוך של שני ישרים: ${bd('∠1 = ∠3')}, ${bd('∠2 = ∠4')}, ${bd('∠1 + ∠2 = 180°')}.</p>`,
+ ex:[['∠1 = 50°, אז הצמודה:','∠2 = 180° − 50° = 130°'.replace('−',MI)],['והקודקודית:','∠3 = ∠1 = 50°']],
+ levels:[
+  {n:'זווית צמודה',gen(){const a=pick([...Array(29)].map((_,k)=>20+k*5).filter(v=>v!==90));return {he:`${bd('∠1 = '+a+'°')}. כמה מעלות ${bd('∠2')}?`,m:'∠2 = ?°',a:qI(180-a),alt:[[qI(a),'vertadj'],[qI(90-a),'adj180'],[qI(360-a),'adj180']],tag:'adj180',fig:ymAngles(a,[a+'°','?','','']),hint:'∠1 ו־∠2 צמודות: יחד 180°.',steps:[['צמודות משלימות ל־180°:',`∠2 = 180° ${MI} ${a}° = ${180-a}°`]]}}},
+  {n:'זווית קודקודית',gen(){const a=pick([...Array(29)].map((_,k)=>20+k*5).filter(v=>v!==90));return {he:`${bd('∠1 = '+a+'°')}. כמה מעלות ${bd('∠3')}?`,m:'∠3 = ?°',a:qI(a),alt:[[qI(180-a),'vertadj']],tag:'vertadj',fig:ymAngles(a,[a+'°','','?','']),hint:'∠1 ו־∠3 נמצאות זו מול זו.',steps:[['קודקודיות שוות:',`∠3 = ∠1 = ${a}°`]]}}},
+  {n:'כל הזוויות בחיתוך',gen(){const a=pick([...Array(29)].map((_,k)=>20+k*5).filter(v=>v!==90)),vals=[a,180-a,a,180-a];const g=ri(0,3);let w=ri(0,3);while(w===g)w=ri(0,3);const lab=['','','',''];lab[g]=vals[g]+'°';lab[w]='?';
+    const adj=Math.abs(g-w)%2===1;return {he:`${bd('∠'+(g+1)+' = '+vals[g]+'°')}. כמה מעלות ${bd('∠'+(w+1))}?`,m:`∠${w+1} = ?°`,a:qI(vals[w]),alt:[[qI(adj?vals[g]:180-vals[g]),'vertadj']],tag:'vertadj',fig:ymAngles(a,lab),hint:'צמודות (זו ליד זו) או קודקודיות (זו מול זו)?',steps:[[adj?'צמודות ← 180° פחות:':'קודקודיות ← שוות:',adj?`180° ${MI} ${vals[g]}° = ${vals[w]}°`:`∠${w+1} = ${vals[w]}°`]]}}},
+  {n:'משוואה עם x',gen(){const t=ri(0,2);
+    if(t===0){const x=ri(35,80),d=180-2*x;return {he:`${bd('∠1')} ו־${bd('∠2')} צמודות. ${bd('∠1 = x')}, ${bd('∠2 = x + '+d)}. מצאי את x.`,m:'x = ?',a:qI(x),alt:[[qI(180-d),'equation'],[qI(x+d),'equation']],tag:'equation',fig:ymAngles(Math.min(170,Math.max(10,x)),['x','x+'+d,'','']),hint:'צמודות: ∠1 + ∠2 = 180.',steps:[['צמודות:',`x + x + ${d} = 180`],['',`2x = ${180-d}`],['',`x = ${x}`]]}}
+    if(t===1){const pr=pick([[1,2],[1,3],[2,3],[1,5],[4,5],[1,4],[3,6],[2,7]]),x=180/(pr[0]+pr[1]);const L=k=>k===1?'x':k+'x';return {he:`${bd('∠1')} ו־${bd('∠2')} צמודות. ${bd('∠1 = '+L(pr[0]))}, ${bd('∠2 = '+L(pr[1]))}. מצאי את x.`,m:'x = ?',a:qI(x),alt:[[qI(180),'equation'],[qI(90),'equation']],tag:'equation',fig:ymAngles(Math.min(170,Math.max(10,pr[0]*x)),[L(pr[0]),L(pr[1]),'','']),hint:'צמודות: הסכום 180.',steps:[['צמודות:',`${L(pr[0])} + ${L(pr[1])} = 180`],['',`${pr[0]+pr[1]}x = 180`],['',`x = ${x}`]]}}
+    const x=ri(10,40),k=ri(2,4);let b=ri(0,20);if(k*x-b<15)b=0;const c=(k-1)*x-b;if(c<=0||k*x-b>165)return this.gen();
+    return {he:`${bd('∠1')} ו־${bd('∠3')} קודקודיות. ${bd('∠1 = '+k+'x'+(b?' '+MI+' '+b:''))}, ${bd('∠3 = x + '+c)}. מצאי את x.`,m:'x = ?',a:qI(x),alt:[[qI((180-c+b)/(k+1)),'vertadj']],tag:'equation',fig:ymAngles(k*x-b,[`${k}x${b?MI+b:''}`,'',`x+${c}`,'']),hint:'קודקודיות שוות: כותבים ∠1 = ∠3.',steps:[['קודקודיות שוות:',`${k}x ${b?MI+' '+b:''} = x + ${c}`],['',`${k-1}x = ${c+b}`],['',`x = ${x}`]]}}},
+  {n:'נכון או לא נכון?',gen(){const S=[['זוויות צמודות משלימות זו את זו ל־180°.',1],['זוויות קודקודיות שוות זו לזו.',1],['זוויות קודקודיות משלימות ל־180°.',0],['שתי זוויות צמודות יכולות להיות שתיהן חדות.',0],['אם זווית אחת היא 90°, גם הצמודה לה היא 90°.',1],['זווית קהה והזווית הצמודה לה: הצמודה תמיד חדה.',1],['בחיתוך של שני ישרים יש שני זוגות של זוויות קודקודיות.',1],['שתי זוויות שסכומן 180° הן תמיד צמודות.',0]];const s=pick(S);
+    return mcItem(s[0],'',['נכון','לא נכון'],s[1]?'נכון':'לא נכון',{tag:'concept',steps:[[s[1]?'נכון.':'לא נכון.','']],hint:'חשבי על הציור של שני ישרים נחתכים.'})}}]},
+{id:'s8',ic:'🔺',t:'משולש שווה צלעות',pages:'עמ׳ 293–296',
+ rule:`<p>במשולש <b>שווה צלעות</b> שלוש הצלעות שוות, ושלוש הזוויות שוות: כל אחת <b>60°</b> (כי ${bd('180 : 3 = 60')}).</p><p><b>היקף</b> = 3 × צלע. צלע = היקף : 3.</p><p>הזווית הצמודה לזווית של המשולש היא ${bd('180° − 60° = 120°')}.</p>`.replace(/−/g,MI),
+ ex:[['צלע 7 ס״מ:','היקף = 3 · 7 = 21 ס״מ'],['צלעות x + 3 ו־9 שוות:','x + 3 = 9 ← x = 6']],
+ levels:[
+  {n:'זוויות במשולש שווה צלעות',gen(){const t=ri(0,2);const Qs=[['כמה מעלות כל זווית במשולש שווה צלעות?',60,'180 : 3 = 60'],['כמה מעלות הזווית הצמודה לזווית של משולש שווה צלעות?',120,`180 ${MI} 60 = 120`],['מה סכום הזוויות במשולש שווה צלעות?',180,'60 + 60 + 60 = 180']][t];
+    return {he:Qs[0],m:'? °',a:qI(Qs[1]),alt:[[qI(t===1?60:t===0?180:60),'equi']],tag:'equi',fig:ymTri(t===0?['','','']:['','','']),hint:'שלוש זוויות שוות, וביחד 180°.',steps:[['',Qs[2]]]}}},
+  {n:'היקף וצלע',gen(){const s=ri(3,25);if(Math.random()<.5)return {he:`צלע של משולש שווה צלעות היא ${s} ס״מ. מה ההיקף?`,m:'? ס״מ',a:qI(3*s),alt:[[qI(4*s),'equi'],[qI(2*s),'equi']],tag:'equi',fig:ymTri([s,s,s]),hint:'שלוש צלעות שוות.',steps:[['היקף = 3 × צלע:',`3 · ${s} = ${3*s}`]]};
+    return {he:`ההיקף של משולש שווה צלעות הוא ${3*s} ס״מ. מה אורך הצלע?`,m:'? ס״מ',a:qI(s),alt:[[Q(3*s,4),'equi'],[Q(3*s,2),'equi']],tag:'equi',fig:ymTri(['?','?','?']),hint:'מחלקים את ההיקף ל־3.',steps:[['צלע = היקף : 3:',`${3*s} : 3 = ${s}`]]}}},
+  {n:'צלעות עם x',gen(){const x=ri(2,12),a=ri(1,9),s=x+a,k=ri(2,4),b=k*x-s;const e2=b>0?`${k}x ${MI} ${b}`:b<0?`${k}x + ${-b}`:`${k}x`;const askP=Math.random()<.35;
+    return {he:`במשולש שווה צלעות אורכי הצלעות הם: ${bd('x + '+a)}, ${bd(e2)}, ו־${s}. ${askP?'מה ההיקף?':'מצאי את x.'}`,m:askP?'היקף = ?':'x = ?',a:qI(askP?3*s:x),alt:askP?[[qI(3*x),'equi']]:[[qI(s),'equation']],tag:'equation',fig:ymTri(['x + '+a,e2,String(s)]),hint:'כל הצלעות שוות: x + '+a+' = '+s+'.',steps:[['הצלעות שוות:',`x + ${a} = ${s}`],['',`x = ${x}`],...(askP?[['היקף = 3 × צלע:',`3 · ${s} = ${3*s}`]]:[['בדיקה:',`${k} · ${x} ${b>0?MI+' '+b:b<0?'+ '+(-b):''} = ${s}`]])]}}},
+  {n:'נכון או לא נכון?',gen(){const S=[['במשולש שווה צלעות כל הזוויות שוות ל־60°.',1],['יש משולש שווה צלעות עם זווית של 90°.',0],['במשולש שווה צלעות ההיקף שווה ל־3 פעמים הצלע.',1],['משולש ששלוש זוויותיו 60° הוא משולש שווה צלעות.',1],['במשולש שווה צלעות יש זווית קהה אחת.',0],['כל משולש שווה שוקיים הוא שווה צלעות.',0]];const s=pick(S);
+    return mcItem(s[0],'',['נכון','לא נכון'],s[1]?'נכון':'לא נכון',{tag:'concept',steps:[[s[1]?'נכון.':'לא נכון.','']],hint:'כל הצלעות שוות, כל הזוויות 60°.'})}}]}];
+const ymStage=id=>YM_STAGES.find(s=>s.id===id);
+const YM_PLAN=[{d:'2026-11-14',to:'2026-11-15',lbl:'שבת וראשון',st:['s1','s2','s3']},{d:'2026-11-16',lbl:'שני',st:['s4','s5','s6']},{d:'2026-11-17',lbl:'שלישי',st:['s7','s8','test']},{d:'2026-11-18',lbl:'רביעי בבוקר',st:['smart']}];
+const YM_NEED=4, YM_SET=8, YM_TESTN=14;
+
+/* ---- התקדמות ---- */
+function ymP(){const p=S.progress;if(!p.ym||typeof p.ym!=='object')p.ym={s:{},tests:[]};p.ym.s=p.ym.s||{};p.ym.tests=p.ym.tests||[];return p.ym}
+function ymSt(id){const P=ymP();const st=ymStage(id);const L=st?st.levels.length:0;const x=P.s[id]||(P.s[id]={ok:[],n:[],w:[],tags:{}});for(let k=0;k<L;k++){x.ok[k]=x.ok[k]||0;x.n[k]=x.n[k]||0;x.w[k]=x.w[k]||0}x.tags=x.tags||{};return x}
+const ymLevelNow=id=>{const st=ymStage(id),x=ymSt(id);const k=x.ok.findIndex((v,i)=>i<st.levels.length&&v<YM_NEED);return k<0?-1:k};
+const ymPassed=id=>{const st=ymStage(id),x=ymSt(id);return st.levels.filter((l,k)=>x.ok[k]>=YM_NEED).length};
+const ymDone=id=>ymPassed(id)===ymStage(id).levels.length;
+function ymTopTags(x,n){return Object.entries(x||{}).filter(([k,v])=>v>0&&YM_TAGS[k]).sort((a,b)=>b[1]-a[1]).slice(0,n||3)}
+function ymAllTags(){const t={};Object.values(ymP().s).forEach(x=>Object.entries(x.tags||{}).forEach(([k,v])=>t[k]=(t[k]||0)+v));return t}
+
+/* ---- בניית סבב ---- */
+function ymMake(stageId,lv){const st=ymStage(stageId);const it=st.levels[lv].gen.call(st.levels[lv]);it.stage=stageId;it.lv=lv;return it}
+function ymNext(sc){
+  if(sc.mode==='test'){const pool=[];YM_STAGES.forEach(st=>st.levels.forEach((l,k)=>{if(k>0||st.levels.length<4)pool.push([st.id,k])}));const order=['s1','s2','s2','s3','s3','s4','s4','s5','s5','s6','s6','s7','s7','s8'];const sid=order[sc.n%order.length];const opts=pool.filter(p=>p[0]===sid);const [s,k]=pick(opts);return ymMake(s,k)}
+  if(sc.mode==='smart'){const w=[];YM_STAGES.forEach(st=>{const x=ymSt(st.id);st.levels.forEach((l,k)=>{const wt=1+3*(x.w[k]||0)-Math.min(2,(x.ok[k]||0)/3);if(wt>0)w.push([st.id,k,wt])})});let r=Math.random()*w.reduce((a,b)=>a+b[2],0);for(const [s,k,wt] of w){r-=wt;if(r<=0)return ymMake(s,k)}return ymMake(w[0][0],w[0][1])}
+  const st=ymStage(sc.id);let lv=sc.lv!=null?sc.lv:ymLevelNow(sc.id);if(lv<0)lv=ri(0,st.levels.length-1);sc.curLv=lv;return ymMake(sc.id,lv)}
+function ymStart(id,opt){opt=opt||{};const mode=id==='test'?'test':id==='smart'?'smart':'stage';
+  const sc={name:'ym',id,mode,lv:opt.lv,n:0,total:mode==='test'?YM_TESTN:YM_SET,inp:'',tries:0,state:'ask',right:0,firstOk:0,log:[],tags:{},hinted:false};sc.it=ymNext(sc);S.screen=sc;render();scrollTo({top:0})}
+function ymCheck(){const sc=S.screen,it=sc.it;if(sc.state!=='ask'&&sc.state!=='retry')return;let ok,ans,tag=null;
+  if(it.o){if(sc.pickO==null)return;ok=sc.pickO===it.ai;if(!ok)tag=(it.oTags||{})[it.o[sc.pickO]]||it.tag||'other'}
+  else{ans=qParse(sc.inp);if(!ans){toast('כתבי מספר, שבר (למשל 3/4) או מספר מעורב (למשל 1 2/3)');return}ok=qEq(ans,it.a);
+    if(!ok){for(const [v,t] of (it.alt||[]))if(qEq(v,ans)){tag=t;break}
+      if(!tag&&it.a.n!==0&&qEq(qN(it.a),ans))tag='sign';if(!tag)tag=(Math.sign(ans.n)===Math.sign(it.a.n)||it.a.n===0)?(it.tag||'arith'):'sign'}}
+  sc.tries++;const x=it.stage?ymSt(it.stage):null;
+  if(ok){sfx.ok();sc.state='ok';if(sc.tries===1&&!sc.hinted){sc.firstOk++;if(x&&sc.mode==='stage')x.ok[it.lv]++;else if(x)x.ok[it.lv]=Math.max(x.ok[it.lv],0)}sc.right++;if(x)x.n[it.lv]++;sc.log.push({stage:it.stage,lv:it.lv,ok:sc.tries===1&&!sc.hinted})}
+  else{sfx.bad&&sfx.bad();sc.lastTag=tag;sc.tags[tag]=(sc.tags[tag]||0)+1;if(x){x.tags[tag]=(x.tags[tag]||0)+1;if(sc.tries===1)x.w[it.lv]++}
+    if(sc.tries>=2){sc.state='show';if(x)x.n[it.lv]++;sc.log.push({stage:it.stage,lv:it.lv,ok:false})}else{sc.state='retry';sc.inp='';sc.pickO=null}}
+  render()}
+function ymAdvance(){const sc=S.screen;sc.n++;if(sc.n>=sc.total){ymFinish();return}
+  if(sc.mode==='stage'&&sc.lv==null){const before=sc.curLv;const now=ymLevelNow(sc.id);if(now!==before&&before>=0&&ymSt(sc.id).ok[before]>=YM_NEED){sc.lvUp=(sc.lvUp||[]).concat(before)}}
+  Object.assign(sc,{inp:'',tries:0,state:'ask',pickO:null,hinted:false,lastTag:null,showHint:false});sc.it=ymNext(sc);render();scrollTo({top:0})}
+function ymFinish(){const sc=S.screen;const title=sc.mode==='test'?'מבחן חזרה':sc.mode==='smart'?'תרגול חכם':ymStage(sc.id).t;
+  if(sc.mode==='test'){const by={};sc.log.forEach(l=>{const b=by[l.stage]||(by[l.stage]=[0,0]);b[1]++;if(l.ok)b[0]++});ymP().tests.push({at:Date.now(),c:sc.firstOk,t:sc.total,by});ymP().tests=ymP().tests.slice(-10)}
+  S.session.activities.push({kind:'ymath',island:'ym-'+sc.id,islandName:'חשבון · '+title,title,correct:sc.firstOk,total:sc.total,at:Date.now(),tags:sc.tags});
+  if(tasksOf(S.session)===GOAL_T()){setTimeout(()=>{sfx.win();toast(TW('done')+GOAL_T()+' משימות היום 🎉')},700)}
+  saveSession();saveState('progress');S.screen={name:'ymEnd',id:sc.id,mode:sc.mode,c:sc.firstOk,t:sc.total,tags:sc.tags,log:sc.log};sfx.win();render();scrollTo({top:0})}
+
+/* ---- תצוגה ---- */
+const ymM=s=>`<div class="ymm" dir="ltr">${fx(s)}</div>`;
+function ymStepsHTML(steps){return `<ol class="ymsteps">${(steps||[]).map(([h,m])=>`<li>${h?`<span>${h}</span>`:''}${m?` <span class="ymsm" dir="ltr">${fx(m)}</span>`:''}</li>`).join('')}</ol>`}
+function ymDaysLeft(){const t=new Date(YM_TEST.date+'T08:00:00');const d=Math.ceil((t-new Date(today()+'T08:00:00'))/864e5);return d}
+function ymPlanHTML(){const td=today();const cur=YM_PLAN.findIndex(p=>td>=p.d&&td<=(p.to||p.d));
+  const nm=id=>id==='test'?'📝 מבחן חזרה':id==='smart'?'🧠 תרגול חכם':ymStage(id).ic+' '+ymStage(id).t;
+  const doneOf=id=>id==='test'?ymP().tests.length>0:id==='smart'?false:ymDone(id);
+  return `<section class="card ymplan"><h3>🗺️ התוכנית עד המבחן · ${YM_TEST.label}</h3>${YM_PLAN.map((p,k)=>`<div class="ymday ${k===cur?'now':k<cur?'past':''}"><b>${k===cur?'היום · ':''}${p.lbl}</b><span>${p.st.map(id=>`<button class="ymchip ${doneOf(id)?'done':''}" data-act="${id==='test'||id==='smart'?'ymGo':'ymStage'}" data-id="${id}">${doneOf(id)?'✓ ':''}${nm(id)}</button>`).join('')}</span></div>`).join('')}</section>`}
+function ymRing(id){const st=ymStage(id),L=st.levels.length,p=ymPassed(id),x=ymSt(id);const part=st.levels.reduce((a,l,k)=>a+Math.min(1,x.ok[k]/YM_NEED),0)/L;const C=2*Math.PI*18;
+  return `<svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="18" fill="none" stroke="#dde6ec" stroke-width="5"/><circle cx="23" cy="23" r="18" fill="none" stroke="${p===L?'#2f9468':'#1f8fb3'}" stroke-width="5" stroke-dasharray="${C*part} ${C}" transform="rotate(-90 23 23)" stroke-linecap="round"/><text x="23" y="28" text-anchor="middle" font-size="14">${st.ic}</text></svg>`}
+function viewYMMap(){const dl=ymDaysLeft();const t=tasksOf(S.session),G=GOAL_T();const nextId=(YM_STAGES.find(s=>!ymDone(s.id))||{}).id;const tg=ymTopTags(ymAllTags(),3);
+  return `<section class="card ymhead"><div><span class="eyebrow">חשבון · כיתה ז׳</span><h2>הדרך למבחן</h2><p>${dl>1?`עוד ${dl} ימים למבחן`:dl===1?'המבחן מחר! 💪':dl===0?'המבחן היום, בהצלחה! 🍀':'המבחן עבר'} · היום: ${Math.min(t,G)} מתוך ${G} משימות</p></div><div class="ymgoal">${t>=G?'⭐':''}</div></section>
+  ${ymPlanHTML()}
+  ${tg.length?`<section class="card ymwatch"><h3>👀 לשים לב</h3>${tg.map(([k,v])=>`<p><b>${YM_TAGS[k].t}</b> (${v}): ${YM_TAGS[k].tip}</p>`).join('')}<button class="btn small brass" data-act="ymGo" data-id="smart">🧠 תרגול חכם על מה שקשה</button></section>`:''}
+  <section class="ympath">${YM_STAGES.map((s,k)=>{const L=s.levels.length,p=ymPassed(s.id);return `<button class="ystage ${ymDone(s.id)?'done':''} ${s.id===nextId?'next':''}" data-act="ymStage" data-id="${s.id}">${ymRing(s.id)}<span class="yst"><small>שלב ${k+1} · ${s.pages}</small><b>${s.t}</b><span>${p===L?'✓ כל הרמות עברו':s.id===nextId?`עכשיו: רמה ${ymLevelNow(s.id)+1} מתוך ${L}`:`${p} מתוך ${L} רמות`}</span></span></button>`}).join('')}
+  <button class="ystage test" data-act="ymGo" data-id="test"><span class="ymbig">📝</span><span class="yst"><small>שלב 9</small><b>מבחן חזרה מעורב</b><span>${YM_TESTN} תרגילים מכל הנושאים${ymP().tests.length?` · אחרון: ${ymP().tests.slice(-1)[0].c}/${ymP().tests.slice(-1)[0].t}`:''}</span></span></button></section>`}
+function viewYMStage(){const id=S.screen.id;const st=ymStage(id);if(!st){S.screen={name:'map'};return viewYMMap()}const x=ymSt(id),now=ymLevelNow(id);const tg=ymTopTags(x.tags,3);
+  return `<button class="back" data-act="home">${I.back} חזרה למסלול</button>
+  <div class="ihead"><span class="eyebrow">${st.pages} בספר</span><h2>${st.ic} ${st.t}</h2></div>
+  <section class="card"><h3>📘 מה צריך לדעת</h3><div class="ymrule">${st.rule}</div><details><summary><b>דוגמה פתורה</b></summary>${ymStepsHTML(st.ex)}</details></section>
+  <section class="card"><h3>🪜 הרמות</h3><p class="sub">כל רמה עוברים אחרי ${YM_NEED} תשובות נכונות בניסיון הראשון. אפשר ללחוץ על רמה כדי לתרגל רק אותה.</p>
+   ${st.levels.map((l,k)=>`<button class="ylv ${x.ok[k]>=YM_NEED?'done':k===now?'now':''}" data-act="ymLv" data-id="${id}" data-lv="${k}"><span>${x.ok[k]>=YM_NEED?'✅':k===now?'👉':'⚪'} רמה ${k+1}: ${l.n}</span><span class="ydots">${[0,1,2,3].map(j=>`<i class="${j<Math.min(x.ok[k],YM_NEED)?'on':''}"></i>`).join('')}</span></button>`).join('')}
+   <button class="btn brass" data-act="ymGo" data-id="${id}">${now<0?'🔁 עוד סבב חזרה':'✏️ להתחיל לתרגל'} (${YM_SET} תרגילים)</button></section>
+  ${tg.length?`<section class="card ymwatch"><h3>👀 איפה היו טעויות בשלב הזה</h3>${tg.map(([k,v])=>`<p><b>${YM_TAGS[k].t}</b> (${v}): ${YM_TAGS[k].tip}</p>`).join('')}</section>`:''}`}
+function ymKeysHTML(){const k=['7','8','9','4','5','6','1','2','3',MI,'0','/','.','␣','⌫'];return `<div class="ymkeys" dir="ltr">${k.map(c=>`<button class="ymk" data-act="ymKey" data-k="${c}">${c==='␣'?'רווח':c}</button>`).join('')}</div>`}
+function viewYM(){const sc=S.screen,it=sc.it;const title=sc.mode==='test'?'📝 מבחן חזרה':sc.mode==='smart'?'🧠 תרגול חכם':ymStage(sc.id).ic+' '+ymStage(sc.id).t;const lvName=it.stage?ymStage(it.stage).levels[it.lv].n:'';
+  const done=sc.state==='ok'||sc.state==='show';
+  const fb=sc.state==='ok'?`<div class="fb ok">${sc.tries===1?pick(['נכון! 🎯','מעולה! ⭐','בדיוק! 💪','יפה מאוד!']):'נכון, הפעם זה יצא! 👏'}</div>`
+    :sc.state==='retry'?`<div class="fb bad">עוד לא. <b>${YM_TAGS[sc.lastTag]?YM_TAGS[sc.lastTag].t:''}</b>: ${YM_TAGS[sc.lastTag]?YM_TAGS[sc.lastTag].tip:''}<br><span class="sub">💡 רמז: ${it.hint||'נסי שוב, לאט.'}</span></div>`
+    :sc.state==='show'?`<div class="fb bad">התשובה: <b dir="ltr">${it.o?esc(it.o[it.ai]):fx(qt(it.a,it.dec))}</b>${YM_TAGS[sc.lastTag]?`<br><span class="sub">${YM_TAGS[sc.lastTag].t}: ${YM_TAGS[sc.lastTag].tip}</span>`:''}</div>`:'';
+  return `<button class="back" data-act="ymBack">${I.back} ${sc.mode==='stage'?'חזרה לשלב':'חזרה למסלול'}</button>
+  <div class="ymtop"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${title}</span><span style="flex:none" dir="ltr">${sc.n+1} / ${sc.total}</span></div><div class="bar"><i style="width:${sc.n/sc.total*100}%"></i></div>
+  <section class="card ymcard">${lvName?`<span class="eyebrow">${sc.mode==='stage'?'רמה '+(it.lv+1)+': ':''}${lvName}</span>`:''}
+   <div class="ymhe">${it.he||''}</div>${it.fig||''}${it.m?ymM(it.m):''}
+   ${it.o?`<div class="ymopts">${it.o.map((o,k)=>`<button class="opt ${done&&k===it.ai?'ok':''} ${sc.pickO===k?(done&&k!==it.ai?'bad':'sel'):''}" data-act="ymPick" data-k="${k}" ${done?'disabled':''}><span dir="ltr">${fx(o)}</span></button>`).join('')}</div>`
+     :`<div class="ymans ${sc.state==='retry'?'bad':done?'okb':''}" dir="ltr">${done?fx(qt(it.a,it.dec)):(sc.inp?fx(sc.inp.replace(/-/g,MI)):'<span class="ph">התשובה שלך</span>')}</div>${done?'':ymKeysHTML()}`}
+   ${fb}
+   ${sc.state==='ask'&&sc.showHint?`<p class="sub">💡 ${it.hint||''}</p>`:''}
+   ${done&&(sc.state==='show'||sc.tries>1||sc.mode==='test'&&false)?`<div class="ymsol"><b>הפתרון צעד אחר צעד</b>${ymStepsHTML(it.steps)}</div>`:done?`<details class="ymsol"><summary>איך פותרים?</summary>${ymStepsHTML(it.steps)}</details>`:''}
+   <div class="btns">${done?`<button class="btn brass" data-act="ymNext">${sc.n+1>=sc.total?'לסיכום 🏁':'הבא ←'}</button>`:`<button class="btn brass" data-act="ymCheck">בדיקה ✓</button>${sc.state==='ask'&&!sc.showHint&&it.hint?'<button class="btn ghost" data-act="ymHint">💡 רמז</button>':''}`}</div></section>`}
+function viewYMEnd(){const r=S.screen;const pct=Math.round(r.c/r.t*100);const tg=Object.entries(r.tags||{}).sort((a,b)=>b[1]-a[1]);const st=r.mode==='stage'?ymStage(r.id):null;
+  let by='';if(r.mode==='test'){const b={};r.log.forEach(l=>{const x=b[l.stage]||(b[l.stage]=[0,0]);x[1]++;if(l.ok)x[0]++});by=`<div class="ymby">${Object.entries(b).map(([s,[c,t]])=>`<p>${ymStage(s).ic} ${ymStage(s).t}: <b>${c}/${t}</b> ${c===t?'✅':'← כדאי לחזור'}</p>`).join('')}</div>`}
+  return `<section class="card ymend"><div class="confetti">${pct>=85?'🏆':pct>=60?'⭐':'💪'}</div><h2>${r.c} מתוך ${r.t} בניסיון הראשון</h2><p>${pct>=85?'מצוין!':pct>=60?'יפה! עוד קצת תרגול וזה שלך.':'כל טעות עכשיו היא טעות שלא תהיה במבחן.'}</p>
+   ${st?`<p>בשלב הזה עברת ${ymPassed(st.id)} מתוך ${st.levels.length} רמות.</p>`:''}${by}
+   ${tg.length?`<div class="ymwatch"><h3>על מה לשים לב</h3>${tg.map(([k,v])=>`<p><b>${YM_TAGS[k].t}</b> (${v}): ${YM_TAGS[k].tip}</p>`).join('')}</div>`:'<p>בלי טעויות בכלל! 🎉</p>'}
+   <div class="btns"><button class="btn brass" data-act="ymGo" data-id="${r.id}">עוד סבב</button><button class="btn ghost" data-act="home">חזרה למסלול</button></div></section>`}
+function ymParentHTML(){const P=S.progress&&S.progress.ym;if(!P||!Object.keys(P.s||{}).length)return '';const all=ymAllTags();const tg=ymTopTags(all,4);
+  return `<section class="card"><h3>🔢 חשבון: הדרך למבחן (${YM_TEST.label})</h3>${YM_STAGES.map(s=>{const x=P.s[s.id];if(!x)return `<p class="sub">${s.ic} ${s.t}: עוד לא התחילה</p>`;const p=s.levels.filter((l,k)=>(x.ok[k]||0)>=YM_NEED).length;const t=ymTopTags(x.tags,2);
+   return `<p>${s.ic} <b>${s.t}</b>: ${p}/${s.levels.length} רמות${t.length?` · טעויות: ${t.map(([k,v])=>YM_TAGS[k].t+' ('+v+')').join(', ')}`:''}</p>`}).join('')}
+   ${P.tests&&P.tests.length?`<p>📝 מבחני חזרה: ${P.tests.map(t=>t.c+'/'+t.t).join(', ')}</p>`:''}${tg.length?`<p class="sub">הכי הרבה טעויות: ${tg.map(([k,v])=>YM_TAGS[k].t+' ('+v+')').join(', ')}</p>`:''}</section>`}
+addEventListener('keydown',e=>{if(!isYM()||!S.screen||S.screen.name!=='ym'||S.tab!=='map')return;const sc=S.screen;if(e.target&&/input|textarea/i.test(e.target.tagName))return;
+  if(sc.state==='ok'||sc.state==='show'){if(e.key==='Enter'){e.preventDefault();ymAdvance()}return}
+  if(sc.it.o){if(e.key==='Enter'){e.preventDefault();ymCheck()}return}
+  if(/^[0-9]$/.test(e.key))sc.inp+=e.key;else if(e.key==='-')sc.inp+='-';else if(e.key==='/')sc.inp+='/';else if(e.key==='.')sc.inp+='.';else if(e.key===' '){e.preventDefault();sc.inp+=' '}
+  else if(e.key==='Backspace')sc.inp=sc.inp.slice(0,-1);else if(e.key==='Enter'){e.preventDefault();ymCheck();return}else return;render()});
+
 /* ============ ARABIC WORLD: letters, numbers, desert fleet ============ */
 // [letter, Hebrew equivalent, Hebrew name, Arabic name, connects to next letter]
 const AR_LETTERS=[['ا','א','אַלִף','ألف',0],['ب','ב','בָּא','باء',1],['ت','ת','תָּא','تاء',1],['ث','ת׳','תַ׳א','ثاء',1],['ج','ג׳','ג׳ִים','جيم',1],['ح','ח','חָא','حاء',1],['خ','ח׳','ח׳ָא','خاء',1],
@@ -2243,7 +2583,7 @@ function mallModalHTML(){const M=S.mallModal;if(!M)return '';const s=mallState()
   if(M.tab==='closet'){const b=s.m.buys;return wrap(head+tabs+(b.length?`<div class="closet">${b.map(x=>{const it=MALL_ITEMS.find(y=>y.id===x.id);const st=it&&MALL_STORES.find(z=>z.id===it.st);return it?`<div>${it.e}<small>${esc(it.he)}</small><small style="direction:ltr">${esc(st.n)}</small></div>`:''}).join('')}</div><p style="text-align:center">${b.length} פריטים · שווי ₪${b.reduce((n,x)=>n+(x.cash||0)+(x.cp||0),0)}</p>`:'<p>הארון עוד ריק. בואי נקנה משהו 🛍️</p>')+close)}
   return wrap(head+tabs+`<div class="stores">${MALL_STORES.map(st=>{const c=s.cps.filter(x=>x.st===st.id).length;return `<button class="store" style="--sc:${st.c}" data-act="mallStore" data-id="${st.id}"><div class="aw"></div><span class="sn" style="color:${st.c}">${esc(st.n)}</span><span class="sx">${c?`🎟️ קופון ₪${COUPON}`:'4 פריטים'}</span></button>`}).join('')}</div>`+close)}
 function isGreat(i){const st=stationsOf(i).filter(x=>x.scored);if(!st.length)return false;const b=S.progress.best[i.id]||{};if(st.some(x=>b[x.k]==null))return false;return st.reduce((n,x)=>n+b[x.k],0)/st.length>=85}
-const fleetOn=()=>(THEME()==='sea'||THEME()==='desert')&&!!S.profile;
+const fleetOn=()=>(THEME()==='sea'||THEME()==='desert')&&!!S.profile&&WORLD!=='math';
 function fleetState(){const F=FLEETS();const q=allIslands().filter(i=>i.kind!=='daily').filter(isGreat).length;const lv=Math.min(F.length-1,Math.floor(q/5));return {q,lv,next:lv>=F.length-1?0:5-(q%5),inStep:q%5}}
 function fleetCardHTML(){if(!fleetOn())return '';const f=fleetState();const F=FLEETS();const b=F[f.lv];
   return `<button class="fleetcard" data-act="fleet">${vehSVG(f.lv,72)}<span class="ft"><b>${esc(fullName(b))} <small style="direction:ltr;display:inline-block">${esc(b.en)}</small></b><span>${f.lv>=F.length-1?(THEME()==='desert'?'הגעת לרכב המטורף ביותר! 🏆':'הגעת לספינה הגדולה ביותר! 🏆'):`עוד <b>${f.next}</b> ${f.next===1?(THEME()==='desert'?'נווה מדבר מצוין':'אי מצוין'):(THEME()==='desert'?'נווי מדבר מצוינים':'איים מצוינים')} לשדרוג`}</span><span class="fdots">${[0,1,2,3,4].map(k=>`<i class="${k<f.inStep?'on':''}"></i>`).join('')}</span></span><span class="flv">${f.lv+1}/20</span></button>`}
@@ -2276,11 +2616,13 @@ function inProgress(sc){if(!sc||S.tab!=='map')return false;switch(sc.name){
   case 'read2':return sc.idx>0||!!sc.res;
   case 'readtext':return sc.res.some(Boolean)||!!sc.listening;
   case 'unseen':return sc.answers.some(x=>x!=null);
+  case 'ym':return (sc.n>0||sc.tries>0||!!sc.inp)&&sc.n<sc.total;
   case 'readaloud':return sc.idx>0;}return false}
 function navTo(t,force){
   if(!force&&inProgress(S.screen)){S.confirm=t;render();return}
   S.confirm=null;stopAll();
   if(t.act==='home'){S.screen={name:'map'};S.tab='map'}
+  else if(t.act==='ymStage'||t.act==='island'&&isYM()){S.tab='map';S.screen=t.act==='ymStage'&&t.id&&ymStage(t.id)?{name:'ymStage',id:t.id}:{name:'map'}}
   else if(t.act==='island'){const id=t.id||S.screen.id;S.tab='map';S.screen=id?{name:'island',id}:{name:'map'};markSeen(id)}
   render();scrollTo({top:0});
 }
@@ -2290,6 +2632,8 @@ function goBack(){
   if(S.relink&&KEY){S.relink=false;render();return true}
   if(S.tab!=='map'){stopAll();S.tab='map';render();scrollTo({top:0});return true}
   const sc=S.screen;if(!sc||sc.name==='map')return false;
+  if(sc.name==='ym'){navTo(sc.mode==='stage'?{act:'ymStage',id:sc.id}:{act:'home'});return true}
+  if(sc.name==='ymStage'||sc.name==='ymEnd'){navTo({act:'home'});return true}
   if(sc.name==='island')navTo({act:'home'});else navTo({act:'island',id:sc.id});
   return true;
 }
