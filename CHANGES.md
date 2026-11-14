@@ -1,5 +1,6 @@
 # Changes
 
+- v38 (2026-11-14): parent can try Yuval's math world (test banner, intro and boat pop-ups shown, nothing saved).
 - v37 (2026-11-14): Yuval's math world gets a boat path: starts on a raft, every conquered island upgrades the boat (10 vessels), super yacht only after all 8 islands + the mixed test at 80%+; intro story, upgrade pop-ups, fleet view, boat card on the map (`progress.ym.boat`, `progress.ym.intro`).
 - v36 (2026-11-14): Yuval's math path is drawn as an island map (each stage an island to conquer, boat at the current one, level dots, flag when done); day plan folded below.
 - v35 (2026-11-14): Yuval gets a math world: a path to the 18.11 test (8 stages + mixed test + smart review), each stage one practice card with levels, keypad answers, hints, full solutions and mistake-type diagnosis; plan by day; parent card with progress and mistake types.

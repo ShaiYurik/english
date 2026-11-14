@@ -484,7 +484,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='37';
+const APP_VERSION='38';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -989,7 +989,7 @@ function render(){
   }
   if(S.confirm&&S.tab==='map')v.insertAdjacentHTML('beforeend',confirmHTML());
   if(S.ref&&LANG()==='ar')v.insertAdjacentHTML('beforeend',refHTML());
-  if(S.tab==='map'&&!S.confirm&&isYM()&&(S.screen.name==='map'||S.screen.name==='ymEnd')){ymCheckBoat();if(S.ymModal)v.insertAdjacentHTML('beforeend',ymModalHTML())}
+  if(S.tab==='map'&&!S.confirm&&isYM()&&(S.screen.name==='map'||S.screen.name==='ymEnd')){ymCheckBoat();if(!S.ymModal)ymParentBoat();if(S.ymModal)v.insertAdjacentHTML('beforeend',ymModalHTML())}
   if(S.tab==='map'&&!S.confirm&&(S.screen.name==='map'||S.screen.name==='result')){checkFleet();if(S.boatModal)v.insertAdjacentHTML('beforeend',boatModalHTML());checkMall();if(S.mallModal&&!S.boatModal)v.insertAdjacentHTML('beforeend',mallModalHTML())}
   updateMeter();refreshRecUI();setSync();armBack();
   if(S.tab==='map'&&S.screen.name==='map'){const c=document.querySelector('.isl.cur');if(c&&!S._scrolledMap){S._scrolledMap=true;c.scrollIntoView({block:'center'})}}else S._scrolledMap=false;
@@ -2366,6 +2366,7 @@ function ymCheck(){const sc=S.screen,it=sc.it;if(sc.state!=='ask'&&sc.state!=='r
 function ymAdvance(){const sc=S.screen;sc.n++;if(sc.n>=sc.total){ymFinish();return}
   if(sc.mode==='stage'&&sc.lv==null){const before=sc.curLv;const now=ymLevelNow(sc.id);if(now!==before&&before>=0&&ymSt(sc.id).ok[before]>=YM_NEED){sc.lvUp=(sc.lvUp||[]).concat(before)}}
   Object.assign(sc,{inp:'',tries:0,state:'ask',pickO:null,hinted:false,lastTag:null,showHint:false});sc.it=ymNext(sc);render();scrollTo({top:0})}
+function ymParentBoat(){if(!isParent())return;const lv=ymBoatLv();S._ymPrev=S._ymPrev||{};if(S._ymPrev.boat==null)S._ymPrev.boat=lv;else if(lv>S._ymPrev.boat){const won=YM_STAGES.filter(s=>ymDone(s.id));S.ymModal={kind:'up',lv,isl:lv===YM_FLEET().length-1?'מבחן החזרה':(won.length?YM_SHORT[won[won.length-1].id]:'')};S._ymPrev.boat=lv}}
 function ymFinish(){const sc=S.screen;const title=sc.mode==='test'?'מבחן חזרה':sc.mode==='smart'?'תרגול חכם':ymStage(sc.id).t;
   if(sc.mode==='test'){const by={};sc.log.forEach(l=>{const b=by[l.stage]||(by[l.stage]=[0,0]);b[1]++;if(l.ok)b[0]++});ymP().tests.push({at:Date.now(),c:sc.firstOk,t:sc.total,by});ymP().tests=ymP().tests.slice(-10)}
   S.session.activities.push({kind:'ymath',island:'ym-'+sc.id,islandName:'חשבון · '+title,title,correct:sc.firstOk,total:sc.total,at:Date.now(),tags:sc.tags});
@@ -2406,7 +2407,8 @@ const YM_FLEET=()=>[FLEET[0],FLEET[1],FLEET[2],FLEET[4],FLEET[7],FLEET[8],FLEET[
   {n:'יאכטת־על מפוארת',en:'Super Yacht',t:'boat',w:110,c:'#ffffff',decks:3,port:8,pool:1,story:'שלוש קומות, בריכה על הסיפון ונוף לכל האיים שכבשת. את מוכנה למבחן!'}];
 const YM_FUN=['🎉 יש! עוד אי נכבש!','🌊 הגלים מוחאים לך כפיים!','🏝️ האי הזה שלך!','💪 קפטנית אמיתית!','⭐ איזו התקדמות!','🚀 את טסה על המים!','🦈 אפילו הכרישים מתרשמים!','🏆 עוד צעד אחד ליאכטה!'];
 function ymBoatLv(){const d=YM_STAGES.filter(s=>ymDone(s.id)).length;const t=ymP().tests.some(x=>x.c/x.t>=.8);return d+(d===YM_STAGES.length&&t?1:0)}
-function ymCheckBoat(){if(isParent()||!S.loaded)return;const P=ymP();const lv=ymBoatLv();
+function ymCheckBoat(){if(!S.loaded)return;const P=ymP();const lv=ymBoatLv();
+  if(isParent()){S._ymPrev=S._ymPrev||{};if(!S._ymPrev.intro&&!S.ymModal){S._ymPrev.intro=1;S.ymModal={kind:'intro'}}return}
   if(!P.intro&&!S.ymModal){S.ymModal={kind:'intro'};return}
   if((P.boat||0)<lv&&!S.ymModal){const won=YM_STAGES.filter(s=>ymDone(s.id));S.ymModal={kind:'up',lv,from:P.boat||0,isl:lv===YM_FLEET().length-1?'מבחן החזרה':(won.length?YM_SHORT[won[won.length-1].id]:'')};P.boat=lv;saveState('progress');setTimeout(()=>{sfx.horn();setTimeout(()=>sfx.win(),700)},200)}}
 function ymModalHTML(){const M=S.ymModal;if(!M)return '';const F=YM_FLEET(),last=F.length-1;const wrap=x=>`<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox">${x}</div></div>`;
@@ -2426,7 +2428,7 @@ function ymBoatCardHTML(){const F=YM_FLEET(),lv=ymBoatLv(),last=F.length-1,b=F[l
   const nxt=lv>=last?'הגעת ליאכטת־העל! 🏆':d<YM_STAGES.length?`האי הבא שתכבשי ← <b>${esc(F[lv+1].n)}</b>`:'עברי את מבחן החזרה (80%+) ← <b>יאכטת־על מפוארת</b> 🛥️';
   return `<button class="fleetcard" data-act="ymFleet">${boatSVG(b,72)}<span class="ft"><b>${esc(b.n)}</b><span>${nxt}</span><span class="fdots">${YM_STAGES.map((s,k)=>`<i class="${k<d?'on':''}"></i>`).join('')}</span></span><span class="flv">${lv+1}/${F.length}</span></button>`}
 function viewYMMap(){const dl=ymDaysLeft();const t=tasksOf(S.session),G=GOAL_T();const tg=ymTopTags(ymAllTags(),3);const won=YM_STAGES.filter(s=>ymDone(s.id)).length;
-  return `<section class="card ymhead"><div><span class="eyebrow">חשבון · כיתה ז׳</span><h2>איי החשבון</h2><p>${dl>1?`עוד ${dl} ימים למבחן`:dl===1?'המבחן מחר! 💪':dl===0?'המבחן היום, בהצלחה! 🍀':'המבחן עבר'} · נכבשו ${won} מתוך ${YM_STAGES.length} איים · היום: ${Math.min(t,G)}/${G} משימות</p></div><div class="ymgoal">${t>=G?'⭐':'🏝️'}</div></section>
+  return `${isParent()?'<p class="maphint" style="background:#fff3c4;color:#5a4300;border-radius:12px;padding:8px 12px">👀 מצב בדיקה של הורה: אפשר לתרגל, שום דבר לא נשמר אצל יובל.</p>':''}<section class="card ymhead"><div><span class="eyebrow">חשבון · כיתה ז׳</span><h2>איי החשבון</h2><p>${dl>1?`עוד ${dl} ימים למבחן`:dl===1?'המבחן מחר! 💪':dl===0?'המבחן היום, בהצלחה! 🍀':'המבחן עבר'} · נכבשו ${won} מתוך ${YM_STAGES.length} איים · היום: ${Math.min(t,G)}/${G} משימות</p></div><div class="ymgoal">${t>=G?'⭐':'🏝️'}</div></section>
   ${ymBoatCardHTML()}${ymIslandsSVG()}
   ${tg.length?`<section class="card ymwatch"><h3>👀 לשים לב</h3>${tg.map(([k,v])=>`<p><b>${YM_TAGS[k].t}</b> (${v}): ${YM_TAGS[k].tip}</p>`).join('')}<button class="btn small brass" data-act="ymGo" data-id="smart">🧠 תרגול חכם על מה שקשה</button></section>`:''}
   <details class="card ymplanbox"><summary><b>🗺️ התוכנית עד המבחן · ${YM_TEST.label}</b></summary>${ymPlanHTML().replace(/^<section class="card ymplan"><h3>[^<]*<\/h3>/,'').replace(/<\/section>$/,'')}</details>`}
