@@ -1,5 +1,6 @@
 # Changes
 
+- v39 (2026-11-14): Yuval's math practice celebrates success: varied praise, streak messages (3/5/8 in a row), confetti bursts, level-complete and island-conquered banners, end screen with stars, record streak and next-boat hint.
 - v38 (2026-11-14): parent can try Yuval's math world (test banner, intro and boat pop-ups shown, nothing saved).
 - v37 (2026-11-14): Yuval's math world gets a boat path: starts on a raft, every conquered island upgrades the boat (10 vessels), super yacht only after all 8 islands + the mixed test at 80%+; intro story, upgrade pop-ups, fleet view, boat card on the map (`progress.ym.boat`, `progress.ym.intro`).
 - v36 (2026-11-14): Yuval's math path is drawn as an island map (each stage an island to conquer, boat at the current one, level dots, flag when done); day plan folded below.

@@ -346,6 +346,14 @@ textarea.paste{width:100%;min-height:80px;border-radius:12px;border:1px solid va
 .rbar i.top{background:var(--kelp)}.rbar i.good{background:var(--brass)}.rbar i.low{background:var(--signal)}
 .rl{font-size:12px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
 .rl.top{color:var(--kelp)}.rl.good{color:#9a6f14}.rl.low{color:var(--signal)}.rl.none{color:var(--ink2)}
+.ympraise{position:relative;overflow:visible;display:grid;gap:4px;justify-items:center;text-align:center;font-size:20px;font-weight:800}
+.ympop{display:inline-block;animation:ympop .55s cubic-bezier(.2,1.7,.4,1) both}.ymstreak{font-size:17px;color:#b4540a;animation:ympop .6s .15s cubic-bezier(.2,1.7,.4,1) both}.ymstreak.sm{font-size:14px;font-weight:700}
+@keyframes ympop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+.ymburst{position:absolute;inset:-10px 0 auto 0;height:0;pointer-events:none;z-index:2}.ymburst i{position:absolute;top:0;border-radius:2px;opacity:0;animation:ymfall 1.3s ease-out forwards}.ymburst.big i{animation-duration:1.9s}
+@keyframes ymfall{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),140px) rotate(var(--r))}}.ymburst.big{inset:0 0 auto 0}
+.ymlvup{background:linear-gradient(135deg,#fff4cf,#ffe39a);border:2px solid #f2b94a;border-radius:14px;padding:10px 12px;text-align:center;font-size:17px;animation:ympop .6s .2s both}.ymlvup.isl{background:linear-gradient(135deg,#d9f5e5,#a9e6c4);border-color:#2f9468}
+.ymend{position:relative;overflow:hidden}.ymstars{display:flex;gap:6px;justify-content:center}.ymstars span{font-size:42px;color:#d6dde3;line-height:1}.ymstars span.on{color:#f2b94a;animation:ympop .5s both;text-shadow:0 2px 0 #c98a1a}
+.ymscore{font-size:18px}.ymnext{background:#e6f3f9;border-radius:12px;padding:10px 12px;font-size:16px}
 .ymfleet{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-items:flex-end}.ymfleet span{width:50px;height:40px;display:flex;align-items:flex-end;justify-content:center;border-radius:10px;background:#eef3f7;opacity:.55}.ymfleet span.got{opacity:1;background:#dff1fa}.ymfleet span.gold{width:68px;height:52px;outline:2px dashed #f2b94a}.ymfleet span b{align-self:center;color:#9fb3c2}.ymfleet svg{max-width:100%;height:auto}
 .ymfrow{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:12px;background:#f3f6f8;text-align:start;opacity:.6}.ymfrow.got{opacity:1;background:#e3f3fa}.ymfrow>span:first-child{width:70px;display:flex;justify-content:center;font-size:24px}.ymfrow small{display:block;color:var(--ink2)}
 .ymhead{flex-direction:row;align-items:center;justify-content:space-between}.ymhead h2{margin:2px 0}.ymhead p{margin:0;color:var(--ink2)}.ymgoal{font-size:34px}
@@ -484,7 +492,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='38';
+const APP_VERSION='39';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -2359,8 +2367,10 @@ function ymCheck(){const sc=S.screen,it=sc.it;if(sc.state!=='ask'&&sc.state!=='r
     if(!ok){for(const [v,t] of (it.alt||[]))if(qEq(v,ans)){tag=t;break}
       if(!tag&&it.a.n!==0&&qEq(qN(it.a),ans))tag='sign';if(!tag)tag=(Math.sign(ans.n)===Math.sign(it.a.n)||it.a.n===0)?(it.tag||'arith'):'sign'}}
   sc.tries++;const x=it.stage?ymSt(it.stage):null;
-  if(ok){sfx.ok();sc.state='ok';if(sc.tries===1&&!sc.hinted){sc.firstOk++;if(x&&sc.mode==='stage')x.ok[it.lv]++;else if(x)x.ok[it.lv]=Math.max(x.ok[it.lv],0)}sc.right++;if(x)x.n[it.lv]++;sc.log.push({stage:it.stage,lv:it.lv,ok:sc.tries===1&&!sc.hinted})}
-  else{sfx.bad&&sfx.bad();sc.lastTag=tag;sc.tags[tag]=(sc.tags[tag]||0)+1;if(x){x.tags[tag]=(x.tags[tag]||0)+1;if(sc.tries===1)x.w[it.lv]++}
+  sc.cele=null;
+  if(ok){sfx.ok();sc.state='ok';const first=sc.tries===1&&!sc.hinted;sc.streak=first?(sc.streak||0)+1:0;sc.best=Math.max(sc.best||0,sc.streak);if(first&&x&&sc.mode==='stage'&&x.ok[it.lv]===YM_NEED-1){sc.cele={lv:it.lv,isl:ymPassed(it.stage)+1===ymStage(it.stage).levels.length}}
+    if(sc.tries===1&&!sc.hinted){sc.firstOk++;if(x&&sc.mode==='stage')x.ok[it.lv]++;else if(x)x.ok[it.lv]=Math.max(x.ok[it.lv],0)}sc.right++;if(x)x.n[it.lv]++;sc.log.push({stage:it.stage,lv:it.lv,ok:sc.tries===1&&!sc.hinted})}
+  else{sfx.bad&&sfx.bad();sc.streak=0;sc.lastTag=tag;sc.tags[tag]=(sc.tags[tag]||0)+1;if(x){x.tags[tag]=(x.tags[tag]||0)+1;if(sc.tries===1)x.w[it.lv]++}
     if(sc.tries>=2){sc.state='show';if(x)x.n[it.lv]++;sc.log.push({stage:it.stage,lv:it.lv,ok:false})}else{sc.state='retry';sc.inp='';sc.pickO=null}}
   render()}
 function ymAdvance(){const sc=S.screen;sc.n++;if(sc.n>=sc.total){ymFinish();return}
@@ -2371,7 +2381,7 @@ function ymFinish(){const sc=S.screen;const title=sc.mode==='test'?'מבחן ח�
   if(sc.mode==='test'){const by={};sc.log.forEach(l=>{const b=by[l.stage]||(by[l.stage]=[0,0]);b[1]++;if(l.ok)b[0]++});ymP().tests.push({at:Date.now(),c:sc.firstOk,t:sc.total,by});ymP().tests=ymP().tests.slice(-10)}
   S.session.activities.push({kind:'ymath',island:'ym-'+sc.id,islandName:'חשבון · '+title,title,correct:sc.firstOk,total:sc.total,at:Date.now(),tags:sc.tags});
   if(tasksOf(S.session)===GOAL_T()){setTimeout(()=>{sfx.win();toast(TW('done')+GOAL_T()+' משימות היום 🎉')},700)}
-  saveSession();saveState('progress');S.screen={name:'ymEnd',id:sc.id,mode:sc.mode,c:sc.firstOk,t:sc.total,tags:sc.tags,log:sc.log};sfx.win();render();scrollTo({top:0})}
+  saveSession();saveState('progress');S.screen={name:'ymEnd',id:sc.id,mode:sc.mode,c:sc.firstOk,t:sc.total,tags:sc.tags,log:sc.log,best:sc.best||0};sfx.win();render();scrollTo({top:0})}
 
 /* ---- תצוגה ---- */
 const ymM=s=>`<div class="ymm" dir="ltr">${fx(s)}</div>`;
@@ -2443,7 +2453,7 @@ function viewYMStage(){const id=S.screen.id;const st=ymStage(id);if(!st){S.scree
 function ymKeysHTML(){const k=['7','8','9','4','5','6','1','2','3',MI,'0','/','.','␣','⌫'];return `<div class="ymkeys" dir="ltr">${k.map(c=>`<button class="ymk" data-act="ymKey" data-k="${c}">${c==='␣'?'רווח':c}</button>`).join('')}</div>`}
 function viewYM(){const sc=S.screen,it=sc.it;const title=sc.mode==='test'?'📝 מבחן חזרה':sc.mode==='smart'?'🧠 תרגול חכם':ymStage(sc.id).ic+' '+ymStage(sc.id).t;const lvName=it.stage?ymStage(it.stage).levels[it.lv].n:'';
   const done=sc.state==='ok'||sc.state==='show';
-  const fb=sc.state==='ok'?`<div class="fb ok">${sc.tries===1?pick(['נכון! 🎯','מעולה! ⭐','בדיוק! 💪','יפה מאוד!']):'נכון, הפעם זה יצא! 👏'}</div>`
+  const fb=sc.state==='ok'?ymPraiseHTML(sc)
     :sc.state==='retry'?`<div class="fb bad">עוד לא. <b>${YM_TAGS[sc.lastTag]?YM_TAGS[sc.lastTag].t:''}</b>: ${YM_TAGS[sc.lastTag]?YM_TAGS[sc.lastTag].tip:''}<br><span class="sub">💡 רמז: ${it.hint||'נסי שוב, לאט.'}</span></div>`
     :sc.state==='show'?`<div class="fb bad">התשובה: <b dir="ltr">${it.o?esc(it.o[it.ai]):fx(qt(it.a,it.dec))}</b>${YM_TAGS[sc.lastTag]?`<br><span class="sub">${YM_TAGS[sc.lastTag].t}: ${YM_TAGS[sc.lastTag].tip}</span>`:''}</div>`:'';
   return `<button class="back" data-act="ymBack">${I.back} ${sc.mode==='stage'?'חזרה לשלב':'חזרה למסלול'}</button>
@@ -2456,9 +2466,20 @@ function viewYM(){const sc=S.screen,it=sc.it;const title=sc.mode==='test'?'📝 
    ${sc.state==='ask'&&sc.showHint?`<p class="sub">💡 ${it.hint||''}</p>`:''}
    ${done&&(sc.state==='show'||sc.tries>1||sc.mode==='test'&&false)?`<div class="ymsol"><b>הפתרון צעד אחר צעד</b>${ymStepsHTML(it.steps)}</div>`:done?`<details class="ymsol"><summary>איך פותרים?</summary>${ymStepsHTML(it.steps)}</details>`:''}
    <div class="btns">${done?`<button class="btn brass" data-act="ymNext">${sc.n+1>=sc.total?'לסיכום 🏁':'הבא ←'}</button>`:`<button class="btn brass" data-act="ymCheck">בדיקה ✓</button>${sc.state==='ask'&&!sc.showHint&&it.hint?'<button class="btn ghost" data-act="ymHint">💡 רמז</button>':''}`}</div></section>`}
+const YM_PRAISE=['נכון! 🎯','מעולה! ⭐','בדיוק! 💪','יפה מאוד! 👏','וואו, איזו חדה! 🧠','אלופה! 🏆','מושלם! ✨','בול! 🎯','את מנצחת את התרגילים! 🥇','הראש עובד מצוין! 💡','כל הכבוד, יובל! 🌟','זה בדיוק ככה! ✅'];
+const YM_STREAK={3:['🔥 3 ברצף! את בוערת!','🔥 שלוש ברצף, שום דבר לא עוצר אותך!'],5:['⚡ 5 ברצף! מכונה של חשבון!','⚡ חמש ברצף! המורה הייתה גאה!'],8:['👑 8 ברצף! סבב מושלם!','👑 שמונה מתוך שמונה ברצף! מלכת החשבון!']};
+function ymBurst(n,big){const C=['#ffd98c','#f2b94a','#2f9468','#1f8fb3','#e0395f','#9b6bd6','#ffffff'];let h='';for(let i=0;i<n;i++){const l=Math.round(Math.random()*100),d=(Math.random()*.5).toFixed(2),r=Math.round(Math.random()*360),c=C[i%C.length],w=big?ri(7,12):ri(5,9),dx=ri(-60,60);h+=`<i style="left:${l}%;background:${c};width:${w}px;height:${Math.round(w*1.6)}px;animation-delay:${d}s;--dx:${dx}px;--r:${r}deg"></i>`}return `<div class="ymburst ${big?'big':''}" aria-hidden="true">${h}</div>`}
+function ymPraiseHTML(sc){const first=sc.tries===1&&!sc.hinted;const st=sc.streak||0;const sk=first&&YM_STREAK[st]?pick(YM_STREAK[st]):null;
+  const main=first?pick(YM_PRAISE):pick(['נכון, הפעם זה יצא! 👏','יש! תיקנת את עצמך 💪','בדיוק! ככה לומדים 🌱']);
+  const lvl=sc.cele?(sc.cele.isl?`<div class="ymlvup isl">🏝️ כל הרמות עברו! <b>האי נכבש!</b><br><small>כלי שייט חדש מחכה לך בסוף הסבב ⛵</small></div>`:`<div class="ymlvup">⬆️ <b>רמה ${sc.cele.lv+1} הושלמה!</b> ${ymStage(sc.it.stage).levels[sc.cele.lv+1]?'הבאה: '+ymStage(sc.it.stage).levels[sc.cele.lv+1].n:''}</div>`):'';
+  return `<div class="fb ok ympraise">${ymBurst(sk||sc.cele?36:14,!!(sk||sc.cele))}<span class="ympop">${main}</span>${sk?`<span class="ymstreak">${sk}</span>`:st>=2&&first?`<span class="ymstreak sm">🔥 ${st} ברצף</span>`:''}</div>${lvl}`}
+function ymStars(pct){const n=pct>=90?3:pct>=70?2:pct>=40?1:0;return `<div class="ymstars">${[0,1,2].map(k=>`<span class="${k<n?'on':''}" style="animation-delay:${.25+k*.3}s">★</span>`).join('')}</div>`}
 function viewYMEnd(){const r=S.screen;const pct=Math.round(r.c/r.t*100);const tg=Object.entries(r.tags||{}).sort((a,b)=>b[1]-a[1]);const st=r.mode==='stage'?ymStage(r.id):null;
   let by='';if(r.mode==='test'){const b={};r.log.forEach(l=>{const x=b[l.stage]||(b[l.stage]=[0,0]);x[1]++;if(l.ok)x[0]++});by=`<div class="ymby">${Object.entries(b).map(([s,[c,t]])=>`<p>${ymStage(s).ic} ${ymStage(s).t}: <b>${c}/${t}</b> ${c===t?'✅':'← כדאי לחזור'}</p>`).join('')}</div>`}
-  return `<section class="card ymend"><div class="confetti">${pct>=85?'🏆':pct>=60?'⭐':'💪'}</div><h2>${r.c} מתוך ${r.t} בניסיון הראשון</h2><p>${pct>=85?'מצוין!':pct>=60?'יפה! עוד קצת תרגול וזה שלך.':'כל טעות עכשיו היא טעות שלא תהיה במבחן.'}</p>
+  const F=YM_FLEET(),blv=ymBoatLv(),nb=F[Math.min(blv+1,F.length-1)];const lvl=st?st.levels.length-ymPassed(st.id):0;
+  const head=pct>=90?pick(['סבב מטורף! 🏆','את פשוט אלופה! 👑','מושלם כמעט לגמרי! 🌟']):pct>=70?pick(['סבב מעולה! ⭐','יופי של עבודה! 💪','את בכיוון הנכון! 🚀']):pct>=40?pick(['התקדמות יפה! 🌱','כל סבב מחזק אותך! 💪']):pick(['כל הכבוד שהתאמצת! 💙','מכאן רק עולים! 📈']);
+  return `<section class="card ymend">${ymBurst(pct>=70?60:24,pct>=70)}<div class="confetti">${pct>=90?'🏆':pct>=70?'🎉':pct>=40?'⭐':'💪'}</div><h2>${head}</h2>${ymStars(pct)}<p class="ymscore"><b>${r.c}</b> מתוך ${r.t} בניסיון הראשון${r.best>=3?` · 🔥 רצף שיא: ${r.best}`:''}</p><p>${pct>=85?'המבחן ביום רביעי? את מוכנה לו! 💪':pct>=60?'עוד סבב אחד וזה שלך.':'כל טעות עכשיו היא טעות שלא תהיה במבחן.'}</p>
+   ${st&&lvl>0?`<div class="ymnext">⛵ עוד <b>${lvl}</b> ${lvl===1?'רמה':'רמות'} והאי נכבש ← <b>${esc(nb.n)}</b></div>`:''}
    ${st?`<p>בשלב הזה עברת ${ymPassed(st.id)} מתוך ${st.levels.length} רמות.</p>`:''}${by}${r.mode==='test'&&pct>=80&&YM_STAGES.some(s=>!ymDone(s.id))?`<p>🛥️ עברת את מבחן החזרה! כדי לקבל את יאכטת־העל צריך לכבוש גם את: <b>${YM_STAGES.filter(s=>!ymDone(s.id)).map(s=>YM_SHORT[s.id]).join(', ')}</b></p>`:''}${r.mode==='test'&&pct<80?'<p>🛥️ ליאכטת־העל צריך 80% ומעלה במבחן החזרה. אפשר לנסות שוב!</p>':''}
    ${tg.length?`<div class="ymwatch"><h3>על מה לשים לב</h3>${tg.map(([k,v])=>`<p><b>${YM_TAGS[k].t}</b> (${v}): ${YM_TAGS[k].tip}</p>`).join('')}</div>`:'<p>בלי טעויות בכלל! 🎉</p>'}
    <div class="btns"><button class="btn brass" data-act="ymGo" data-id="${r.id}">עוד סבב</button><button class="btn ghost" data-act="home">חזרה למסלול</button></div></section>`}
