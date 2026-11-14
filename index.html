@@ -347,7 +347,7 @@ textarea.paste{width:100%;min-height:80px;border-radius:12px;border:1px solid va
 .rl{font-size:12px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
 .rl.top{color:var(--kelp)}.rl.good{color:#9a6f14}.rl.low{color:var(--signal)}.rl.none{color:var(--ink2)}
 .ymhead{flex-direction:row;align-items:center;justify-content:space-between}.ymhead h2{margin:2px 0}.ymhead p{margin:0;color:var(--ink2)}.ymgoal{font-size:34px}
-.ymplan h3,.ymwatch h3{margin:0}.ymday{display:grid;gap:6px;padding:8px 10px;border-radius:12px;background:#fff}.ymday.now{outline:2.5px solid var(--brass);background:#fffbe9}.ymday.past{opacity:.75}.ymday span{display:flex;flex-wrap:wrap;gap:6px}
+.ymplan h3,.ymwatch h3{margin:0}.ymplanbox{gap:8px;margin-top:12px}.ymplanbox summary{cursor:pointer}.ymhead+.map{margin-top:12px}.map+.card{margin-top:12px}.ymday{display:grid;gap:6px;padding:8px 10px;border-radius:12px;background:#fff}.ymday.now{outline:2.5px solid var(--brass);background:#fffbe9}.ymday.past{opacity:.75}.ymday span{display:flex;flex-wrap:wrap;gap:6px}
 .ymchip{border:1px solid #cfdbe4;background:#f4f8fb;color:var(--ink);border-radius:999px;padding:6px 10px;font:inherit;font-size:14px;font-weight:700}.ymchip.done{background:#dcf3e8;border-color:#9fd7bd;color:#1d6b4f}
 .ymwatch p{margin:4px 0}.ympath{display:grid;gap:10px;margin:12px 0}
 .ystage{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:16px;padding:10px 12px;background:var(--chart);color:var(--ink);font:inherit;text-align:start;box-shadow:0 8px 20px -14px #000}
@@ -482,7 +482,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='35';
+const APP_VERSION='36';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -2377,12 +2377,29 @@ function ymPlanHTML(){const td=today();const cur=YM_PLAN.findIndex(p=>td>=p.d&&t
   return `<section class="card ymplan"><h3>🗺️ התוכנית עד המבחן · ${YM_TEST.label}</h3>${YM_PLAN.map((p,k)=>`<div class="ymday ${k===cur?'now':k<cur?'past':''}"><b>${k===cur?'היום · ':''}${p.lbl}</b><span>${p.st.map(id=>`<button class="ymchip ${doneOf(id)?'done':''}" data-act="${id==='test'||id==='smart'?'ymGo':'ymStage'}" data-id="${id}">${doneOf(id)?'✓ ':''}${nm(id)}</button>`).join('')}</span></div>`).join('')}</section>`}
 function ymRing(id){const st=ymStage(id),L=st.levels.length,p=ymPassed(id),x=ymSt(id);const part=st.levels.reduce((a,l,k)=>a+Math.min(1,x.ok[k]/YM_NEED),0)/L;const C=2*Math.PI*18;
   return `<svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="18" fill="none" stroke="#dde6ec" stroke-width="5"/><circle cx="23" cy="23" r="18" fill="none" stroke="${p===L?'#2f9468':'#1f8fb3'}" stroke-width="5" stroke-dasharray="${C*part} ${C}" transform="rotate(-90 23 23)" stroke-linecap="round"/><text x="23" y="28" text-anchor="middle" font-size="14">${st.ic}</text></svg>`}
-function viewYMMap(){const dl=ymDaysLeft();const t=tasksOf(S.session),G=GOAL_T();const nextId=(YM_STAGES.find(s=>!ymDone(s.id))||{}).id;const tg=ymTopTags(ymAllTags(),3);
-  return `<section class="card ymhead"><div><span class="eyebrow">חשבון · כיתה ז׳</span><h2>הדרך למבחן</h2><p>${dl>1?`עוד ${dl} ימים למבחן`:dl===1?'המבחן מחר! 💪':dl===0?'המבחן היום, בהצלחה! 🍀':'המבחן עבר'} · היום: ${Math.min(t,G)} מתוך ${G} משימות</p></div><div class="ymgoal">${t>=G?'⭐':''}</div></section>
-  ${ymPlanHTML()}
+const YM_SHORT={s1:'נגדיים וערך מוחלט',s2:'חיבור וחיסור',s3:'השמטת סוגריים',s4:'מערכת צירים',s5:'כפל',s6:'חילוק',s7:'זוויות',s8:'משולש שווה צלעות',test:'מבחן חזרה'};
+function ymIslandsSVG(){const ids=[...YM_STAGES.map(s=>s.id),'test'];const W=360,gap=118,top=78,H=top+gap*(ids.length-1)+90;
+  const pos=ids.map((id,k)=>({x:k%2?260:100,y:top+k*gap}));const nextId=(YM_STAGES.find(s=>!ymDone(s.id))||{id:'test'}).id;
+  let g=`<defs><radialGradient id="ymsea" cx=".5" cy=".3" r=".9"><stop offset="0" stop-color="#2a7fb0"/><stop offset="1" stop-color="#0e3a5c"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#ymsea)"/>`;
+  for(let k=0;k<14;k++)g+=`<path d="M${(k*53)%340+10} ${(k*97)%H} q8 -5 16 0 t16 0" fill="none" stroke="#7fc3e6" stroke-width="1.4" opacity=".35"/>`;
+  g+=`<path d="${pos.map((p,k)=>(k?'L':'M')+p.x+' '+p.y).join(' ')}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round" opacity=".7"/>`;
+  ids.forEach((id,k)=>{const p=pos[k],isT=id==='test';const st=isT?null:ymStage(id);const done=isT?ymP().tests.some(t=>t.c/t.t>=.8):ymDone(id);const cur=id===nextId;const L=st?st.levels.length:0,pa=st?ymPassed(id):0;
+    const sub=isT?(ymP().tests.length?`אחרון: ${ymP().tests.slice(-1)[0].c}/${ymP().tests.slice(-1)[0].t}`:'14 תרגילים מכל הנושאים'):done?'✓ נכבש!':`${pa} מתוך ${L} רמות`;
+    g+=`<g class="isl ${cur?'cur':''}" data-act="${isT?'ymGo':'ymStage'}" data-id="${id}" transform="translate(${p.x},${p.y})" role="button" aria-label="${esc(YM_SHORT[id])}">
+     ${cur?`<circle r="52" fill="none" stroke="#ffd98c" stroke-width="3" opacity=".9"><animate attributeName="r" values="46;54;46" dur="2.4s" repeatCount="indefinite"/></circle>`:''}
+     <ellipse cx="0" cy="14" rx="50" ry="17" fill="#0b2f4a" opacity=".35"/><ellipse cx="0" cy="8" rx="46" ry="20" fill="${done?'#f2d48a':'#e8c27a'}"/><ellipse cx="0" cy="2" rx="34" ry="15" fill="${done?'#5fb36b':isT?'#c98b3a':'#7cbf6b'}"/>
+     <text x="0" y="9" text-anchor="middle" font-size="22">${isT?'📝':st.ic}</text>
+     ${done?`<g transform="translate(26,-30)"><line x1="0" y1="0" x2="0" y2="26" stroke="#5a3b1a" stroke-width="2"/><path d="M0 0 L18 5 L0 11Z" fill="#2f9468"/></g>`:''}
+     ${!isT&&!done&&pa?`<g transform="translate(-${(L-1)*7},32)">${st.levels.map((l,j)=>`<circle cx="${j*14}" cy="0" r="4.5" fill="${j<pa?'#ffd98c':'none'}" stroke="#ffd98c" stroke-width="1.5"/>`).join('')}</g>`:''}
+     <text x="0" y="${!isT&&!done&&pa?58:44}" text-anchor="middle" font-family="Secular One, Assistant, sans-serif" font-size="15" fill="#fff" stroke="#0b2f4a" stroke-width="3" paint-order="stroke">${k+1}. ${esc(YM_SHORT[id])}</text>
+     <text x="0" y="${!isT&&!done&&pa?74:60}" text-anchor="middle" font-family="Assistant, sans-serif" font-size="12" fill="${done?'#bff0cf':'#cfe6f3'}">${sub}</text>
+     ${cur?`<text x="${k%2?-62:62}" y="6" text-anchor="middle" font-size="30">⛵</text>`:''}</g>`});
+  return `<section class="map" aria-label="מפת איי החשבון"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${g}</svg></section>`}
+function viewYMMap(){const dl=ymDaysLeft();const t=tasksOf(S.session),G=GOAL_T();const tg=ymTopTags(ymAllTags(),3);const won=YM_STAGES.filter(s=>ymDone(s.id)).length;
+  return `<section class="card ymhead"><div><span class="eyebrow">חשבון · כיתה ז׳</span><h2>איי החשבון</h2><p>${dl>1?`עוד ${dl} ימים למבחן`:dl===1?'המבחן מחר! 💪':dl===0?'המבחן היום, בהצלחה! 🍀':'המבחן עבר'} · נכבשו ${won} מתוך ${YM_STAGES.length} איים · היום: ${Math.min(t,G)}/${G} משימות</p></div><div class="ymgoal">${t>=G?'⭐':'🏝️'}</div></section>
+  ${ymIslandsSVG()}
   ${tg.length?`<section class="card ymwatch"><h3>👀 לשים לב</h3>${tg.map(([k,v])=>`<p><b>${YM_TAGS[k].t}</b> (${v}): ${YM_TAGS[k].tip}</p>`).join('')}<button class="btn small brass" data-act="ymGo" data-id="smart">🧠 תרגול חכם על מה שקשה</button></section>`:''}
-  <section class="ympath">${YM_STAGES.map((s,k)=>{const L=s.levels.length,p=ymPassed(s.id);return `<button class="ystage ${ymDone(s.id)?'done':''} ${s.id===nextId?'next':''}" data-act="ymStage" data-id="${s.id}">${ymRing(s.id)}<span class="yst"><small>שלב ${k+1} · ${s.pages}</small><b>${s.t}</b><span>${p===L?'✓ כל הרמות עברו':s.id===nextId?`עכשיו: רמה ${ymLevelNow(s.id)+1} מתוך ${L}`:`${p} מתוך ${L} רמות`}</span></span></button>`}).join('')}
-  <button class="ystage test" data-act="ymGo" data-id="test"><span class="ymbig">📝</span><span class="yst"><small>שלב 9</small><b>מבחן חזרה מעורב</b><span>${YM_TESTN} תרגילים מכל הנושאים${ymP().tests.length?` · אחרון: ${ymP().tests.slice(-1)[0].c}/${ymP().tests.slice(-1)[0].t}`:''}</span></span></button></section>`}
+  <details class="card ymplanbox"><summary><b>🗺️ התוכנית עד המבחן · ${YM_TEST.label}</b></summary>${ymPlanHTML().replace(/^<section class="card ymplan"><h3>[^<]*<\/h3>/,'').replace(/<\/section>$/,'')}</details>`}
 function viewYMStage(){const id=S.screen.id;const st=ymStage(id);if(!st){S.screen={name:'map'};return viewYMMap()}const x=ymSt(id),now=ymLevelNow(id);const tg=ymTopTags(x.tags,3);
   return `<button class="back" data-act="home">${I.back} חזרה למסלול</button>
   <div class="ihead"><span class="eyebrow">${st.pages} בספר</span><h2>${st.ic} ${st.t}</h2></div>
