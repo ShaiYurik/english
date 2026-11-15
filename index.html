@@ -493,7 +493,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='40';
+const APP_VERSION='41';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -894,7 +894,7 @@ function wordHe(w,i){const k=String(w).replace(/[\u2018\u2019]/g,"'").replace(/^
 function islandById(id){return allIslands().find(i=>i.id===id)}
 /* ---- three tracks: class / zoom / unseen. one active island each ---- */
 const TRACKS=[{k:'class',t:'מהכיתה',ic:'🏫',flag:'#2fbf8f',none:'כל האיים נכבשו!',empty:'יופיע כשיעלה חומר מהכיתה'},{k:'zoom',t:'שיעור זום',ic:'💻',flag:'#7fb7ff',none:'האי יופיע אחרי שיעור הזום',empty:'האי יופיע אחרי שיעור הזום'},{k:'unseen',t:'אנסין',ic:'📖',flag:'#e2553b',none:'סיימת את כל האנסינים!',empty:'עוד אין אנסינים'}];
-function trackOf(i){if(i.kind==='fixed')return i.track;if(i.kind==='daily')return 'daily';if(i.kind==='lesson'&&i.source==='זום')return 'zoom';if(i.kind==='book'&&i.text)return 'unseen';return 'class'}
+function trackOf(i){if(i.kind==='fixed')return i.track;if(i.lang==='he')return 'he';if(i.kind==='daily')return 'daily';if(i.kind==='lesson'&&i.source==='זום')return 'zoom';if(i.kind==='book'&&i.text)return 'unseen';return 'class'}
 function isDone(i){if(i.kind==='daily')return !!(S.progress.best[i.id]||{}).story;const st=stationsOf(i);if(st.some(s=>s.scored))return islandRatio(i)>=.5;const b=S.progress.best[i.id]||{};return !!(b.learn||b.story||b.read)}
 let _trk=null;
 function tracks(){
@@ -908,13 +908,15 @@ function tracks(){
   if(!book.length&&(!S.profile||S.profile.child==='yuvik')){_trk=null;return null}
   const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));
   const lists={
-    class:[...all.filter(i=>i.kind==='lesson'&&i.source!=='זום').sort(byC),...all.filter(i=>i.kind==='class'),...book.filter(i=>!i.text)],
+    he:all.filter(i=>i.kind==='lesson'&&i.lang==='he').sort(byC),
+    class:[...all.filter(i=>i.kind==='lesson'&&i.source!=='זום'&&i.lang!=='he').sort(byC),...all.filter(i=>i.kind==='class'),...book.filter(i=>!i.text)],
     zoom:all.filter(i=>i.kind==='lesson'&&i.source==='זום').sort(byC),
     unseen:book.filter(i=>i.text)};
   _trk=TRACKS.filter(t=>t.k!=='zoom'||feat('zoom')).map(t=>{const list=lists[t.k];const active=list.find(i=>!isDone(i))||null;
     const done=list.filter(isDone);const started=list.filter(i=>i!==active&&!isDone(i)&&S.progress.best[i.id]);
     const queue=list.filter(i=>i!==active&&!isDone(i)&&!S.progress.best[i.id]);
     return {...t,active,done,started,queue,none:list.length?t.none:t.empty}});
+  if(lists.he.length){const list=lists.he,active=list.find(i=>!isDone(i))||list[list.length-1];_trk.push({k:'he',t:'עברית',ic:'📝',flag:'#3a6fd8',none:'כל האיים בעברית נכבשו!',active,done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})}
   if(classSlots()>1){const ci=_trk.findIndex(t=>t.k==='class');if(ci>=0){const c=_trk[ci];const open=lists.class.filter(i=>!isDone(i));const a2=open[1]||null,rest=open.slice(2);
     const L1={...c,queue:rest.filter(i=>!S.progress.best[i.id]),started:rest.filter(i=>S.progress.best[i.id])};
     const L2={...c,lane:2,active:a2,done:[],started:[],queue:[],none:'מגרש נוסף ייפתח כשיעלה עוד חומר'};
@@ -1053,7 +1055,7 @@ function viewMap(){
   if(!CHILD&&KEY&&S.online!==true)return `<div class="ihead"><h2>${S.online===false?'⚠️ עוד לא הצלחנו להתחבר':'מתחברים…'}</h2><p>${S.online===false?'בפתיחה הראשונה צריך חיבור לשרת כדי לדעת של מי האפליקציה. מנסים שוב לבד כל כמה שניות.':'טוענים את האיים שלך.'}</p>${S.online===false?'<p><button class="syncbtn" data-act="retry">לנסות שוב עכשיו</button></p>':''}</div>`;
   const T=tracks();if(!T)return viewMapLegacy();
   updateAlerts();
-  const W=360,H=T.length===2?330:470;const pos=T.length===2?[{x:240,y:240},{x:120,y:95}]:[{x:248,y:385},{x:110,y:235},{x:250,y:95}];
+  const W=360,H=T.length===2?330:T.length<=3?470:180+(T.length-1)*150;const pos=T.length===2?[{x:240,y:240},{x:120,y:95}]:T.length<=3?[{x:248,y:385},{x:110,y:235},{x:250,y:95}]:T.map((_,k)=>({x:k%2?110:250,y:H-85-k*150}));
   const depths=Array.from({length:7},(_,k)=>[[40,320,180,30,330,200][k%6],k*70+40,String(5+(k*7)%27)]).map(([x,y,t])=>`<text x="${x}" y="${y}" font-size="10" fill="#5f84a0" font-family="Assistant" font-style="italic">${t}</text>`).join('');
   const tn=THEME()==='tennis',ds=THEME()==='desert',bk=THEME()==='shop';const BK=['👗','👠','👜','🧥','👟','🕶️','👒','💍'];
   const nodes=T.map((t,k)=>{const {x,y}=pos[k];const i=t.active;
