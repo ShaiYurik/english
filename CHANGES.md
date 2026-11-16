@@ -1,5 +1,6 @@
 # Changes
 
+- v49 (2026-11-16): Shai-Li's texts no longer mention 'אבא' uploading material: they speak to her ('כשתצלמי חומר…', 'ריקוד חדש בסטודיו', 'במה נוספת'), via `SHL()`. Other profiles unchanged.
 - v48 (2026-11-16): Shai-Li guided welcome: steps (welcome → add to home screen, iPhone/Android instructions → enable reminders → how to photograph material → dance levels), ending with 'לצלם חומר עכשיו' that opens the camera tab. Map shows a 'the studio is waiting for your first material' card while she has no islands.
 - v47 (2026-11-16): new profile Shai-Li (shaili): dance theme (studio stage map, spotlights), English only with no islands yet. Progress = 10 dance levels from beginner to 'סופר רקדנית'; every great island (85%+) adds an outfit item and raises her level (`progress.danceLv`, `danceIntro`). Own manifest/icons. Also restored sw.js, which had been empty since v36 (push notifications and offline cache were broken); smoke now checks sw.js.
 - v46 (2026-11-16): exercises with brackets are always solved in steps: first choose the sign that replaces each bracket, then solve (island 2 subtraction, missing number, fractions; island 3 three-number brackets). Conversion shown as two lines with ↓. One-time reset of island 2 levels 3–5; self-heal ignores island-2 logs from before v46.
