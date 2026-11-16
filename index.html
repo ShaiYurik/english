@@ -151,6 +151,7 @@ button.wtag{border:0;cursor:pointer;font:inherit}
 .newbanner .gift{font-size:32px;animation:bobg 1.2s ease-in-out infinite}
 @keyframes bobg{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-4px) rotate(6deg)}}
 .newbanner small{display:block;font-weight:600;opacity:.85}
+.newbanner.procb{background:linear-gradient(135deg,#ffe9a8,#ffc76b);color:#3a2600;cursor:default}.newbanner.procb .gift{animation:hgspin 2s ease-in-out infinite}@keyframes hgspin{0%,40%{transform:rotate(0)}50%,90%{transform:rotate(180deg)}100%{transform:rotate(360deg)}}.procslot .pring{animation:pdash 1.6s linear infinite}@keyframes pdash{to{stroke-dashoffset:-22}}.procslot .phg{animation:pblink 1.4s ease-in-out infinite}@keyframes pblink{50%{opacity:.35}}
 .newbanner.late{background:linear-gradient(135deg,#9fd3ff,#5f9be0);color:#0b1c2b}
 .newbanner .go{margin-inline-start:auto;background:#1a1206;color:#f0c35e;border-radius:999px;padding:8px 14px;white-space:nowrap}
 .zbadge{display:inline-flex;align-items:center;gap:6px;background:#dcebff;color:#1d4f8a;border-radius:999px;padding:4px 12px;font-weight:800;font-size:14px}
@@ -489,6 +490,13 @@ details summary{cursor:pointer;padding:6px 0}
 <script>
 /* ============ CONNECTION ============ */
 const API='https://script.google.com/macros/s/AKfycbxLlbEJozfMjmGyQZeeJm0lXCW-NhjTsNaQ7UPCaaQ8qAqmo_yee2h7FEY4LW1IIXWJ4g/exec';
+/* חומר בעיבוד: מה נשלח ועוד לא הפך לאי (נמחק כשהדרייב ריק מחומר שממתין) */
+const PRK=()=>'proc:'+(((typeof S!=='undefined'&&S.profile&&S.profile.child)||CHILD)||'');
+function procAdd(tag){const m=/subject:(.+)$/.exec(String(tag||''));const a=LS.get(PRK(),[]).filter(x=>Date.now()-x.t<4*864e5);a.push({s:m?m[1].trim():'',t:Date.now()});LS.set(PRK(),a.slice(-30))}
+function procList(){if(!S.pendingPhotos)return [];return LS.get(PRK(),[]).filter(x=>Date.now()-x.t<4*864e5)}
+function procSubjects(){return [...new Set(procList().map(x=>x.s||''))]}
+function procBannerHTML(){if(isParent()||!S.pendingPhotos)return '';const subs=procSubjects().filter(Boolean);const n=S.pendingPhotos;
+  return `<div class="newbanner procb"><span class="gift">⏳</span><span>${SHL()?'הריקוד החדש שלך בהכנה!':'החומר ששלחת בעיבוד'}<small>${n===1?'קובץ אחד מחכה':n+' קבצים מחכים'}${subs.length?' · '+subs.map(esc).join(', '):''} · ${SHL()?'כשהוא מוכן הוא יופיע בסטודיו 💃':'כשהוא מוכן הוא יופיע כאי חדש במפה'}</small></span></div>`}
 function SHL(){return !!(typeof S!=='undefined'&&S.profile&&S.profile.child==='shaili')}
 const LS={get(k,d){try{const v=localStorage.getItem('voy:'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('voy:'+k,JSON.stringify(v))}catch(e){}}};
 let KEY=LS.get('key','');
@@ -506,7 +514,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='55';
+const APP_VERSION='56';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -582,7 +590,7 @@ async function flushUploads(){
         const res=await apiPost({action:it.kind==='rec'?'uploadRec':it.kind==='file'?'uploadFile':'uploadPhoto',b64,mime:(/presentation|powerpoint/.test(it.blob.type)?'':it.blob.type)||'application/octet-stream',...it.meta});
         await IDB.del(it.id);upStatus[it.id]='ok';
         if(it.kind==='rec')onRecUploaded(it,res.file);
-        if(it.kind==='photo'||it.kind==='file'){S.pendingPhotos=(S.pendingPhotos||0)+1;cache()}
+        if(it.kind==='photo'||it.kind==='file'){S.pendingPhotos=(S.pendingPhotos||0)+1;procAdd(it.meta&&it.meta.tag);cache()}
       }catch(e){
         console.warn('upload',e);upStatus[it.id]='err';
         if(/גדול|מגבלה|מקום|רק תמונות|סוג קובץ/.test(e.message)){await IDB.del(it.id);toast(e.message)}
@@ -757,7 +765,7 @@ function applyState(st,fromServer){
   if(st.zoom&&!pend('zoom'))S.zoom=st.zoom;
   if(st.schedule!==undefined&&st.schedule&&!pend('schedule'))S.scheduleState=st.schedule;
   if(st.lessons)S.lessons=st.lessons;
-  if(typeof st.pendingPhotos==='number')S.pendingPhotos=st.pendingPhotos;
+  if(typeof st.pendingPhotos==='number'){S.pendingPhotos=st.pendingPhotos;if(!st.pendingPhotos)LS.set(PRK(),[])}
   if(Array.isArray(st.transcripts))S.transcripts=st.transcripts;
   if(st.sessions){
     const t=today();const remoteToday=st.sessions.find(s=>s&&s.date===t);
@@ -944,7 +952,7 @@ function tracks(){
   _trk=TRACKS.filter(t=>t.k!=='zoom'||feat('zoom')).map(t=>{const list=lists[t.k];const active=list.find(i=>!isDone(i))||null;
     const done=list.filter(isDone);const started=list.filter(i=>i!==active&&!isDone(i)&&S.progress.best[i.id]);
     const queue=list.filter(i=>i!==active&&!isDone(i)&&!S.progress.best[i.id]);
-    return {...t,active,done,started,queue,none:list.length?t.none:t.empty}});
+    return {...t,active,done,started,queue,none:list.length?t.none:t.empty,...(!active&&t.k==='class'&&procList().length?{proc:true,none:'⏳ החומר בעיבוד, האי יופיע כאן בקרוב'}:{})}});
   if(lists.he.length){const list=lists.he,active=list.find(i=>!isDone(i))||list[list.length-1];_trk.push({k:'he',t:'עברית',ic:'📝',flag:'#3a6fd8',none:'כל האיים בעברית נכבשו!',active,done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})}
   if(classSlots()>1){const ci=_trk.findIndex(t=>t.k==='class');if(ci>=0){const c=_trk[ci];const open=lists.class.filter(i=>!isDone(i));const a2=open[1]||null,rest=open.slice(2);
     const L1={...c,queue:rest.filter(i=>!S.progress.best[i.id]),started:rest.filter(i=>S.progress.best[i.id])};
@@ -968,6 +976,7 @@ function subjectTracks(all){const byC=(a,b)=>String(a.created||'').localeCompare
     if(!open.length){out.push({...base,active:done[done.length-1],replay:true,done:done.slice(0,-1),started:[],queue:[]});return}
     const rest=open.slice(2);out.push({...base,active:open[0],done,started:rest.filter(i=>S.progress.best[i.id]),queue:rest.filter(i=>!S.progress.best[i.id])});
     if(open[1])out.push({...base,k:'s'+gi+'b',lane:2,active:open[1],done:[],started:[],queue:[]})});
+  const ps=procSubjects();if(ps.length){const keys=Object.keys(groups);ps.forEach((g0,pi)=>{const g=g0||'חומר חדש';const gi=keys.indexOf(g);const [ic,flag]=SUBJ_IC[g]||['🎶',PAL[(gi<0?keys.length+pi:gi)%PAL.length]];out.push({k:'p'+pi,t:g,ic,flag,proc:true,active:null,done:[],started:[],queue:[],none:'⏳ בהכנה… יופיע כאן בקרוב'})})}
   return out}
 const classSlots=()=>['gil','ariel','shaili'].includes((S.profile&&S.profile.child)||CHILD)?2:1;
 const activeIds=()=>{const T=tracks();return T?T.filter(t=>t.active).map(t=>t.active.id):[]};
@@ -1100,6 +1109,9 @@ function viewMap(){
   const depths=Array.from({length:7},(_,k)=>[[40,320,180,30,330,200][k%6],k*70+40,String(5+(k*7)%27)]).map(([x,y,t])=>`<text x="${x}" y="${y}" font-size="10" fill="#5f84a0" font-family="Assistant" font-style="italic">${t}</text>`).join('');
   const tn=THEME()==='tennis',ds=THEME()==='desert',bk=THEME()==='shop',dn=THEME()==='dance';const BK=['👗','👠','👜','🧥','👟','🕶️','👒','💍'],DN=['💃','🩰','🎶','🪩','🎤','🎀','👯','⭐'];
   const nodes=T.map((t,k)=>{const {x,y}=pos[k];const i=t.active;
+    if(!i&&t.proc)return `<g class="procslot" transform="translate(${x},${y})"><text x="0" y="-44" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="${t.flag||'#f0c35e'}">${t.ic} ${esc(t.t)}</text>
+      <ellipse class="pring" cx="0" cy="4" rx="40" ry="20" fill="none" stroke="${t.flag||'#f0c35e'}" stroke-width="2" stroke-dasharray="6 5"/><text class="phg" x="0" y="11" text-anchor="middle" font-size="24">⏳</text>
+      <text x="0" y="44" text-anchor="middle" font-family="Assistant" font-weight="700" font-size="12" fill="${ds||bk?'#6e4e2f':'#e8eef3'}">${esc(t.none)}</text></g>`;
     if(!i)return `<g transform="translate(${x},${y})" opacity=".75"><text x="0" y="-44" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="${ds||bk?'#6e4e2f':'#c9d6de'}">${t.ic} ${t.t}</text>
       <ellipse cx="0" cy="4" rx="40" ry="20" fill="none" stroke="#2a6a92" stroke-dasharray="3 4"/><text x="0" y="9" text-anchor="middle" font-size="22">${ds?'🏜️':tn?'🎾':bk?'🏬':dn?'🎶':'🌊'}</text>
       <text x="0" y="44" text-anchor="middle" font-family="Assistant" font-size="12" fill="${ds||bk?'#6e4e2f':'#86a2b6'}">${esc(t.none)}</text></g>`;
@@ -1125,7 +1137,7 @@ function viewMap(){
   const arch=T.filter(t=>!t.fixed).flatMap(t=>[...t.started,...t.done].map(i=>({i,t}))).filter(x=>x.i.id!==(x.t.active||{}).id);
   const archive=arch.length?`<details class="shelf" ${LS.get('shelfOpen',false)?'open':''}><summary data-act="shelfTog">${TW('arch')} <small>${arch.filter(x=>isDone(x.i)).length} נכבשו · אפשר לחזור ולתרגל</small></summary><div class="shelfl">${arch.map(({i,t})=>`<button class="shelfi" data-act="island" data-id="${esc(i.id)}"><span>${t.ic}</span><span class="en" style="font-family:inherit">${esc(i.name)}</span><b>${isDone(i)?'⭐'.repeat(Math.max(1,islandStars(i.id))):'בתהליך'}</b></button>`).join('')}</div></details>`:'';
   const refb=LANG()==='ar'?`<button class="btn small" data-act="ref" style="justify-self:start">🔤 טבלת אותיות ומספרים</button>`:'';
-  return meterHTML()+fleetCardHTML()+mallCardHTML()+danceCardHTML()+refb+banner+pushCardHTML()+`<section class="map" aria-label="מפת האיים">
+  return meterHTML()+fleetCardHTML()+mallCardHTML()+danceCardHTML()+refb+banner+procBannerHTML()+pushCardHTML()+`<section class="map" aria-label="מפת האיים">
     <svg viewBox="0 0 ${W} ${H}" role="group">
       <defs><pattern id="wv" width="40" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="#174260" stroke-width="1.2"/></pattern></defs>
       ${dn?`<defs><radialGradient id="dnspot"><stop offset="0" stop-color="#fff2b0" stop-opacity=".95"/><stop offset="1" stop-color="#ffcf4a" stop-opacity="0"/></radialGradient><linearGradient id="dnfloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b1660"/><stop offset="1" stop-color="#140a2e"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#dnfloor)"/>
@@ -1154,7 +1166,7 @@ function viewMap(){
       ${nodes}
     </svg></section>
     ${archive}
-    <p class="maphint">${T.some(t=>t.active||t.done.length)?SHL()?'לכל מקצוע יש מסלול משלו, ואפשר לרקוד כמה ריקודים במקביל. ריקוד שמסיימים ב־85% ומעלה נותן בגד חדש 💃':(classSlots()>1?'אפשר לשחק בשני מגרשים במקביל. כשמנצחים באחד':'בכל מסלול יש אי אחד פעיל. כשכובשים אותו')+' (70% ברוב התחנות) נפתח הבא בתור.':(SHL()?'עוד אין ריקודים. כשתצלמי חומר בלשונית "צילום" (בכל מקצוע), הריקוד הראשון שלך יופיע כאן 💃':'עוד אין איים. כשאבא יעלה חומר מהכיתה, האי הראשון יופיע כאן.')}</p>`;
+    <p class="maphint">${T.some(t=>t.active||t.done.length)?SHL()?'לכל מקצוע יש מסלול משלו, ואפשר לרקוד כמה ריקודים במקביל. ריקוד שמסיימים ב־85% ומעלה נותן בגד חדש 💃':(classSlots()>1?'אפשר לשחק בשני מגרשים במקביל. כשמנצחים באחד':'בכל מסלול יש אי אחד פעיל. כשכובשים אותו')+' (70% ברוב התחנות) נפתח הבא בתור.':(SHL()?(S.pendingPhotos?'הריקוד הראשון שלך בהכנה ⏳ כשהוא מוכן הוא יופיע כאן 💃':'עוד אין ריקודים. כשתצלמי חומר בלשונית "צילום" (בכל מקצוע), הריקוד הראשון שלך יופיע כאן 💃'):'עוד אין איים. כשאבא יעלה חומר מהכיתה, האי הראשון יופיע כאן.')}</p>`;
 }
 function trackLabel(i){if(SHL()&&i.kind!=='daily'){const g=subjOf(i);return ((SUBJ_IC[g]||['🎶'])[0])+' '+g}const t=TRACKS.find(x=>x.k===trackOf(i))||MATH_TRACKS.find(x=>x.k===trackOf(i))||(trackOf(i)==='daily'?{ic:'📖',t:'סיפור יומי'}:null);return t?t.ic+' '+t.t:''}
 function viewMapLegacy(){
@@ -2770,7 +2782,7 @@ function dancerSVG(lv,size){const L=k=>lv>=k;const top=L(9)?'#ffcf4a':L(6)?'#ff3
   ${L(7)?'<path d="M50 14 L52 4 L56 11 L60 2 L64 11 L68 4 L70 14Z" fill="#ffcf4a" stroke="#c99a12" stroke-width="1"/>':''}
   ${L(9)?'<g fill="#fff">'+[[14,30],[104,26],[18,96],[106,100]].map(([x,y])=>`<path d="M${x} ${y-5} l1.5 4 4 1.5 -4 1.5 -1.5 4 -1.5 -4 -4 -1.5 4 -1.5z"/>`).join('')+'</g>':''}</svg>`}
 function danceCardHTML(){if(!danceOn())return '';const lv=danceLv(),D=DANCE_LV[lv],nx=DANCE_LV[lv+1];
-  return `<button class="dancecard" data-act="danceAll">${dancerSVG(lv,66)}<span class="ft"><small>רמת ריקוד ${lv+1} מתוך ${DANCE_LV.length}</small><b>${esc(D.n)}</b><span>${nx?`האי הבא שתכבשי ← ${nx.e} ${esc(nx.it)}`:'הגעת לרמה הכי גבוהה! 🌟'}</span><small>אי מצוין (85%+) = בגד חדש ועלייה ברמה</small></span></button>`+(allIslands().some(i=>i.kind!=='daily')?'':`<button class="dancecard dempty" data-act="tab" data-tab="camera"><span class="de">📸</span><span class="ft"><b>הסטודיו מחכה לחומר הראשון שלך!</b><span>צלמי חומר בכל מקצוע שאת רוצה ללמוד, והריקוד הראשון שלך יופיע כאן 🎶</span><small>לחצי כאן כדי לצלם</small></span></button>`)}
+  return `<button class="dancecard" data-act="danceAll">${dancerSVG(lv,66)}<span class="ft"><small>רמת ריקוד ${lv+1} מתוך ${DANCE_LV.length}</small><b>${esc(D.n)}</b><span>${nx?`האי הבא שתכבשי ← ${nx.e} ${esc(nx.it)}`:'הגעת לרמה הכי גבוהה! 🌟'}</span><small>אי מצוין (85%+) = בגד חדש ועלייה ברמה</small></span></button>`+(allIslands().some(i=>i.kind!=='daily')||S.pendingPhotos?'':`<button class="dancecard dempty" data-act="tab" data-tab="camera"><span class="de">📸</span><span class="ft"><b>הסטודיו מחכה לחומר הראשון שלך!</b><span>צלמי חומר בכל מקצוע שאת רוצה ללמוד, והריקוד הראשון שלך יופיע כאן 🎶</span><small>לחצי כאן כדי לצלם</small></span></button>`)}
 function checkDance(){if(!danceOn()||!S.loaded||S.danceModal)return;const p=S.progress,lv=danceLv();
   if(isParent())return;
   if(!p.danceIntro){S.danceModal={kind:'intro'};return}
