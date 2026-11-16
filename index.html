@@ -506,7 +506,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='50';
+const APP_VERSION='51';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -906,7 +906,7 @@ function allIslands(){
   const list=book.length?book:legacy?ISLANDS.map(i=>({...i,kind:'base'})):[];
   if(S.classWords.length>=4)list.push({id:'cove',kind:'class',name:'מפרץ המטמון',en:'Treasure Cove',topic:'מילים מהכיתה',words:S.classWords.map(w=>({en:w.en,he:w.he,ex:w.ex||''}))});
   dailyIslands().forEach(x=>list.push(x));
-  (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule||l.roundsFor||l.dailyStory)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,stories:Array.isArray(l.stories)?l.stories.filter(x=>x&&x.qs&&x.qs.length&&(x.text||x.paras)):[],lang:l.lang==='he'?'he':undefined,mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],zoomId:l.zoomId||'',zoomDate:l.zoomDate||'',created:l.created||''})});
+  (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule||l.roundsFor||l.dailyStory)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,stories:Array.isArray(l.stories)?l.stories.filter(x=>x&&x.qs&&x.qs.length&&(x.text||x.paras)):[],lang:l.lang==='he'||(l.subject&&!/אנגלית|english/i.test(l.subject))?'he':undefined,subject:l.subject||'',mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],zoomId:l.zoomId||'',zoomDate:l.zoomDate||'',created:l.created||''})});
   return list;
 }
 /* ---- סיפור יומי: קטע אחד ביום. הקטע הבא נפתח ביום שאחרי שקראו את הקטע הקודם ---- */
@@ -933,6 +933,7 @@ function tracks(){
   if(LANG()==='ar'){const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));const F=arFixedIslands();
     const T=[{k:'letters',t:'אותיות',ic:'🔤',flag:'#f2a93b',fixed:1,list:[F[0]]},{k:'numbers',t:'מספרים',ic:'🔢',flag:'#2f8a63',fixed:1,list:[F[1]]},{k:'class',t:'מהכיתה',ic:'🏫',flag:'#d8572a',none:'כל נווי המדבר נכבשו!',empty:'יופיע כשיעלה צילום מהכיתה',list:all.filter(i=>i.kind==='lesson').sort(byC)}];
     _trk=T.map(t=>{const list=t.list;const active=t.fixed?list[0]:list.find(i=>!isDone(i))||null;const done=t.fixed?[]:list.filter(isDone);const started=t.fixed?[]:list.filter(i=>i!==active&&!isDone(i)&&S.progress.best[i.id]);const queue=t.fixed?[]:list.filter(i=>i!==active&&!isDone(i)&&!S.progress.best[i.id]);return {...t,active,done,started,queue,none:list.length?t.none:t.empty}});return _trk}
+  if(SHL()){_trk=subjectTracks(all);const dc=dailyCurrent();if(dc)_trk.push({k:'daily',t:'סיפור יומי',ic:'📖',flag:'#f0c35e',active:dc.isl,done:[],started:[],queue:[],quiet:true,dailyDone:dc.doneToday,dailyLast:dc.last,none:''});return _trk}
   if(!book.length&&(!S.profile||S.profile.child==='yuvik')){_trk=null;return null}
   const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));
   const lists={
@@ -956,6 +957,18 @@ function tracks(){
   const dc=dailyCurrent();if(dc)_trk.push({k:'daily',t:'סיפור יומי',ic:'📖',flag:'#f0c35e',active:dc.isl,done:[],started:[],queue:[],quiet:true,dailyDone:dc.doneToday,dailyLast:dc.last,none:''});
   return _trk;
 }
+/* ---- שי־לי: מסלול לכל מקצוע לפי הנושא שהועלה, ועד שני ריקודים פתוחים בכל מקצוע ---- */
+const SUBJ_IC={'אנגלית':['🇬🇧','#ff6fb5'],'עברית':['📝','#b98cff'],'חשבון':['🔢','#ffcf4a'],'מתמטיקה':['🔢','#ffcf4a'],'מדעים':['🔬','#4fd1c5'],'היסטוריה':['🏛️','#f2a93b'],'תנ"ך':['📜','#e8c46a'],'גאוגרפיה':['🌍','#5ab0ff'],'מולדת':['🗺️','#5ab0ff'],'ערבית':['🌙','#ff8a65'],'ספרות':['📚','#ff9fd0'],'אזרחות':['⚖️','#7fb7ff']};
+const SUBJ_LIST=['אנגלית','עברית','חשבון','מדעים','היסטוריה','תנ"ך','גאוגרפיה','ספרות'];
+const subjOf=i=>i.subject||(i.lang==='he'?'עברית':'אנגלית');
+function subjectTracks(all){const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));const PAL=['#ff6fb5','#b98cff','#4fd1c5','#ffcf4a','#5ab0ff','#f2a93b'];
+  const groups={};all.filter(i=>i.kind!=='daily').sort(byC).forEach(i=>{const g=subjOf(i);(groups[g]=groups[g]||[]).push(i)});const out=[];
+  Object.keys(groups).forEach((g,gi)=>{const list=groups[g],open=list.filter(i=>!isDone(i)),done=list.filter(isDone);const [ic,flag]=SUBJ_IC[g]||['🎶',PAL[gi%PAL.length]];
+    const base={k:'s'+gi,t:g,ic,flag,none:'כל הריקודים ב'+g+' הושלמו!'};
+    if(!open.length){out.push({...base,active:done[done.length-1],replay:true,done:done.slice(0,-1),started:[],queue:[]});return}
+    const rest=open.slice(2);out.push({...base,active:open[0],done,started:rest.filter(i=>S.progress.best[i.id]),queue:rest.filter(i=>!S.progress.best[i.id])});
+    if(open[1])out.push({...base,k:'s'+gi+'b',lane:2,active:open[1],done:[],started:[],queue:[]})});
+  return out}
 const classSlots=()=>['gil','ariel','shaili'].includes((S.profile&&S.profile.child)||CHILD)?2:1;
 const activeIds=()=>{const T=tracks();return T?T.filter(t=>t.active).map(t=>t.active.id):[]};
 const daysSince=d=>d?Math.max(0,Math.round((new Date(today())-new Date(d))/864e5)):0;
@@ -1141,9 +1154,9 @@ function viewMap(){
       ${nodes}
     </svg></section>
     ${archive}
-    <p class="maphint">${T.some(t=>t.active||t.done.length)?(classSlots()>1?'אפשר לשחק בשני מגרשים במקביל. כשמנצחים באחד':'בכל מסלול יש אי אחד פעיל. כשכובשים אותו')+' (70% ברוב התחנות) נפתח הבא בתור.':(SHL()?'עוד אין ריקודים. כשתצלמי חומר באנגלית בלשונית "צילום", הריקוד הראשון שלך יופיע כאן 💃':'עוד אין איים. כשאבא יעלה חומר מהכיתה, האי הראשון יופיע כאן.')}</p>`;
+    <p class="maphint">${T.some(t=>t.active||t.done.length)?SHL()?'לכל מקצוע יש מסלול משלו, ואפשר לרקוד כמה ריקודים במקביל. ריקוד שמסיימים ב־85% ומעלה נותן בגד חדש 💃':(classSlots()>1?'אפשר לשחק בשני מגרשים במקביל. כשמנצחים באחד':'בכל מסלול יש אי אחד פעיל. כשכובשים אותו')+' (70% ברוב התחנות) נפתח הבא בתור.':(SHL()?'עוד אין ריקודים. כשתצלמי חומר בלשונית "צילום" (בכל מקצוע), הריקוד הראשון שלך יופיע כאן 💃':'עוד אין איים. כשאבא יעלה חומר מהכיתה, האי הראשון יופיע כאן.')}</p>`;
 }
-function trackLabel(i){const t=TRACKS.find(x=>x.k===trackOf(i))||MATH_TRACKS.find(x=>x.k===trackOf(i))||(trackOf(i)==='daily'?{ic:'📖',t:'סיפור יומי'}:null);return t?t.ic+' '+t.t:''}
+function trackLabel(i){if(SHL()&&i.kind!=='daily'){const g=subjOf(i);return ((SUBJ_IC[g]||['🎶'])[0])+' '+g}const t=TRACKS.find(x=>x.k===trackOf(i))||MATH_TRACKS.find(x=>x.k===trackOf(i))||(trackOf(i)==='daily'?{ic:'📖',t:'סיפור יומי'}:null);return t?t.ic+' '+t.t:''}
 function viewMapLegacy(){
   const isl=allIslands();const n=isl.length;
   const W=360,H=Math.max(500,n*96+110);
@@ -1883,7 +1896,7 @@ function refreshUploadUI(){
   if(changed){const cb=$('#camBadge');const n=S.shots.filter(s=>s.status!=='ok').length;cb.hidden=!n;cb.textContent=n}
   setSync();
 }
-function belongHTML(id){const zs=(feat('zoom')?S.zoom:[]).filter(z=>z.done||(z.recs||[]).length).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||''))).slice(0,4);
+function belongHTML(id){if(SHL())return `<label>באיזה מקצוע? <b style="color:var(--signal)">*</b><select id="${id}" required><option value="" selected disabled>בחרי…</option>${SUBJ_LIST.map(g=>`<option value="subj:${esc(g)}">${(SUBJ_IC[g]||['🎶'])[0]} ${esc(g)}</option>`).join('')}<option value="subj:אחר">🎶 מקצוע אחר</option></select></label><p class="sub" style="margin:4px 0 0">כל העלאה הופכת לריקוד חדש במקצוע הזה. אפשר להעלות כמה שרוצים 💃</p>`;const zs=(feat('zoom')?S.zoom:[]).filter(z=>z.done||(z.recs||[]).length).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||''))).slice(0,4);
   const T=tracks();const cur=T&&(T.find(t=>t.k==='class')||{}).active;
   return `<label>למה זה שייך? <b style="color:var(--signal)">*</b><select id="${id}" required><option value="" selected disabled>בחרי…</option>
     ${zs.map(z=>`<option value="zoom:${esc(z.id)}">💻 שיעור זום ${dayName(z.date)} ${fmtDate(z.date)}${z.teacher?' · '+esc(z.teacher):''}</option>`).join('')}
@@ -1892,6 +1905,7 @@ function belongHTML(id){const zs=(feat('zoom')?S.zoom:[]).filter(z=>z.done||(z.r
 function zoomMeta(selId){const v=($('#'+selId)||{}).value||'';
   if(v.startsWith('zoom:')){const z=S.zoom.find(x=>x.id===v.slice(5));return z?{zoomId:z.id,zoomDate:z.date,tag:'zoom '+z.date}:{}}
   if(v==='class-add'){const T=tracks();const cur=T&&(T.find(t=>t.k==='class')||{}).active;return {tag:'class-add '+(cur?cur.id+' ('+cur.name+')':'')}}
+  if(v.startsWith('subj:'))return {tag:'class-new subject:'+v.slice(5)};
   if(v==='class-new')return {tag:'class-new'};return null}
 function viewCamera(){
   const fresh=S.shots.filter(s=>s.status==='new');
@@ -2749,7 +2763,7 @@ function dancerSVG(lv,size){const L=k=>lv>=k;const top=L(9)?'#ffcf4a':L(6)?'#ff3
   ${L(7)?'<path d="M50 14 L52 4 L56 11 L60 2 L64 11 L68 4 L70 14Z" fill="#ffcf4a" stroke="#c99a12" stroke-width="1"/>':''}
   ${L(9)?'<g fill="#fff">'+[[14,30],[104,26],[18,96],[106,100]].map(([x,y])=>`<path d="M${x} ${y-5} l1.5 4 4 1.5 -4 1.5 -1.5 4 -1.5 -4 -4 -1.5 4 -1.5z"/>`).join('')+'</g>':''}</svg>`}
 function danceCardHTML(){if(!danceOn())return '';const lv=danceLv(),D=DANCE_LV[lv],nx=DANCE_LV[lv+1];
-  return `<button class="dancecard" data-act="danceAll">${dancerSVG(lv,66)}<span class="ft"><small>רמת ריקוד ${lv+1} מתוך ${DANCE_LV.length}</small><b>${esc(D.n)}</b><span>${nx?`האי הבא שתכבשי ← ${nx.e} ${esc(nx.it)}`:'הגעת לרמה הכי גבוהה! 🌟'}</span><small>אי מצוין (85%+) = בגד חדש ועלייה ברמה</small></span></button>`+(allIslands().some(i=>i.kind!=='daily')?'':`<button class="dancecard dempty" data-act="tab" data-tab="camera"><span class="de">📸</span><span class="ft"><b>הסטודיו מחכה לחומר הראשון שלך!</b><span>צלמי דף באנגלית שאת רוצה ללמוד, והריקוד הראשון שלך יופיע כאן 🎶</span><small>לחצי כאן כדי לצלם</small></span></button>`)}
+  return `<button class="dancecard" data-act="danceAll">${dancerSVG(lv,66)}<span class="ft"><small>רמת ריקוד ${lv+1} מתוך ${DANCE_LV.length}</small><b>${esc(D.n)}</b><span>${nx?`האי הבא שתכבשי ← ${nx.e} ${esc(nx.it)}`:'הגעת לרמה הכי גבוהה! 🌟'}</span><small>אי מצוין (85%+) = בגד חדש ועלייה ברמה</small></span></button>`+(allIslands().some(i=>i.kind!=='daily')?'':`<button class="dancecard dempty" data-act="tab" data-tab="camera"><span class="de">📸</span><span class="ft"><b>הסטודיו מחכה לחומר הראשון שלך!</b><span>צלמי חומר בכל מקצוע שאת רוצה ללמוד, והריקוד הראשון שלך יופיע כאן 🎶</span><small>לחצי כאן כדי לצלם</small></span></button>`)}
 function checkDance(){if(!danceOn()||!S.loaded||S.danceModal)return;const p=S.progress,lv=danceLv();
   if(isParent())return;
   if(!p.danceIntro){S.danceModal={kind:'intro'};return}
@@ -2761,10 +2775,10 @@ function danceModalHTML(){const M=S.danceModal;if(!M)return '';const wrap=x=>`<d
     const next=t=>`<div class="btns"><button class="btn brass" data-act="danceStep">${t}</button></div>`;
     const ios=/iPhone|iPad|iPod/i.test(navigator.userAgent);
     let body='';
-    if(st==='hi')body=`<div class="bpop">${dancerSVG(0,140)}</div><h3>${esc(nm)}, ברוכה הבאה לסטודיו! 💃</h3><p>זה הסטודיו שלך ללימוד אנגלית. כאן כל שיעור הוא <b>ריקוד</b>, וכל ריקוד שתלמדי הופך אותך לרקדנית טובה יותר.</p><p>בואי אראה לך איך זה עובד, זה לוקח דקה 🎶</p>${next('בואי נתחיל ←')}`;
+    if(st==='hi')body=`<div class="bpop">${dancerSVG(0,140)}</div><h3>${esc(nm)}, ברוכה הבאה לסטודיו! 💃</h3><p>זה הסטודיו שלך ללמידה, בכל מקצוע שתרצי. כאן כל נושא הוא <b>ריקוד</b>, וכל ריקוד שתלמדי הופך אותך לרקדנית טובה יותר.</p><p>בואי אראה לך איך זה עובד, זה לוקח דקה 🎶</p>${next('בואי נתחיל ←')}`;
     else if(st==='install')body=`<div class="confetti">📲</div><h3>קודם כל: הסטודיו במסך הבית</h3><p>ככה תפתחי אותו בלחיצה אחת, כמו אפליקציה, ותקבלי תזכורת לאימון.</p>${ios?`<ol class="dlist"><li>לוחצים על כפתור <b>השיתוף</b> <span class="kb">⬆️</span> (בתחתית ספארי, או ב־⋯)</li><li>גוללים ובוחרים <b>"הוספה למסך הבית"</b></li><li>לוחצים <b>"הוסף"</b>, ופותחים את הסטודיו מהאייקון החדש 💃</li><li>בסטודיו לוחצים <b>"להפעיל"</b> בכרטיס התזכורת, ומאשרים 🔔</li></ol>`:`<ol class="dlist"><li>לוחצים על <b>⋮</b> (שלוש הנקודות למעלה בכרום)</li><li>בוחרים <b>"הוספה למסך הבית"</b> או <b>"התקנת אפליקציה"</b></li><li>מאשרים, ופותחים את הסטודיו מהאייקון החדש 💃</li></ol>`}${next('הבא ←')}`;
     else if(st==='push')body=`<div class="confetti">🔔</div><h3>תזכורת לאימון</h3><p>כל רקדנית טובה מתאמנת קצת כל יום. נפעיל תזכורת קטנה בשש בערב (ראשון עד חמישי), כדי שלא תפספסי אימון 🎶</p><p>אחרי הלחיצה, הטלפון ישאל אם לאשר התראות: לוחצים <b>"אישור"</b> / <b>"Allow"</b>.</p><div class="btns"><button class="btn brass" data-act="dancePush">להפעיל תזכורות 🔔</button><button class="btn ghost" data-act="danceStep">אחר כך</button></div>`;
-    else if(st==='photo')body=`<div class="confetti">📸</div><h3>איך מקבלים ריקוד חדש?</h3><ol class="dlist"><li>נכנסים ללשונית <b>"צילום"</b> למטה</li><li>מצלמים את מה שאת רוצה ללמוד באנגלית: דף מהמחברת, דף עבודה, רשימת מילים או טקסט מהספר</li><li>אחרי זמן קצר מופיע בסטודיו <b>ריקוד חדש</b>, עם משחקים ותרגולים בדיוק על החומר שלך 🎶</li></ol><p>הכי טוב לצלם חומר לפני מבחן, ככה מגיעים מוכנות 💪</p>${next('הבא ←')}`;
+    else if(st==='photo')body=`<div class="confetti">📸</div><h3>איך מקבלים ריקוד חדש?</h3><ol class="dlist"><li>נכנסים ללשונית <b>"צילום"</b> למטה</li><li>בוחרים את <b>המקצוע</b> (אנגלית, עברית, חשבון, מדעים, היסטוריה…) ומצלמים את מה שאת רוצה ללמוד: דף מהמחברת, דף עבודה, סיכום או עמוד מהספר</li><li>אחרי זמן קצר מופיע בסטודיו <b>ריקוד חדש</b>, עם משחקים ותרגולים בדיוק על החומר שלך 🎶</li><li>אפשר להעלות <b>כמה נושאים</b>, וכל אחד יהיה ריקוד משלו 💃</li></ol><p>הכי טוב לצלם חומר לפני מבחן, ככה מגיעים מוכנות 💪</p>${next('הבא ←')}`;
     else body=`<div class="bpop">${dancerSVG(3,120)}</div><h3>ככל שתתקדמי, תרקדי יותר טוב 🌟</h3><p>כל ריקוד שתסיימי ב־85% ומעלה נותן לך <b>בגד חדש</b> ומעלה אותך <b>רמת ריקוד</b>.</p><p>מתחילות באימונית ונעלי ספורט, ומגיעות עד <b>סופר רקדנית</b> עם תלבושת זהב וזרקור משלך!</p>${row(0)}<div class="btns"><button class="btn brass" data-act="danceGoCam">לצלם חומר עכשיו 📸</button><button class="btn ghost" data-act="danceClose">אחר כך</button></div>`;
     return wrap(dots+body)}
   if(M.kind==='all'){const lv=danceLv();return wrap(`<h3>רמות הריקוד שלך</h3>${DANCE_LV.map((d,k)=>`<div class="dlv ${k<=lv?'got':''} ${k===lv?'cur':''}"><span>${k<=lv?d.e:'🔒'}</span><span><b>${k+1}. ${esc(d.n)}</b><small>${k<=lv?esc(d.it):k===0?'נקודת ההתחלה':'אחרי '+k+' איים'}</small></span></div>`).join('')}<div class="btns"><button class="btn brass" data-act="danceClose">סגירה</button></div>`)}
