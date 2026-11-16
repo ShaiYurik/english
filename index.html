@@ -154,6 +154,7 @@ button.wtag{border:0;cursor:pointer;font:inherit}
 @keyframes bobg{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-4px) rotate(6deg)}}
 .newbanner small{display:block;font-weight:600;opacity:.85}
 .hintbtn{border-color:#f0c35e!important}.hintbox{background:#fff6d6;color:#4a3500;border:1.5px solid #f0c35e;border-radius:14px;padding:10px 12px;line-height:1.55;font-size:15px;text-align:start}.hintbox b{color:#8a5a00}.hintbox .hsay{float:inline-end;margin:-2px 0 4px 8px;padding:4px 10px;font-size:13px}.hgl{padding-bottom:6px;margin-bottom:6px;border-bottom:1px dashed #f0c35e}.hgl:last-child{border:0;margin:0;padding:0}
+.teaser{cursor:pointer}.teaser .tglow{animation:pdash 2.2s linear infinite}.teaser .tgift{animation:tbob 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}@keyframes tbob{50%{transform:translateY(-4px) rotate(-6deg)}}
 .newbanner.procb{background:linear-gradient(135deg,#ffe9a8,#ffc76b);color:#3a2600;cursor:default}.newbanner.procb .gift{animation:hgspin 2s ease-in-out infinite}@keyframes hgspin{0%,40%{transform:rotate(0)}50%,90%{transform:rotate(180deg)}100%{transform:rotate(360deg)}}.procslot .pring{animation:pdash 1.6s linear infinite}@keyframes pdash{to{stroke-dashoffset:-22}}.procslot .phg{animation:pblink 1.4s ease-in-out infinite}@keyframes pblink{50%{opacity:.35}}
 .newbanner.late{background:linear-gradient(135deg,#9fd3ff,#5f9be0);color:#0b1c2b}
 .newbanner .go{margin-inline-start:auto;background:#1a1206;color:#f0c35e;border-radius:999px;padding:8px 14px;white-space:nowrap}
@@ -519,7 +520,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='66';
+const APP_VERSION='67';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1109,12 +1110,23 @@ function updateMeter(){
 
 function viewMap(){
   if(!CHILD&&KEY&&S.online!==true)return `<div class="ihead"><h2>${S.online===false?'⚠️ עוד לא הצלחנו להתחבר':'מתחברים…'}</h2><p>${S.online===false?'בפתיחה הראשונה צריך חיבור לשרת כדי לדעת של מי האפליקציה. מנסים שוב לבד כל כמה שניות.':'טוענים את האיים שלך.'}</p>${S.online===false?'<p><button class="syncbtn" data-act="retry">לנסות שוב עכשיו</button></p>':''}</div>`;
-  const T=tracks();if(!T)return viewMapLegacy();
+  const T0=tracks();if(!T0)return viewMapLegacy();
   updateAlerts();
-  const W=360,H=T.length===2?330:T.length<=3?470:180+(T.length-1)*150;const pos=T.length===2?[{x:240,y:240},{x:120,y:95}]:T.length<=3?[{x:248,y:385},{x:110,y:235},{x:250,y:95}]:T.map((_,k)=>({x:k%2?110:250,y:H-85-k*150}));
+  // שי־לי: במה קומפקטית + "ריקוד הבא" שמזמין להעלות עוד חומר
+  const dnC=THEME()==='dance'&&SHL()&&!isParent();const T=dnC?[...T0,{k:'teaser',teaser:true,t:'',ic:'',active:null,done:[],started:[],queue:[]}]:T0;
+  const W=360;let H,pos;
+  if(dnC){const G=122;H=Math.max(300,70+T.length*G);pos=T.map((_,k)=>({x:k%2?112:248,y:H-82-k*G}))}
+  else{H=T.length===2?330:T.length<=3?470:180+(T.length-1)*150;pos=T.length===2?[{x:240,y:240},{x:120,y:95}]:T.length<=3?[{x:248,y:385},{x:110,y:235},{x:250,y:95}]:T.map((_,k)=>({x:k%2?110:250,y:H-85-k*150}))}
   const depths=Array.from({length:7},(_,k)=>[[40,320,180,30,330,200][k%6],k*70+40,String(5+(k*7)%27)]).map(([x,y,t])=>`<text x="${x}" y="${y}" font-size="10" fill="#5f84a0" font-family="Assistant" font-style="italic">${t}</text>`).join('');
   const tn=THEME()==='tennis',ds=THEME()==='desert',bk=THEME()==='shop',dn=THEME()==='dance';const BK=['👗','👠','👜','🧥','👟','🕶️','👒','💍'],DN=['💃','🩰','🎶','🪩','🎤','🎀','👯','⭐'];
   const nodes=T.map((t,k)=>{const {x,y}=pos[k];const i=t.active;
+    if(t.teaser)return `<g class="teaser" tabindex="0" role="button" aria-label="ריקוד חדש: צלמי חומר" data-act="tab" data-tab="camera" transform="translate(${x},${y})">
+      <g transform="translate(0,-56)"><rect x="-64" y="-14" width="128" height="26" rx="13" fill="#2a1658" stroke="#ff9fd0" stroke-width="1.5" stroke-dasharray="4 3"/><text x="0" y="4" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="13" fill="#ffd1ea">✨ הריקוד הבא שלך</text></g>
+      <ellipse class="tglow" cx="0" cy="6" rx="50" ry="26" fill="rgba(255,111,181,.14)" stroke="#ff9fd0" stroke-width="2" stroke-dasharray="7 6"/>
+      <ellipse cx="0" cy="10" rx="34" ry="13" fill="#1d1040" stroke="#ff9fd0" stroke-width="1.5"/>
+      <text class="tgift" x="0" y="14" text-anchor="middle" font-size="28">🎁</text><text x="30" y="-10" font-size="14">🔒</text>
+      <text x="0" y="46" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="13" fill="#ffe3f1">מחכה לחומר חדש</text>
+      <text x="0" y="63" text-anchor="middle" font-family="Assistant" font-size="11.5" fill="#d9c7ff">📸 צלמי נושא חדש לפתיחה</text></g>`;
     if(!i&&t.proc)return `<g class="procslot" transform="translate(${x},${y})"><text x="0" y="-44" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="${t.flag||'#f0c35e'}">${t.ic} ${esc(t.t)}</text>
       <ellipse class="pring" cx="0" cy="4" rx="40" ry="20" fill="none" stroke="${t.flag||'#f0c35e'}" stroke-width="2" stroke-dasharray="6 5"/><text class="phg" x="0" y="11" text-anchor="middle" font-size="24">⏳</text>
       <text x="0" y="44" text-anchor="middle" font-family="Assistant" font-weight="700" font-size="12" fill="${ds||bk?'#6e4e2f':'#e8eef3'}">${esc(t.none)}</text></g>`;
@@ -1147,9 +1159,9 @@ function viewMap(){
     <svg viewBox="0 0 ${W} ${H}" role="group">
       <defs><pattern id="wv" width="40" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="#174260" stroke-width="1.2"/></pattern></defs>
       ${dn?`<defs><radialGradient id="dnspot"><stop offset="0" stop-color="#fff2b0" stop-opacity=".95"/><stop offset="1" stop-color="#ffcf4a" stop-opacity="0"/></radialGradient><linearGradient id="dnfloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b1660"/><stop offset="1" stop-color="#140a2e"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#dnfloor)"/>
-      <g opacity=".22">${[0,1,2].map(k=>`<path d="M${60+k*120} 0 L${20+k*120} ${H} L${110+k*120} ${H}Z" fill="${['#ff6fb5','#ffcf4a','#7ad7ff'][k]}"/>`).join('')}</g>
+      <g opacity=".13">${[0,1,2].map(k=>`<path d="M${60+k*120} 0 L${35+k*120} ${H} L${85+k*120} ${H}Z" fill="${['#ff6fb5','#ffcf4a','#7ad7ff'][k]}"/>`).join('')}</g>
       <g stroke="#6b4fb0" stroke-width="1" opacity=".35">${[...Array(9)].map((_,k)=>`<line x1="0" y1="${H*0.15+k*H*0.1}" x2="${W}" y2="${H*0.15+k*H*0.1}"/>`).join('')}</g>
-      <text x="${W/2}" y="34" text-anchor="middle" font-size="30">🪩</text><text x="22" y="${H-22}" font-size="20">🎵</text><text x="${W-40}" y="${H*0.5}" font-size="20">🎶</text><text x="20" y="${H*0.4}" font-size="18">✨</text>
+      <text x="${W/2}" y="${dnC?28:34}" text-anchor="middle" font-size="${dnC?24:30}">🪩</text><text x="22" y="${H-22}" font-size="20">🎵</text><text x="${W-40}" y="${H*0.5}" font-size="20">🎶</text><text x="20" y="${H*0.4}" font-size="18">✨</text>
       <polyline points="${pos.slice(0,T.length).map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#ffcf4a" stroke-width="2.5" stroke-dasharray="1 9" stroke-linecap="round" opacity=".8"/>`:bk?`<defs><pattern id="tile" width="48" height="48" patternUnits="userSpaceOnUse"><rect width="48" height="48" fill="#fbf1f4"/><path d="M48 0H0V48" fill="none" stroke="#ecd3dd" stroke-width="1.5"/></pattern></defs><rect width="${W}" height="${H}" fill="url(#tile)"/>
       <g opacity=".9">${['#111','#d6001c','#2d6fb7','#7a1f3d','#2f5d50'].map((c,k)=>`<rect x="${k*W/5}" y="0" width="${W/5-4}" height="16" fill="${c}"/>`).join('')}</g>
       <text x="${W-44}" y="${H*0.5}" font-size="22">🪴</text><text x="16" y="${H-18}" font-size="22">🪞</text><text x="18" y="${H*0.36}" font-size="20">🎀</text><text x="${W-40}" y="${H-24}" font-size="22">🛒</text>
