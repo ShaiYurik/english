@@ -506,7 +506,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='54';
+const APP_VERSION='55';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1871,13 +1871,20 @@ async function compress(file){
 const FILE_OK=/^(application\/(pdf|msword|rtf|vnd\.ms-powerpoint|vnd\.openxmlformats-officedocument\.presentationml\.(presentation|slideshow)|vnd\.oasis\.opendocument\.presentation|vnd\.openxmlformats-officedocument\.wordprocessingml\.document|vnd\.oasis\.opendocument\.text)|text\/(plain|html|rtf)|message\/rfc822)$/;
 const FILE_EXT=/\.(pdf|docx?|odt|rtf|txt|html?|eml|pptx?|ppsx?|odp)$/i;
 const MAX_FILE=10*1024*1024;
+/* בלי כפילויות: כל קובץ/טקסט שכבר נשלח נשמר כחתימה, ולא נשלח שוב */
+const UPK=()=>'upsig:'+((S.profile&&S.profile.child)||CHILD||'');
+const upSigs=()=>new Set(LS.get(UPK(),[]));
+function upRemember(sig){if(!sig)return;const a=LS.get(UPK(),[]);if(!a.includes(sig)){a.push(sig);LS.set(UPK(),a.slice(-400))}}
+const fileSig=f=>'f:'+f.name+':'+f.size+':'+(f.lastModified||0);
 function addFiles(files){
-  let n=0;const imgs=[];
+  let n=0;const imgs=[];const seen=upSigs();S.shots.forEach(x=>x.sig&&seen.add(x.sig));let dup=0;
+  files=files.filter(f=>{const g=fileSig(f);if(seen.has(g)){dup++;return false}seen.add(g);f._sig=g;return true});
+  if(dup)toast(dup===1?'את הקובץ הזה כבר העלית, אין צורך שוב 🙂':dup+' קבצים כבר הועלו קודם, דילגתי עליהם 🙂');
   for(const f of files){
     if(/^image\//.test(f.type)){imgs.push(f);continue}
     if(!FILE_OK.test(f.type)&&!FILE_EXT.test(f.name)){toast('סוג קובץ לא נתמך: '+f.name);continue}
     if(f.size>MAX_FILE){toast('הקובץ גדול מ־10MB: '+f.name);continue}
-    S.shots.push({id:uid('f'),blob:f,name:f.name,file:true,status:'new'});n++;
+    S.shots.push({id:uid('f'),blob:f,name:f.name,file:true,status:'new',sig:f._sig});n++;
   }
   if(imgs.length)addShots(imgs);else if(n){sfx.tap();render()}
 }
@@ -1885,7 +1892,7 @@ async function addShots(files){
   for(const f of files){
     if(!/^image\//.test(f.type))continue;
     const blob=await compress(f);
-    S.shots.push({id:uid('p'),blob,url:URL.createObjectURL(blob),status:'new'});
+    S.shots.push({id:uid('p'),blob,url:URL.createObjectURL(blob),status:'new',sig:f._sig});
   }
   sfx.shutter();render();
 }
@@ -1929,7 +1936,7 @@ function viewCamera(){
     <h2>מתי זה הופך לתרגול?</h2>
     <p>כל ערב החומר החדש עובר עיבוד, ${SHL()?'ולמחרת מחכה לך ריקוד חדש בסטודיו. רוצה מוקדם יותר? לחצי על הכפתור ונכין אותו מהר יותר 💃':'ולמחרת מחכה לך אי חדש במפה. רוצה מוקדם יותר? אפשר לבקש מאבא לעבד עכשיו.'}</p>
     <p class="sub">ממתינים לעיבוד בדרייב: <b>${S.pendingPhotos||0}</b></p>
-    <button class="btn" data-act="reqProcess" ${S.pendingPhotos?'':'disabled'}>בקשת עיבוד עכשיו</button>
+    ${(()=>{const sent=S.pendingPhotos&&LS.get('reqfor:'+UPK(),-1)===S.pendingPhotos;return `<button class="btn" data-act="reqProcess" ${S.pendingPhotos&&!sent?'':'disabled'}>${sent?'✓ הבקשה נשלחה, החומר בהכנה':'בקשת עיבוד עכשיו'}</button>`})()}
   </section>`;
 }
 
@@ -2141,7 +2148,7 @@ document.addEventListener('click',e=>{
     case 'recStart':startRecording(el.dataset.id);break;
     case 'recStop':stopRecording(false);break;
     case 'delShot':{const s=S.shots.find(x=>x.id===el.dataset.id);if(s)URL.revokeObjectURL(s.url);S.shots=S.shots.filter(x=>x.id!==el.dataset.id);render();break;}
-    case 'reqProcess':{el.disabled=true;apiPost({action:'requestProcess',note:''}).then(()=>{sfx.ok();toast(SHL()?'הבקשה נשלחה! הריקוד שלך בהכנה 💃':'הבקשה נשלחה לאבא במייל')}).catch(err=>{toast(err.message||'לא הצלחתי לשלוח, נסי שוב');el.disabled=false});break;}
+    case 'reqProcess':{el.disabled=true;apiPost({action:'requestProcess',note:''}).then(()=>{LS.set('reqfor:'+UPK(),S.pendingPhotos||0);render();sfx.ok();toast(SHL()?'הבקשה נשלחה! הריקוד שלך בהכנה 💃':'הבקשה נשלחה לאבא במייל')}).catch(err=>{toast(err.message||'לא הצלחתי לשלוח, נסי שוב');el.disabled=false});break;}
   }
 });
 
@@ -2883,7 +2890,7 @@ let logoTaps=[];document.querySelector('.brand img').addEventListener('click',()
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('isl')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
 document.addEventListener('change',e=>{if(e.target.id==='calTT'||e.target.id==='calEX'){const f=e.target.files[0];const note=e.target.dataset.note;e.target.value='';if(f)calPhoto(f,note);return}
   if(e.target.id==='fileIn'){const files=[...e.target.files];e.target.value='';if(files.length)addFiles(files);return}
-  if(e.target.id==='camIn'||e.target.id==='galIn'){const files=[...e.target.files];e.target.value='';if(files.length)addShots(files)}});
+  if(e.target.id==='camIn'||e.target.id==='galIn'){const files=[...e.target.files];e.target.value='';if(files.length)addFiles(files)}});
 document.addEventListener('submit',e=>{
   const f=e.target;if(!f.dataset.form)return;e.preventDefault();
   if(f.dataset.form==='key'){
@@ -2911,12 +2918,13 @@ document.addEventListener('submit',e=>{
     const z=S.zoom.find(x=>x.id===f.dataset.id);if(!z)return;z.notes=(f.querySelector('input').value||'').trim();if(!z.notes)return;saveState('zoom');toast('נשמר');render();
   }else if(f.dataset.form==='paste'){
     const t=($('#pasteIn').value||'').trim();if(!t){toast('אין מה לשלוח');return}const zm=zoomMeta('pasteZoom');if(!zm){toast('בחרי למה זה שייך');return}
+    const tsig='t:'+t.slice(0,300);if(upSigs().has(tsig)){toast('את זה כבר שלחת, אין צורך שוב 🙂');$('#pasteIn').value='';return}upRemember(tsig);
     const blob=new Blob([t],{type:'text/plain'});const id=uid('f');
     S.shots.push({id,blob,name:'טקסט שהודבק.txt',file:true,status:'wait'});queueUpload({id,kind:'file',blob,meta:{note:'טקסט שהודבק',name:'טקסט שהודבק.txt',...zm}});
     sfx.ok();if(/(drive|docs)\.google\.com/.test(t))S.confirm=null,setTimeout(()=>alert('נשלח! שימי לב: זה קישור לקובץ בדרייב שלך, ואנחנו לא יכולים לפתוח אותו.\nכדי שזה יעבוד: בדרייב לוחצים על הקובץ ← ⋮ ← "שיתוף" ← "כל מי שיש לו את הקישור".\nאו פשוט: מורידים את הקובץ לטלפון ומצרפים אותו ב"צרף קובץ" 📎'),50);else toast('נשלח לדרייב');render();
   }else if(f.dataset.form==='shots'){
     const note=($('#shotNote')?.value||'').trim();const zm=zoomMeta('shotZoom');if(!zm){toast('בחרי למה זה שייך');return}
-    S.shots.filter(s=>s.status==='new').forEach(s=>{s.status='wait';queueUpload({id:s.id,kind:s.file?'file':'photo',blob:s.blob,meta:s.file?{note,name:s.name,...zm}:{note,...zm}})});
+    S.shots.filter(s=>s.status==='new').forEach(s=>{s.status='wait';upRemember(s.sig);queueUpload({id:s.id,kind:s.file?'file':'photo',blob:s.blob,meta:s.file?{note,name:s.name,...zm}:{note,...zm}})});
     sfx.ok();toast('הצילומים נשלחים לדרייב');render();
   }
 });

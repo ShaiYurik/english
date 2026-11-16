@@ -21,6 +21,7 @@ More than one conversation may work on it, so **never overwrite someone else's w
 - gil: worlds `en` (tennis theme) and `math` (client-side math islands, `mathFixedIslands`).
 - ariel: world `en` (shop theme: fashion mall, wallet ₪ from station scores, ₪50 coupon per great island, closet; state in `progress.mall`). Her Drive folders are created by the server on first use (`provision_`).
 - shaili: world `en` (dance theme: studio stage, 10 dance levels to 'סופר רקדנית', one outfit item per great island; state in `progress.danceLv`). Server entry `auto:true` like ariel. All subjects, not only English: each lesson JSON for her needs `subject` (e.g. 'אנגלית', 'מדעים', 'היסטוריה'; taken from the upload tag `class-new subject:X`); non-English subjects are Hebrew islands (use `games`). Each subject is its own track on her map. For a general subject build: `text` {title, paras} = summary (read aloud in Hebrew), and `games`: `mc` (questions), `tf`, `pairs` (memory game), `order`.
+  When processing her uploads: same topic as an existing island → add the material to that island (more games/rounds), different topic → new island. Never create duplicate islands; identical uploads (same file/link) are processed once and the extra copies trashed.
 If you add or remove a world on purpose, update `EXPECT` in tools/smoke.js in the same commit.
 
 ## Architecture (short)
