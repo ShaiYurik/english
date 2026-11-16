@@ -1,5 +1,6 @@
 # Changes
 
+- v43 (2026-11-16): Yuval math, island 2 levels 3–4 made easier: smaller numbers, a 'before we start' worked-example card, and guided step-by-step solving (subtraction: opposite → same/different signs → distance → sign; missing number: choose the inverse exercise → compute) for the first 2 correct answers, then solo. Generic `learn` and `guide()` support per level.
 - v42 (2026-11-16): FIX lost math progress. The math world used its own outbox/cache namespace while sharing the English server state, so switching worlds could overwrite progress. Math now shares the English namespace; loading merges progress instead of replacing it (ym, mall and other device-only keys are kept); Yuval's math progress self-heals from the session log; stale math outbox entries are dropped.
 - v41 (2026-11-15): Hebrew islands get their own 'עברית' track on the map (they were queued behind the two open class islands); map layout supports 4+ tracks.
 - v40 (2026-11-15): lesson files can set `"lang":"he"` for a Hebrew island (RTL text, Hebrew font, no English speech).
