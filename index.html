@@ -153,7 +153,7 @@ button.wtag{border:0;cursor:pointer;font:inherit}
 .newbanner .gift{font-size:32px;animation:bobg 1.2s ease-in-out infinite}
 @keyframes bobg{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-4px) rotate(6deg)}}
 .newbanner small{display:block;font-weight:600;opacity:.85}
-.hintbtn{border-color:#f0c35e!important}.hintbox{background:#fff6d6;color:#4a3500;border:1.5px solid #f0c35e;border-radius:14px;padding:10px 12px;line-height:1.55;font-size:15px;text-align:start}.hintbox b{color:#8a5a00}
+.hintbtn{border-color:#f0c35e!important}.hintbox{background:#fff6d6;color:#4a3500;border:1.5px solid #f0c35e;border-radius:14px;padding:10px 12px;line-height:1.55;font-size:15px;text-align:start}.hintbox b{color:#8a5a00}.hgl{padding-bottom:6px;margin-bottom:6px;border-bottom:1px dashed #f0c35e}.hgl:last-child{border:0;margin:0;padding:0}
 .newbanner.procb{background:linear-gradient(135deg,#ffe9a8,#ffc76b);color:#3a2600;cursor:default}.newbanner.procb .gift{animation:hgspin 2s ease-in-out infinite}@keyframes hgspin{0%,40%{transform:rotate(0)}50%,90%{transform:rotate(180deg)}100%{transform:rotate(360deg)}}.procslot .pring{animation:pdash 1.6s linear infinite}@keyframes pdash{to{stroke-dashoffset:-22}}.procslot .phg{animation:pblink 1.4s ease-in-out infinite}@keyframes pblink{50%{opacity:.35}}
 .newbanner.late{background:linear-gradient(135deg,#9fd3ff,#5f9be0);color:#0b1c2b}
 .newbanner .go{margin-inline-start:auto;background:#1a1206;color:#f0c35e;border-radius:999px;padding:8px 14px;white-space:nowrap}
@@ -518,7 +518,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='58';
+const APP_VERSION='59';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -918,7 +918,7 @@ function allIslands(){
   const list=book.length?book:legacy?ISLANDS.map(i=>({...i,kind:'base'})):[];
   if(S.classWords.length>=4)list.push({id:'cove',kind:'class',name:'מפרץ המטמון',en:'Treasure Cove',topic:'מילים מהכיתה',words:S.classWords.map(w=>({en:w.en,he:w.he,ex:w.ex||''}))});
   dailyIslands().forEach(x=>list.push(x));
-  (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule||l.roundsFor||l.dailyStory)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,stories:Array.isArray(l.stories)?l.stories.filter(x=>x&&x.qs&&x.qs.length&&(x.text||x.paras)):[],lang:l.lang==='he'||(l.subject&&!/אנגלית|english/i.test(l.subject))?'he':undefined,subject:l.subject||'',mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],zoomId:l.zoomId||'',zoomDate:l.zoomDate||'',created:l.created||''})});
+  (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule||l.roundsFor||l.dailyStory)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,stories:Array.isArray(l.stories)?l.stories.filter(x=>x&&x.qs&&x.qs.length&&(x.text||x.paras)):[],lang:l.lang==='he'||(l.subject&&!/אנגלית|english/i.test(l.subject))?'he':undefined,subject:l.subject||'',terms:l.terms&&typeof l.terms==='object'?l.terms:{},mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],zoomId:l.zoomId||'',zoomDate:l.zoomDate||'',created:l.created||''})});
   return list;
 }
 /* ---- סיפור יומי: קטע אחד ביום. הקטע הבא נפתח ביום שאחרי שקראו את הקטע הקודם ---- */
@@ -1416,10 +1416,17 @@ function oddFeedback(q,sc){const pk=q.o[sc.picked[0]];
 function hintPara(i,txt){if(!i||!i.text||!i.text.paras||!i.text.paras.length)return '';const norm=w=>w.replace(/[^\u0590-\u05FFA-Za-z0-9]/g,'').toLowerCase();
   const ws=[...new Set(String(txt).split(/\s+/).map(norm).filter(w=>w.length>=3))];let best='',bs=0;
   i.text.paras.forEach(p=>{const P=p.toLowerCase();let sc=0;ws.forEach(w=>{if(P.includes(w))sc+=2;else if(/^[\u0590-\u05FF]/.test(w)&&w.length>=4&&P.includes(w.slice(1)))sc+=1});if(sc>bs){bs=sc;best=p}});return bs>=2?best:''}
-function hintOf(i,q,kind){if(q.hint)return {t:q.hint};const qs=kind==='tf'?q.s:(q.q||'')+' '+(q.a||[]).map(k=>q.o[k]).join(' ');const p=hintPara(i,qs);if(p)return {t:p,from:1};return kind==='mc'&&q.o&&q.o.length>=4&&(q.a||[]).length===1?{elim:1}:null}
+// מילים מהשאלה שיש להן פירוש: מושגים של האי (terms), מילון הטקסט, ומילים באנגלית מרשימת המילים
+function hintGloss(i,txt,opts){const T=String(txt||'');const out=[];const seen=new Set();const O=(opts||[]).map(o=>String(o).trim().toLowerCase());const add=(k,v)=>{const kk=String(k).toLowerCase();if(!v||seen.has(kk))return;const vv=String(v).trim().toLowerCase();if(O.some(o=>o&&(o===vv||vv.includes(o)||o.includes(vv))))return;const wd=x=>x.replace(/[^\u0590-\u05FFa-z0-9 ]|\u05BE/g,' ').split(/\s+/).filter(w=>w.length>=3);const vw=wd(vv);if(O.some(o=>{const ow=wd(o);return ow.filter(w=>vw.some(x=>x.includes(w)||w.includes(x))).length>=2}))return;seen.add(kk);out.push([k,v])};
+  Object.entries(i.terms||{}).sort((a,b)=>b[0].length-a[0].length).forEach(([k,v])=>{if(k&&T.includes(k)&&!out.some(([x])=>x.includes(k)))add(k,v)});
+  Object.entries((i.text&&i.text.gloss)||{}).forEach(([k,v])=>{if(k&&new RegExp('\\b'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i').test(T))add(k,v)});
+  (i.words||[]).forEach(w=>{if(w&&w.en&&w.he&&new RegExp('\\b'+w.en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i').test(T))add(w.en,w.he)});return out.slice(0,3)}
+function hintOf(i,q,kind){const qt=kind==='tf'?q.s:(q.q||'');const gl=hintGloss(i,qt,kind==='mc'?q.o:[q.s]);if(q.hint)return {t:q.hint,gl};const qs=kind==='tf'?q.s:(q.q||'')+' '+(q.a||[]).map(k=>q.o[k]).join(' ');const p=hintPara(i,qs);if(p)return {t:p,from:1,gl};if(gl.length)return {gl};return kind==='mc'&&q.o&&q.o.length>=4&&(q.a||[]).length===1?{elim:1}:null}
 function hintHTML(sc,i,q,kind){if(sc.answered||WORLD==='math'&&kind==='tf')return '';const h=hintOf(i,q,kind);if(!h)return '';
   if(sc.hintAt!==sc.idx)return `<div><button class="btn ghost small hintbtn" data-act="gHint">💡 רמז</button></div>`;
-  return h.elim?`<div class="hintbox">💡 מחקתי שתי תשובות שגויות. נשארו שתיים, איזו נכונה?</div>`:`<div class="hintbox">💡 ${h.from?'<b>רמז מהסיכום:</b> ':''}${tx(h.t)}</div>`}
+  if(h.elim)return `<div class="hintbox">💡 מחקתי שתי תשובות שגויות. נשארו שתיים, איזו נכונה?</div>`;
+  const gl=(h.gl||[]).map(([k,v])=>`<div class="hgl">📖 <b>${isLatin(k)?`<span class="en">${esc(k)}</span>`:esc(k)}</b> = ${esc(v)}</div>`).join('');
+  return `<div class="hintbox">${gl}${h.t?`<div>💡 ${h.from?'<b>רמז מהסיכום:</b> ':''}${tx(h.t)}</div>`:''}</div>`}
 function viewGame(){
   const sc=S.screen;const i=islandById(sc.id);
   if(sc.kind==='mc'){
