@@ -495,7 +495,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='43';
+const APP_VERSION='44';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -2261,28 +2261,28 @@ const YM_STAGES=[
   {n:'חיבור בסימנים שונים',gen(){let a=ri(2,40),b=ri(2,40);while(a===b)b=ri(2,40);if(Math.random()<.5)a=-a;else b=-b;if(Math.random()<.5)[a,b]=[b,a];const A=Math.abs(a),B=Math.abs(b),big=A>B?a:b;
     return {he:'חשבי:',m:`${qp(a)} + ${qp(b)} =`,a:qI(a+b),alt:[[qI(Math.sign(big)*(A+B)),'diffsign'],[qI(-Math.sign(big)*(A+B)),'diffsign']],tag:'diffsign',hint:'מחסרים את המרחקים. של מי הסימן?',steps:[['סימנים שונים, מחסרים את המרחקים:',`${Math.max(A,B)} ${MI} ${Math.min(A,B)} = ${Math.abs(A-B)}`],[`הסימן של ${qt(big)}, כי הוא רחוק יותר מ־0:`,qt(a+b)]]}}},
   {n:'חיסור: הופכים לחיבור הנגדי',
-   learn:[['חיסור הופכים לחיבור. משנים שני דברים: את ה־"−" ל־"+", ואת הסימן של המספר השני:',`(${MI}5) ${MI} (${MI}7) = (${MI}5) + (+7)`],['ואז פותרים חיבור רגיל. כאן הסימנים שונים, אז מחסרים את המרחקים: 7 − 5 = 2',`= +2`],['לזכור: מינוס ואחריו מינוס נותן פלוס',`${MI} (${MI}7) = + 7`]],
-   gen(){const a=nz(-12,12),b=nz(-12,12);return {raw:{a,b},he:'חשבי:',m:`${qp(a)} ${MI} ${qp(b)} =`,a:qI(a-b),alt:[[qI(a+b),b<0?'minusminus':'brackets']],tag:'minusminus',hint:'הופכים את החיסור לחיבור של הנגדי.',steps:[['משנים חיסור לחיבור המספר הנגדי:',`${qp(a)} ${MI} ${qp(b)} = ${qp(a)} + ${qp(-b)}`],['מחשבים:',`= ${qt(a-b)}`]]}},
-   guide(it){const {a,b}=it.raw,c=-b,A=Math.abs(a),C=Math.abs(c),same=(a>0)===(c>0),r=a+c;const P=[
-     {he:'שלב 1: הופכים את החיסור לחיבור. מה כותבים במקום ה־?',m:`${qp(a)} ${MI} ${qp(b)} = ${qp(a)} + (?)`,a:qI(c),alt:[[qI(b),'minusminus']],tag:'minusminus',hint:`הנגדי של ${bd(qp(b))}: אותו מספר עם סימן הפוך.`,show:`${qp(a)} + ${qp(c)}`},
-     {he:'שלב 2: לשני המספרים בתרגיל החיבור יש סימנים…',m:`${qp(a)} + ${qp(c)}`,o:['זהים','שונים'],ai:same?0:1,tag:'diffsign',hint:'בודקים: שניהם + או שניהם −? או אחד מכל סוג?',show:same?'סימנים זהים':'סימנים שונים'},
-     same?{he:'שלב 3: סימנים זהים ← מחברים את המרחקים (בלי סימנים):',m:`${A} + ${C} =`,a:qI(A+C),tag:'arith',hint:'חיבור רגיל.',show:`${A} + ${C} = ${A+C}`}
-         :{he:'שלב 3: סימנים שונים ← מחסרים: המרחק הגדול פחות הקטן:',m:`${Math.max(A,C)} ${MI} ${Math.min(A,C)} =`,a:qI(Math.abs(A-C)),tag:'arith',hint:'חיסור רגיל, הגדול פחות הקטן.',show:`${Math.max(A,C)} ${MI} ${Math.min(A,C)} = ${Math.abs(A-C)}`}];
-     if(r!==0)P.push({he:same?'שלב 4: סימנים זהים ← התוצאה מקבלת את אותו סימן. מה הסימן?':`שלב 4: הסימן של המספר הרחוק יותר מ־0 (${bd(qp(A>C?a:c))}). מה הסימן?`,m:'',o:['+',MI],ai:r>0?0:1,tag:'sign',hint:same?'אותו סימן כמו של שני המספרים.':'למי מהשניים יש מרחק גדול יותר מ־0?',show:`התוצאה: ${qt(r)}`});
+   learn:[['כלל 1: שני מינוסים צמודים הופכים לפלוס.',`(${MI}10) ${MI} (${MI}3)  →  ${MI}10 + 3`],['כלל 2: מינוס ופלוס נשאר מינוס.',`(+5) ${MI} (+8)  →  5 ${MI} 8`],['ואז חושבים על כסף: מינוס זה חוב, פלוס זה כסף שיש לי.',''],['חייבת 10 ומקבלת 3, אז עדיין חייבת 7:',`${MI}10 + 3 = ${MI}7`],['יש לי 5 ומשלמת 8, אז חסר לי 3:',`5 ${MI} 8 = ${MI}3`]],
+   gen(){const a=nz(-12,12),b=nz(-12,12),fl=`${qt(a)} ${b>0?MI:'+'} ${Math.abs(b)}`;return {raw:{a,b},he:'חשבי:',m:`${qp(a)} ${MI} ${qp(b)} =`,a:qI(a-b),alt:[[qI(a+b),b<0?'minusminus':'brackets']],tag:'minusminus',hint:'קודם מורידים סוגריים: שני מינוסים צמודים הופכים לפלוס.',steps:[['מורידים סוגריים:',`${qp(a)} ${MI} ${qp(b)}  →  ${fl}`],['חושבים על כסף (מינוס זה חוב, פלוס זה כסף):',`${fl} = ${qt(a-b)}`]]}},
+   guide(it){const {a,b}=it.raw,y=-b,r=a+y;const flat=`${qt(a)} ${y<0?MI:'+'} ${Math.abs(y)}`;const o=shuffle([flat,`${qt(a)} ${y<0?'+':MI} ${Math.abs(y)}`,`${qt(-a)} ${y<0?MI:'+'} ${Math.abs(y)}`]);
+     const money=`${a<0?'חייבת '+Math.abs(a):'יש לי '+a}, ${y<0?'ומשלמת '+Math.abs(y):'ומקבלת '+y}.`;
+     const P=[{he:'שלב 1: מורידים סוגריים. איך זה נראה?',m:`${qp(a)} ${MI} ${qp(b)}`,o,ai:o.indexOf(flat),tag:'minusminus',hint:'שני מינוסים צמודים = פלוס. מינוס ופלוס = מינוס.',show:flat}];
+     if(r===0)P.push({he:`שלב 2: ${money} כמה נשאר?`,m:flat+' =',a:qI(0),tag:'arith',hint:'מקבלת בדיוק כמו שחייבת.',show:'= 0'});
+     else{P.push({he:`שלב 2: ${money} בסוף יש לך כסף או חוב?`,m:flat,o:['כסף (+)','חוב ('+MI+')'],ai:r>0?0:1,tag:'sign',hint:'מה גדול יותר: החוב או הכסף?',show:r>0?'בסוף יש כסף ← +':'בסוף יש חוב ← '+MI});
+       P.push({he:`שלב 3: כמה ${r>0?'כסף יש':'חוב יש'} בסוף? (רק המספר)`,m:flat,a:qI(Math.abs(r)),tag:'arith',hint:(a<0)===(y<0)?'חוב ועוד חוב, או כסף ועוד כסף: מחברים.':'כסף מול חוב: מחסרים את הקטן מהגדול.',show:`${flat} = ${qt(r)}`})}
      return P}},
   {n:'מספר חסר',
-   learn:[['מחפשים מספר שיהיה במקום ה־☐ כך שהתרגיל יהיה נכון. עושים את הפעולה ההפוכה.',''],['☐ ואחריו חיסור ← מחברים את התוצאה ואת המספר:',`☐ ${MI} (${MI}6) = (+10)  ←  ☐ = (+10) + (${MI}6) = 4`],['☐ ואחריו חיבור ← מחסרים: התוצאה פחות המספר:',`☐ + (+3) = (${MI}2)  ←  ☐ = (${MI}2) ${MI} (+3) = ${MI}5`],['מספר ואחריו "− ☐" ← המספר הראשון פחות התוצאה:',`(+8) ${MI} ☐ = (+5)  ←  ☐ = 8 ${MI} 5 = 3`],['ובסוף בודקים: מציבים את המספר במקום ה־☐',`(+4) ${MI} (${MI}6) = 4 + 6 = 10 ✓`]],
+   learn:[['שלב 1: מורידים סוגריים, כמו ברמה הקודמת.',`☐ ${MI} (${MI}6) = 10  →  ☐ + 6 = 10`],['שלב 2: שואלים שאלה פשוטה: איזה מספר ועוד 6 נותן 10?','☐ = 4'],['בודקים: מציבים 4 במקום ה־☐','4 + 6 = 10 ✓']],
    gen(){const t=ri(0,2),b=nz(-10,10),c=nz(-10,10);
     if(t===0)return {raw:{t,b,c},he:'מהו המספר החסר?',m:`☐ ${MI} ${qp(b)} = ${qp(c)}`,a:qI(c+b),alt:[[qI(c-b),'minusminus']],tag:'missing',hint:'איזה מספר, אם מחסרים ממנו '+bd(qp(b))+', נותן '+bd(qp(c))+'?',steps:[['☐ = התוצאה + המספר שחיסרנו:',`☐ = ${qp(c)} + ${qp(b)} = ${qt(c+b)}`],['בדיקה:',`${qp(c+b)} ${MI} ${qp(b)} = ${qt(c)}`]]};
     if(t===1){let a=nz(-10,10);while(a===c)a=nz(-10,10);return {raw:{t,a,c},he:'מהו המספר החסר?',m:`${qp(a)} ${MI} ☐ = ${qp(c)}`,a:qI(a-c),alt:[[qI(c-a),'sign']],tag:'missing',hint:'כמה צריך להוריד מ־'+bd(qp(a))+' כדי להגיע ל־'+bd(qp(c))+'?',steps:[['☐ = המספר הראשון פחות התוצאה:',`☐ = ${qp(a)} ${MI} ${qp(c)} = ${qt(a-c)}`],['בדיקה:',`${qp(a)} ${MI} ${qp(a-c)} = ${qt(c)}`]]}}
     return {raw:{t,b,c},he:'מהו המספר החסר?',m:`☐ + ${qp(b)} = ${qp(c)}`,a:qI(c-b),alt:[[qI(c+b),'sign']],tag:'missing',hint:'מה מוסיפים ל־'+bd(qp(b))+' כדי לקבל '+bd(qp(c))+'?',steps:[['☐ = התוצאה פחות המספר:',`☐ = ${qp(c)} ${MI} ${qp(b)} = ${qt(c-b)}`]]}},
-   guide(it){const r=it.raw;let opts,right,calc,ans;
-     if(r.t===0){right=`☐ = ${qp(r.c)} + ${qp(r.b)}`;opts=[right,`☐ = ${qp(r.c)} ${MI} ${qp(r.b)}`,`☐ = ${qp(r.b)} ${MI} ${qp(r.c)}`];calc=`${qp(r.c)} + ${qp(r.b)} =`;ans=r.c+r.b}
-     else if(r.t===1){right=`☐ = ${qp(r.a)} ${MI} ${qp(r.c)}`;opts=[right,`☐ = ${qp(r.c)} ${MI} ${qp(r.a)}`,`☐ = ${qp(r.a)} + ${qp(r.c)}`];calc=`${qp(r.a)} ${MI} ${qp(r.c)} = ${qp(r.a)} + ${qp(-r.c)} =`;ans=r.a-r.c}
-     else{right=`☐ = ${qp(r.c)} ${MI} ${qp(r.b)}`;opts=[right,`☐ = ${qp(r.c)} + ${qp(r.b)}`,`☐ = ${qp(r.b)} ${MI} ${qp(r.c)}`];calc=`${qp(r.c)} ${MI} ${qp(r.b)} = ${qp(r.c)} + ${qp(-r.b)} =`;ans=r.c-r.b}
+   guide(it){const r=it.raw;let flat,opts,q,ans;
+     if(r.t===0){const s0=r.b<0?'+':MI;flat=`☐ ${s0} ${Math.abs(r.b)} = ${qt(r.c)}`;opts=[flat,`☐ ${s0==='+'?MI:'+'} ${Math.abs(r.b)} = ${qt(r.c)}`];q=`איזה מספר ${s0==='+'?'ועוד':'פחות'} ${Math.abs(r.b)} נותן ${bd(qt(r.c))}?`;ans=r.c+r.b}
+     else if(r.t===2){const s0=r.b<0?MI:'+';flat=`☐ ${s0} ${Math.abs(r.b)} = ${qt(r.c)}`;opts=[flat,`☐ ${s0==='+'?MI:'+'} ${Math.abs(r.b)} = ${qt(r.c)}`];q=`איזה מספר ${s0==='+'?'ועוד':'פחות'} ${Math.abs(r.b)} נותן ${bd(qt(r.c))}?`;ans=r.c-r.b}
+     else{flat=`${qt(r.a)} ${MI} ☐ = ${qt(r.c)}`;opts=[flat,`${qt(-r.a)} ${MI} ☐ = ${qt(r.c)}`];q=`${bd(qt(r.a))} פחות איזה מספר נותן ${bd(qt(r.c))}?`;ans=r.a-r.c}
      const o=shuffle(opts);
-     return [{he:'שלב 1: איך מוצאים את ה־☐? בוחרים את התרגיל הנכון:',m:'',o,ai:o.indexOf(right),tag:'missing',hint:r.t===0?'☐ ואחריו חיסור ← עושים חיבור: התוצאה + המספר.':r.t===2?'☐ ואחריו חיבור ← עושים חיסור: התוצאה פחות המספר.':'המספר הראשון פחות התוצאה.',show:right},
-       {he:'שלב 2: מחשבים:',m:calc,a:qI(ans),tag:'arith',hint:'אם יש חיסור, הופכים אותו לחיבור של הנגדי.',show:`☐ = ${qt(ans)}`}]}},
+     return [{he:'שלב 1: מורידים סוגריים. איך זה נראה?',m:it.m,o,ai:o.indexOf(flat),tag:'brackets',hint:'שני מינוסים צמודים = פלוס. פלוס ומינוס = מינוס.',show:flat},
+       {he:`שלב 2: ${q}`,m:flat,a:qI(ans),tag:'missing',hint:r.t===1?`על ציר המספרים: מ־${bd(qt(r.a))} ל־${bd(qt(r.c))}. אם הולכים שמאלה ☐ חיובי, אם ימינה ☐ שלילי.`:'אפשר לנסות מספר ולבדוק אם יוצא נכון.',show:`☐ = ${qt(ans)}`}]}},
   {n:'שברים ועשרוניים',gen(){const op=pick(['+',MI]);let a,b,dec=false;
     if(Math.random()<.5){dec=true;a=Q(nz(-99,99),10);b=Q(nz(-99,99),10)}else{const d=pick([2,3,4,5,6,8]);a=Q(nz(-3*d,3*d),d);b=Q(nz(-2*d,2*d),pick([d,d,2]))}
     const r=op==='+'?qA(a,b):qS(a,b);return {he:'חשבי:',m:`${qp(a,dec)} ${op} ${qp(b,dec)} =`,a:r,dec,alt:[[op==='+'?qS(a,b):qA(a,b),op==='+'?'sign':'minusminus']],tag:'arith',hint:dec?'אפשר לחשב כמו במספרים שלמים ולשים לב לנקודה.':'מכנה משותף, ואז חיבור או חיסור.',
@@ -2430,7 +2430,7 @@ function ymAdvance(){const sc=S.screen;sc.n++;if(sc.n>=sc.total){ymFinish();retu
 function ymParentBoat(){if(!isParent())return;const lv=ymBoatLv();S._ymPrev=S._ymPrev||{};if(S._ymPrev.boat==null)S._ymPrev.boat=lv;else if(lv>S._ymPrev.boat){const won=YM_STAGES.filter(s=>ymDone(s.id));S.ymModal={kind:'up',lv,isl:lv===YM_FLEET().length-1?'מבחן החזרה':(won.length?YM_SHORT[won[won.length-1].id]:'')};S._ymPrev.boat=lv}}
 function ymFinish(){const sc=S.screen;const title=sc.mode==='test'?'מבחן חזרה':sc.mode==='smart'?'תרגול חכם':ymStage(sc.id).t;
   if(sc.mode==='test'){const by={};sc.log.forEach(l=>{const b=by[l.stage]||(by[l.stage]=[0,0]);b[1]++;if(l.ok)b[0]++});ymP().tests.push({at:Date.now(),c:sc.firstOk,t:sc.total,by});ymP().tests=ymP().tests.slice(-10)}
-  S.session.activities.push({kind:'ymath',island:'ym-'+sc.id,islandName:'חשבון · '+title,title,correct:sc.firstOk,total:sc.total,at:Date.now(),tags:sc.tags});
+  const lvs={};sc.log.forEach(l=>{if(l.ok&&sc.mode==='stage')lvs[l.lv]=(lvs[l.lv]||0)+1});S.session.activities.push({kind:'ymath',island:'ym-'+sc.id,islandName:'חשבון · '+title,title,correct:sc.firstOk,total:sc.total,at:Date.now(),tags:sc.tags,lvs,mode:sc.mode});
   if(tasksOf(S.session)===GOAL_T()){setTimeout(()=>{sfx.win();toast(TW('done')+GOAL_T()+' משימות היום 🎉')},700)}
   saveSession();saveState('progress');S.screen={name:'ymEnd',id:sc.id,mode:sc.mode,c:sc.firstOk,t:sc.total,tags:sc.tags,log:sc.log,best:sc.best||0};sfx.win();render();scrollTo({top:0})}
 
@@ -2473,11 +2473,12 @@ function ymBoatLv(){const d=YM_STAGES.filter(s=>ymDone(s.id)).length;const t=ymP
 function ymHeal(){if(isParent()&&!S.progress)return;const P=ymP();const all=[...(S.sessions||[]),S.session].filter(Boolean).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
   const rep={},tg={};all.forEach(s=>(s.activities||[]).forEach(a=>{if(a.kind!=='ymath')return;const id=String(a.island||'').replace(/^ym-/,'');const st=ymStage(id);
     if(a.tags)Object.entries(a.tags).forEach(([t,v])=>{(tg[id]=tg[id]||{})[t]=((tg[id]||{})[t]||0)+v});
-    if(!st)return;const ok=rep[id]||(rep[id]=st.levels.map(()=>0));let c=+a.correct||0;for(let k=0;k<ok.length&&c>0;k++){const need=YM_NEED-ok[k];if(need<=0)continue;const take=Math.min(need,c);ok[k]+=take;c-=take}}));
+    if(!st)return;const ok=rep[id]||(rep[id]=st.levels.map(()=>0));if(a.lvs){Object.entries(a.lvs).forEach(([k,v])=>{if(ok[k]!=null)ok[k]=Math.min(YM_NEED,ok[k]+v)});return}
+    const x0=ymP().s[id];if(x0&&(x0.ok||[]).some(v=>v>0))return;let c=+a.correct||0;for(let k=0;k<ok.length&&c>0;k++){const need=YM_NEED-ok[k];if(need<=0)continue;const take=Math.min(need,c);ok[k]+=take;c-=take}}));
   let ch=false;Object.entries(rep).forEach(([id,ok])=>{const x=ymSt(id);ok.forEach((v,k)=>{if(v>(x.ok[k]||0)){x.ok[k]=v;x.n[k]=Math.max(x.n[k]||0,v);ch=true}})});
   Object.entries(tg).forEach(([id,t])=>{if(!ymStage(id))return;const x=ymSt(id);Object.entries(t).forEach(([k,v])=>{if((x.tags[k]||0)<v){x.tags[k]=v;ch=true}})});
   if(ch&&!isParent()){P.boat=Math.min(P.boat||0,ymBoatLv());saveState('progress')}}
-function ymCheckBoat(){if(!S.loaded)return;if(!S._ymHealed){S._ymHealed=1;try{ymHeal()}catch(e){}}const P=ymP();const lv=ymBoatLv();
+function ymCheckBoat(){if(!S.loaded)return;if(!S._ymHealed){S._ymHealed=1;const P0=ymP();if(!P0.fix43&&!isParent()){const x=ymSt('s2');[2,3,4].forEach(k=>{x.ok[k]=0});P0.fix43=1;P0.boat=Math.min(P0.boat||0,ymBoatLv());saveState('progress')}try{ymHeal()}catch(e){}}const P=ymP();const lv=ymBoatLv();
   if(isParent()){S._ymPrev=S._ymPrev||{};if(!S._ymPrev.intro&&!S.ymModal){S._ymPrev.intro=1;S.ymModal={kind:'intro'}}return}
   if(!P.intro&&!S.ymModal){S.ymModal={kind:'intro'};return}
   if((P.boat||0)<lv&&!S.ymModal){const won=YM_STAGES.filter(s=>ymDone(s.id));S.ymModal={kind:'up',lv,from:P.boat||0,isl:lv===YM_FLEET().length-1?'מבחן החזרה':(won.length?YM_SHORT[won[won.length-1].id]:'')};P.boat=lv;saveState('progress');setTimeout(()=>{sfx.horn();setTimeout(()=>sfx.win(),700)},200)}}
