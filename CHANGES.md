@@ -1,5 +1,6 @@
 # Changes
 
+- v58 (2026-11-16): '💡 רמז' button before answering in question games (mc, tf) for all profiles: shows the item's own `hint` if it has one, otherwise the best-matching paragraph from the island's summary/text, otherwise (4-option questions) removes two wrong answers.
 - v57 (2026-11-16): 'א+' button in the header for every profile: enlarges all page content by 30% (CSS zoom on #view children; pop-ups stay normal size). Remembered per device (`bigfont`).
 - v56 (2026-11-16): 'material is being prepared' status for every child: yellow ⏳ banner on the map while files wait in Drive (count + subjects), and an animated ⏳ spot on the map (Shai-Li: one per subject; others: in the empty class track). The app remembers what was sent (`proc:` in localStorage) and clears it when the server reports nothing waiting.
 - v55 (2026-11-16): no duplicate uploads: every sent file (name+size+date) and pasted text is remembered per child (`upsig:` in localStorage) and skipped with a friendly message if sent again; camera/gallery go through the same check. 'בקשת עיבוד עכשיו' can be sent once per batch of waiting material (then shows '✓ הבקשה נשלחה').

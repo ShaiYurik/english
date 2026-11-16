@@ -153,6 +153,7 @@ button.wtag{border:0;cursor:pointer;font:inherit}
 .newbanner .gift{font-size:32px;animation:bobg 1.2s ease-in-out infinite}
 @keyframes bobg{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-4px) rotate(6deg)}}
 .newbanner small{display:block;font-weight:600;opacity:.85}
+.hintbtn{border-color:#f0c35e!important}.hintbox{background:#fff6d6;color:#4a3500;border:1.5px solid #f0c35e;border-radius:14px;padding:10px 12px;line-height:1.55;font-size:15px;text-align:start}.hintbox b{color:#8a5a00}
 .newbanner.procb{background:linear-gradient(135deg,#ffe9a8,#ffc76b);color:#3a2600;cursor:default}.newbanner.procb .gift{animation:hgspin 2s ease-in-out infinite}@keyframes hgspin{0%,40%{transform:rotate(0)}50%,90%{transform:rotate(180deg)}100%{transform:rotate(360deg)}}.procslot .pring{animation:pdash 1.6s linear infinite}@keyframes pdash{to{stroke-dashoffset:-22}}.procslot .phg{animation:pblink 1.4s ease-in-out infinite}@keyframes pblink{50%{opacity:.35}}
 .newbanner.late{background:linear-gradient(135deg,#9fd3ff,#5f9be0);color:#0b1c2b}
 .newbanner .go{margin-inline-start:auto;background:#1a1206;color:#f0c35e;border-radius:999px;padding:8px 14px;white-space:nowrap}
@@ -517,7 +518,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='57';
+const APP_VERSION='58';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1411,6 +1412,14 @@ function WORDS_ALL(){try{return allIslands().flatMap(x=>x.words||[])}catch(e){re
 function oddFeedback(q,sc){const pk=q.o[sc.picked[0]];
   const head=sc.wasOk?'נכון! ':`בחרת <span class="en">${esc(pk)}</span>, אבל היא כן שייכת לקבוצה. המילה שלא שייכת היא <span class="en">${esc(q.ans)}</span>. `;
   return head+(q.why?`<br><span class="sub">${esc(q.why)}</span>`:'')+(q.tr?`<br><span class="sub" dir="ltr" style="display:inline-block">${esc(q.tr)}</span>`:'')}
+/* ---- רמז לפני התשובה: רמז שנכתב לשאלה, או הפסקה המתאימה מהסיכום, ובשאלות בלי טקסט: מוחקים שתי תשובות שגויות ---- */
+function hintPara(i,txt){if(!i||!i.text||!i.text.paras||!i.text.paras.length)return '';const norm=w=>w.replace(/[^\u0590-\u05FFA-Za-z0-9]/g,'').toLowerCase();
+  const ws=[...new Set(String(txt).split(/\s+/).map(norm).filter(w=>w.length>=3))];let best='',bs=0;
+  i.text.paras.forEach(p=>{const P=p.toLowerCase();let sc=0;ws.forEach(w=>{if(P.includes(w))sc+=2;else if(/^[\u0590-\u05FF]/.test(w)&&w.length>=4&&P.includes(w.slice(1)))sc+=1});if(sc>bs){bs=sc;best=p}});return bs>=2?best:''}
+function hintOf(i,q,kind){if(q.hint)return {t:q.hint};const qs=kind==='tf'?q.s:(q.q||'')+' '+(q.a||[]).map(k=>q.o[k]).join(' ');const p=hintPara(i,qs);if(p)return {t:p,from:1};return kind==='mc'&&q.o&&q.o.length>=4&&(q.a||[]).length===1?{elim:1}:null}
+function hintHTML(sc,i,q,kind){if(sc.answered||WORLD==='math'&&kind==='tf')return '';const h=hintOf(i,q,kind);if(!h)return '';
+  if(sc.hintAt!==sc.idx)return `<div><button class="btn ghost small hintbtn" data-act="gHint">💡 רמז</button></div>`;
+  return h.elim?`<div class="hintbox">💡 מחקתי שתי תשובות שגויות. נשארו שתיים, איזו נכונה?</div>`:`<div class="hintbox">💡 ${h.from?'<b>רמז מהסיכום:</b> ':''}${tx(h.t)}</div>`}
 function viewGame(){
   const sc=S.screen;const i=islandById(sc.id);
   if(sc.kind==='mc'){
@@ -1420,7 +1429,8 @@ function viewGame(){
     ${q.pic||q.gap?`<div class="prompt">${q.pic?'מה בתמונה?':'השלימי את החסר'}</div>`:''}${qHTML}
     ${multi&&!sc.answered?'<p class="sub">יש כאן שתי תשובות נכונות. בחרי שתיים.</p>':''}
     ${q.say&&!q.gap&&!q.pic?`<div><button class="btn ghost small" data-act="say" data-text="${esc(q.say)}">${I.speaker} השמע</button></div>`:''}
-    <div class="opts">${q.o.map((o,k)=>{let cls='opt'+(isLatin(o)?' en':'');if(sc.answered){if(q.a.includes(k))cls+=' ok';else if(sc.picked.includes(k))cls+=' bad'}else if(sc.picked.includes(k))cls+=' sel';return `<button class="${cls}" data-act="gAns" data-k="${k}" ${sc.answered?'disabled':''}>${tx(o)}</button>`}).join('')}</div>
+    ${hintHTML(sc,i,q,'mc')}
+    <div class="opts">${q.o.map((o,k)=>{if(!sc.answered&&sc.hintAt===sc.idx&&(sc.elim||[]).includes(k))return '';let cls='opt'+(isLatin(o)?' en':'');if(sc.answered){if(q.a.includes(k))cls+=' ok';else if(sc.picked.includes(k))cls+=' bad'}else if(sc.picked.includes(k))cls+=' sel';return `<button class="${cls}" data-act="gAns" data-k="${k}" ${sc.answered?'disabled':''}>${tx(o)}</button>`}).join('')}</div>
     <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?(q.odd?oddFeedback(q,sc):(sc.wasOk?'נכון!':'כמעט.')+(q.why&&(!sc.wasOk||WORLD==='math')?` <span class="sub">${tx(q.why)}</span>`:'')):''}</div>
     ${sc.answered?`<div class="btns">${q.say?`<button class="btn ghost small" data-act="say" data-text="${esc(q.say)}">${I.speaker} השמע</button>`:''}<button class="btn brass" data-act="gNext">${sc.idx===sc.items.length-1?'לתוצאות':'הבאה'}</button></div>`:''}
     </section>`;
@@ -1430,6 +1440,7 @@ function viewGame(){
     return gameHead(sc,i,sc.items.length,sc.idx)+`
     <div class="prompt">${WORLD==='math'?fx(q.s):`<span class="en">${esc(q.s)}</span>`}</div>
     ${WORLD==='math'?'':`<div><button class="btn ghost small" data-act="say" data-text="${esc(q.s)}">${I.speaker} השמע</button></div>`}
+    ${hintHTML(sc,i,q,'tf')}
     <div class="tfbtns"><button class="opt tfb ${sc.answered?(q.t?'ok':sc.pick===true?'bad':''):''}" data-act="tfAns" data-v="1" ${sc.answered?'disabled':''}>${WORLD==='math'||i.lang==='he'?'✓ נכון':'✓ True · נכון'}</button><button class="opt tfb ${sc.answered?(!q.t?'ok':sc.pick===false?'bad':''):''}" data-act="tfAns" data-v="0" ${sc.answered?'disabled':''}>${WORLD==='math'||i.lang==='he'?'✗ לא נכון':'✗ False · לא נכון'}</button></div>
     <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?(sc.wasOk?'נכון!':'כמעט.'):''}</div>
     ${sc.answered&&q.fix?(WORLD==='math'?`<div class="fixbox"><span class="sub">${q.t?'נכון, כי:':'התשובה הנכונה:'}</span><div>${fx(q.fix)}</div></div>`:`<div class="fixbox"><span class="sub">המשפט הנכון:</span><div class="en">${esc(q.fix)}</div><button class="btn ghost small" data-act="say" data-text="${esc(q.fix)}">${I.speaker} השמע</button></div>`):''}
@@ -2050,6 +2061,8 @@ document.addEventListener('click',e=>{
       sc.answered=true;sc.wasOk=q.a.every(x=>sc.picked.includes(x));
       if(sc.wasOk){sc.correct++;sfx.ok();if(q.gap&&q.say)setTimeout(()=>say(q.say),350)}else{sfx.bad();sc.missed.push(q.ans||q.o[q.a[0]])}
       render();break;}
+    case 'gHint':{const i=islandById(sc.id),q=sc.items[sc.idx];const h=hintOf(i,q,sc.kind);if(!h)break;sc.hintAt=sc.idx;
+      if(h.elim){const wrong=q.o.map((o,k)=>k).filter(k=>!q.a.includes(k));sc.elim=shuffle(wrong).slice(0,2)}sfx.tap&&sfx.tap();render();break;}
     case 'tfAns':{if(sc.answered)break;const q=sc.items[sc.idx];sc.pick=el.dataset.v==='1';sc.answered=true;sc.wasOk=sc.pick===q.t;
       if(sc.wasOk){sc.correct++;sfx.ok()}else{sfx.bad();sc.missed.push(q.s)}
       render();if(q.fix)setTimeout(()=>say(q.fix),400);break;}
