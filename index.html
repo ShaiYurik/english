@@ -108,6 +108,8 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance
 .iconbtn{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--swell);background:var(--sea);display:grid;place-items:center}
 .iconbtn svg{width:22px;height:22px}
 .iconbtn[aria-pressed="false"]{opacity:.55}
+.topbtns{display:flex;gap:8px;align-items:center}.fontbtn{font-family:inherit;color:inherit;line-height:1}.fontbtn b{font-size:20px;font-weight:900}.fontbtn small{font-size:13px;font-weight:900;margin-top:-6px}.fontbtn{display:flex;gap:1px;align-items:center;justify-content:center}#fontBtn[aria-pressed="false"]{opacity:1}#fontBtn[aria-pressed="true"]{background:#f0c35e;color:#1a1206;border-color:#f0c35e}
+:root.big #view>*:not(.cfwrap){zoom:1.3}
 
 .voyage{background:var(--sea);border:1px solid var(--swell);border-radius:var(--r);padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px}
 .voyage .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
@@ -470,9 +472,10 @@ details summary{cursor:pointer;padding:6px 0}
       <img src="icon-192.png" alt="">
       <div><h1>לומדים בכיף</h1><small class="who"></small><div class="kidsw" id="kidSwitch" hidden></div><div class="kidsw worldsw" id="worldSwitch" hidden></div><small><i class="sync" id="sync"></i><span id="syncTxt">אנגלית לכיתה ז׳</span></small></div>
     </div>
+    <div class="topbtns"><button class="iconbtn fontbtn" id="fontBtn" data-act="bigfont" aria-pressed="false" aria-label="הגדלת גופן"><b>א</b><small>+</small></button>
     <button class="iconbtn" id="soundBtn" data-act="sound" aria-pressed="true" aria-label="צלילים">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
-    </button>
+    </button></div>
   </header>
   <main id="view" style="display:flex;flex-direction:column;gap:14px"></main>
 </div>
@@ -514,7 +517,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='56';
+const APP_VERSION='57';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1031,7 +1034,7 @@ function render(){
   try{const sc0=S.screen,ci=sc0&&sc0.id&&typeof islandById==='function'?islandById(sc0.id):null;document.documentElement.dataset.ilang=ci&&ci.lang==='he'?'he':''}catch(e){document.documentElement.dataset.ilang=''}
   _trk=null;if(UPD.pendingReload)setTimeout(maybeReload,0);
   document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-current',t.dataset.tab===S.tab?'page':'false'));
-  $('#soundBtn').setAttribute('aria-pressed',String(S.sound));
+  $('#soundBtn').setAttribute('aria-pressed',String(S.sound));{const bf=!!LS.get('bigfont',false);document.documentElement.classList.toggle('big',bf);$('#fontBtn').setAttribute('aria-pressed',String(bf));$('#fontBtn').setAttribute('aria-label',bf?'גופן רגיל':'הגדלת גופן ב־30%')}
   const v=$('#view');
   if(!KEY||S.relink){v.innerHTML=viewGate();$('#tabs').hidden=true;return}
   $('#tabs').hidden=false;
@@ -2037,6 +2040,7 @@ document.addEventListener('click',e=>{
     case 'ymLearnOk':S.screen.learn=false;render();scrollTo({top:0});break;
     case 'ymLearnShow':S.screen.learn=true;render();scrollTo({top:0});break;
     case 'sound':S.sound=!S.sound;LS.set('sound',S.sound);render();break;
+    case 'bigfont':{const bf=!LS.get('bigfont',false);LS.set('bigfont',bf);render();toast(bf?'הגופן הוגדל ב־30%':'חזרה לגופן רגיל');break;}
     case 'relinkCancel':S.relink=false;render();break;
     case 'shelfTog':setTimeout(()=>{const d=document.querySelector('.shelf');if(d)LS.set('shelfOpen',d.open)},0);break;
     /* book games */
