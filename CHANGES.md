@@ -1,5 +1,6 @@
 # Changes
 
+- v63 (2026-11-16): question games: '🔊 תשובות' button next to 'השמע' reads all answer options aloud ('תשובה 1… תשובה 2…'), skipping options removed by the hint; Hebrew/English voice per option.
 - v62 (2026-11-16): highlighter in the reading screen (summary/karaoke): '🖍️ מרקר' button, tap a word to mark/unmark its whole sentence in yellow; marked sentences are listed under the text with read-aloud. Saved in `progress.marks` {islandId: ['para:sentence']}.
 - v61 (2026-11-16): '🔊 הקראה' button inside the hint box reads the word explanations and the hint aloud (Hebrew parts with the Hebrew voice, English with English).
 - v60 (2026-11-16): memory game cards keep one fixed size (100px rows) after flipping; long text and long words get a smaller font instead of stretching the card; text centered.

@@ -519,7 +519,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='62';
+const APP_VERSION='63';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1414,6 +1414,7 @@ function oddFeedback(q,sc){const pk=q.o[sc.picked[0]];
   const head=sc.wasOk?'נכון! ':`בחרת <span class="en">${esc(pk)}</span>, אבל היא כן שייכת לקבוצה. המילה שלא שייכת היא <span class="en">${esc(q.ans)}</span>. `;
   return head+(q.why?`<br><span class="sub">${esc(q.why)}</span>`:'')+(q.tr?`<br><span class="sub" dir="ltr" style="display:inline-block">${esc(q.tr)}</span>`:'')}
 /* ---- רמז לפני התשובה: רמז שנכתב לשאלה, או הפסקה המתאימה מהסיכום, ובשאלות בלי טקסט: מוחקים שתי תשובות שגויות ---- */
+function speakSegs(segs){segs.forEach(t=>{const he=/[\u0590-\u05FF]/.test(t);const u=new SpeechSynthesisUtterance(String(t).replace(/[📖💡]/g,''));u.lang=he?'he-IL':TTS_LANG();u.rate=.85;const vv=he?heVoice:vox();if(vv)u.voice=vv;speechSynthesis.speak(u)})}
 function hintPara(i,txt){if(!i||!i.text||!i.text.paras||!i.text.paras.length)return '';const norm=w=>w.replace(/[^\u0590-\u05FFA-Za-z0-9]/g,'').toLowerCase();
   const ws=[...new Set(String(txt).split(/\s+/).map(norm).filter(w=>w.length>=3))];let best='',bs=0;
   i.text.paras.forEach(p=>{const P=p.toLowerCase();let sc=0;ws.forEach(w=>{if(P.includes(w))sc+=2;else if(/^[\u0590-\u05FF]/.test(w)&&w.length>=4&&P.includes(w.slice(1)))sc+=1});if(sc>bs){bs=sc;best=p}});return bs>=2?best:''}
@@ -1436,7 +1437,7 @@ function viewGame(){
     return gameHead(sc,i,sc.items.length,sc.idx)+`
     ${q.pic||q.gap?`<div class="prompt">${q.pic?'מה בתמונה?':'השלימי את החסר'}</div>`:''}${qHTML}
     ${multi&&!sc.answered?'<p class="sub">יש כאן שתי תשובות נכונות. בחרי שתיים.</p>':''}
-    ${q.say&&!q.gap&&!q.pic?`<div><button class="btn ghost small" data-act="say" data-text="${esc(q.say)}">${I.speaker} השמע</button></div>`:''}
+    <div class="btns" style="justify-content:flex-start">${q.say&&!q.gap&&!q.pic?`<button class="btn ghost small" data-act="say" data-text="${esc(q.say)}">${I.speaker} השמע</button>`:''}${WORLD!=='math'?`<button class="btn ghost small" data-act="optSay">${I.speaker} תשובות</button>`:''}</div>
     ${hintHTML(sc,i,q,'mc')}
     <div class="opts">${q.o.map((o,k)=>{if(!sc.answered&&sc.hintAt===sc.idx&&(sc.elim||[]).includes(k))return '';let cls='opt'+(isLatin(o)?' en':'');if(sc.answered){if(q.a.includes(k))cls+=' ok';else if(sc.picked.includes(k))cls+=' bad'}else if(sc.picked.includes(k))cls+=' sel';return `<button class="${cls}" data-act="gAns" data-k="${k}" ${sc.answered?'disabled':''}>${tx(o)}</button>`}).join('')}</div>
     <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?(q.odd?oddFeedback(q,sc):(sc.wasOk?'נכון!':'כמעט.')+(q.why&&(!sc.wasOk||WORLD==='math')?` <span class="sub">${tx(q.why)}</span>`:'')):''}</div>
@@ -2074,6 +2075,8 @@ document.addEventListener('click',e=>{
       sc.answered=true;sc.wasOk=q.a.every(x=>sc.picked.includes(x));
       if(sc.wasOk){sc.correct++;sfx.ok();if(q.gap&&q.say)setTimeout(()=>say(q.say),350)}else{sfx.bad();sc.missed.push(q.ans||q.o[q.a[0]])}
       render();break;}
+    case 'optSay':{const q=sc.items[sc.idx];if(!q||!('speechSynthesis' in window))break;hush();const segs=[];
+      q.o.forEach((o,k)=>{if(!sc.answered&&sc.hintAt===sc.idx&&(sc.elim||[]).includes(k))return;segs.push('תשובה '+(segs.length/2+1)+'.');segs.push(String(o))});speakSegs(segs);break;}
     case 'hintSay':{const i=islandById(sc.id),q=sc.items[sc.idx];const h=hintOf(i,q,sc.kind);if(!h||!('speechSynthesis' in window))break;hush();
       const segs=[];(h.gl||[]).forEach(([k,v])=>{segs.push(k);segs.push(v)});if(h.t)segs.push(h.t);
       segs.forEach(t=>{const he=/[\u0590-\u05FF]/.test(t);const u=new SpeechSynthesisUtterance(String(t).replace(/[📖💡]/g,''));u.lang=he?'he-IL':TTS_LANG();u.rate=.85;const vv=he?heVoice:vox();if(vv)u.voice=vv;speechSynthesis.speak(u)});break;}
