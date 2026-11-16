@@ -491,9 +491,9 @@ addEventListener('hashchange',()=>{if(readKey()){S.badKey=false;loadAll()}});
 let CHILD=LS.get('child','');
 let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
-const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'?WORLD+':':'');
+const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='41';
+const APP_VERSION='42';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -530,7 +530,7 @@ async function apiGet_(ac){const r=await fetch(API+'?key='+encodeURIComponent(KE
 async function apiPost(body){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:KEY,c:CHILD||undefined,w:WP(),...body})});const j=await r.json();if(!j.ok)throw new Error(j.error||'שגיאה');return j}
 
 /* outbox: latest version of each state doc, sent when online */
-let outbox=LS.get('outbox',{});let flushing=false,flushTimer=null;
+let outbox=LS.get('outbox',{});for(const k of Object.keys(outbox))if(/(^|:)math:state:/.test(k))delete outbox[k];let flushing=false,flushTimer=null;
 function enqueue(id,body){body={c:CHILD||undefined,w:WP(),...body};id=NS()+id;outbox[id]=body;LS.set('outbox',outbox);setSync();clearTimeout(flushTimer);flushTimer=setTimeout(flush,1500)}
 async function flush(){
   if(flushing||!KEY)return;flushing=true;
@@ -715,13 +715,27 @@ function setRole(r){
 function saveSession(){if(isParent())return;S.session.updatedAt=Date.now();enqueue('session:'+S.session.date,{action:'saveSession',data:JSON.parse(JSON.stringify(S.session))});cache()}
 function saveState(name){if(isParent()&&name==='progress')return;const data={progress:S.progress,classwords:S.classWords,zoom:S.zoom,schedule:S.scheduleState}[name];enqueue('state:'+name,{action:'saveState',name,data:JSON.parse(JSON.stringify(data))});cache()}
 
+
+// מיזוג התקדמות: אף פעם לא לאבד התקדמות שקיימת רק במכשיר (חשבון של יובל, הקניון של אריאל ועוד)
+function mergeProgress(p,loc){if(!loc)return;
+  for(const k of Object.keys(loc))if(p[k]===undefined)p[k]=loc[k];
+  const mx=(a,b)=>Math.max(+a||0,+b||0);
+  if(loc.ym&&p.ym&&p.ym!==loc.ym){const A=p.ym,B=loc.ym;A.s=A.s||{};
+    for(const [id,x] of Object.entries(B.s||{})){const y=A.s[id]||(A.s[id]={ok:[],n:[],w:[],tags:{}});['ok','n','w'].forEach(f=>{y[f]=y[f]||[];(x[f]||[]).forEach((v,i)=>y[f][i]=mx(y[f][i],v))});y.tags=y.tags||{};for(const [t,v] of Object.entries(x.tags||{}))y.tags[t]=mx(y.tags[t],v)}
+    const seen=new Set((A.tests||[]).map(t=>t.at));A.tests=[...(A.tests||[]),...(B.tests||[]).filter(t=>!seen.has(t.at))].sort((a,b)=>a.at-b.at).slice(-10);
+    A.boat=mx(A.boat,B.boat);A.intro=A.intro||B.intro}
+  if(loc.mall&&p.mall&&p.mall!==loc.mall){const A=p.mall,B=loc.mall;A.earn=mx(A.earn,B.earn);A.intro=A.intro||B.intro;
+    const cp=new Map((A.cps||[]).map(c=>[c.iid,c]));(B.cps||[]).forEach(c=>{const o=cp.get(c.iid);if(!o)cp.set(c.iid,c);else if(c.used)o.used=1});A.cps=[...cp.values()];
+    const key=b=>b.id+'|'+b.at;const bs=new Map((A.buys||[]).map(b=>[key(b),b]));(B.buys||[]).forEach(b=>{if(!bs.has(key(b)))bs.set(key(b),b)});A.buys=[...bs.values()]}
+  ['boatLevel','fleetIntro','caravanIntro'].forEach(k=>{if(loc[k]!=null&&typeof loc[k]==='number')p[k]=mx(p[k],loc[k]);else if(loc[k]&&!p[k])p[k]=loc[k]})}
 function applyState(st,fromServer){
   if(!st)return;
   const pend=k=>fromServer&&outbox[NS()+'state:'+k];
   if(st.progress&&!pend('progress')){
     const p={unlocked:1,best:{},xp:0,...st.progress};
     if(fromServer&&S.progress){p.unlocked=Math.max(p.unlocked,S.progress.unlocked||1);p.xp=Math.max(p.xp||0,S.progress.xp||0);
-      for(const [k,v] of Object.entries(S.progress.best||{})){const b=p.best[k]||(p.best[k]={});for(const [kk,vv] of Object.entries(v)){b[kk]=typeof vv==='number'?Math.max(b[kk]||0,vv):(b[kk]||vv)}}}
+      for(const [k,v] of Object.entries(S.progress.best||{})){const b=p.best[k]||(p.best[k]={});for(const [kk,vv] of Object.entries(v)){b[kk]=typeof vv==='number'?Math.max(b[kk]||0,vv):(b[kk]||vv)}}
+      mergeProgress(p,S.progress)}
     S.progress=p;
   }
   if(st.classwords&&!pend('classwords'))S.classWords=st.classwords;
@@ -2422,7 +2436,16 @@ const YM_FLEET=()=>[FLEET[0],FLEET[1],FLEET[2],FLEET[4],FLEET[7],FLEET[8],FLEET[
   {n:'יאכטת־על מפוארת',en:'Super Yacht',t:'boat',w:110,c:'#ffffff',decks:3,port:8,pool:1,story:'שלוש קומות, בריכה על הסיפון ונוף לכל האיים שכבשת. את מוכנה למבחן!'}];
 const YM_FUN=['🎉 יש! עוד אי נכבש!','🌊 הגלים מוחאים לך כפיים!','🏝️ האי הזה שלך!','💪 קפטנית אמיתית!','⭐ איזו התקדמות!','🚀 את טסה על המים!','🦈 אפילו הכרישים מתרשמים!','🏆 עוד צעד אחד ליאכטה!'];
 function ymBoatLv(){const d=YM_STAGES.filter(s=>ymDone(s.id)).length;const t=ymP().tests.some(x=>x.c/x.t>=.8);return d+(d===YM_STAGES.length&&t?1:0)}
-function ymCheckBoat(){if(!S.loaded)return;const P=ymP();const lv=ymBoatLv();
+
+// שחזור עצמי: אם התקדמות בחשבון נמחקה, משחזרים אותה מיומן הפעילות (כל סבב נשמר גם שם)
+function ymHeal(){if(isParent()&&!S.progress)return;const P=ymP();const all=[...(S.sessions||[]),S.session].filter(Boolean).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const rep={},tg={};all.forEach(s=>(s.activities||[]).forEach(a=>{if(a.kind!=='ymath')return;const id=String(a.island||'').replace(/^ym-/,'');const st=ymStage(id);
+    if(a.tags)Object.entries(a.tags).forEach(([t,v])=>{(tg[id]=tg[id]||{})[t]=((tg[id]||{})[t]||0)+v});
+    if(!st)return;const ok=rep[id]||(rep[id]=st.levels.map(()=>0));let c=+a.correct||0;for(let k=0;k<ok.length&&c>0;k++){const need=YM_NEED-ok[k];if(need<=0)continue;const take=Math.min(need,c);ok[k]+=take;c-=take}}));
+  let ch=false;Object.entries(rep).forEach(([id,ok])=>{const x=ymSt(id);ok.forEach((v,k)=>{if(v>(x.ok[k]||0)){x.ok[k]=v;x.n[k]=Math.max(x.n[k]||0,v);ch=true}})});
+  Object.entries(tg).forEach(([id,t])=>{if(!ymStage(id))return;const x=ymSt(id);Object.entries(t).forEach(([k,v])=>{if((x.tags[k]||0)<v){x.tags[k]=v;ch=true}})});
+  if(ch&&!isParent()){P.boat=Math.min(P.boat||0,ymBoatLv());saveState('progress')}}
+function ymCheckBoat(){if(!S.loaded)return;if(!S._ymHealed){S._ymHealed=1;try{ymHeal()}catch(e){}}const P=ymP();const lv=ymBoatLv();
   if(isParent()){S._ymPrev=S._ymPrev||{};if(!S._ymPrev.intro&&!S.ymModal){S._ymPrev.intro=1;S.ymModal={kind:'intro'}}return}
   if(!P.intro&&!S.ymModal){S.ymModal={kind:'intro'};return}
   if((P.boat||0)<lv&&!S.ymModal){const won=YM_STAGES.filter(s=>ymDone(s.id));S.ymModal={kind:'up',lv,from:P.boat||0,isl:lv===YM_FLEET().length-1?'מבחן החזרה':(won.length?YM_SHORT[won[won.length-1].id]:'')};P.boat=lv;saveState('progress');setTimeout(()=>{sfx.horn();setTimeout(()=>sfx.win(),700)},200)}}

@@ -1,5 +1,6 @@
 # Changes
 
+- v42 (2026-11-16): FIX lost math progress. The math world used its own outbox/cache namespace while sharing the English server state, so switching worlds could overwrite progress. Math now shares the English namespace; loading merges progress instead of replacing it (ym, mall and other device-only keys are kept); Yuval's math progress self-heals from the session log; stale math outbox entries are dropped.
 - v41 (2026-11-15): Hebrew islands get their own 'עברית' track on the map (they were queued behind the two open class islands); map layout supports 4+ tracks.
 - v40 (2026-11-15): lesson files can set `"lang":"he"` for a Hebrew island (RTL text, Hebrew font, no English speech).
 - v39 (2026-11-14): Yuval's math practice celebrates success: varied praise, streak messages (3/5/8 in a row), confetti bursts, level-complete and island-conquered banners, end screen with stars, record streak and next-boat hint.
