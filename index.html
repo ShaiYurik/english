@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script>(function(){var r='child',c='yuvik';try{r=JSON.parse(localStorage.getItem('voy:role'))||r;c=JSON.parse(localStorage.getItem('voy:child'))||c}catch(e){}var m=r==='parent'?['manifest-boss.webmanifest','Boss']:c==='gil'?['manifest-gil.webmanifest','GilGul']:c==='ariel'?['manifest-ariel.webmanifest','Ariel']:c==='shaili'?['manifest-shaili.webmanifest','Shai-Li']:['manifest.webmanifest','Yuvik'];document.write('<meta name="apple-mobile-web-app-title" content="'+m[1]+'"><link rel="manifest" href="'+m[0]+'">')})()</script>
+<script>(function(){var r='child',c='';try{r=JSON.parse(localStorage.getItem('voy:role'))||r;c=JSON.parse(localStorage.getItem('voy:child'))||c}catch(e){}var m=r==='parent'?['manifest-boss.webmanifest','Boss']:c==='gil'?['manifest-gil.webmanifest','GilGul']:c==='ariel'?['manifest-ariel.webmanifest','Ariel']:c==='shaili'?['manifest-shaili.webmanifest','Shai-Li']:c==='yuvik'?['manifest.webmanifest','Yuvik']:['manifest-app.webmanifest','לומדים בכיף'];document.write('<meta name="apple-mobile-web-app-title" content="'+m[1]+'"><link rel="manifest" href="'+m[0]+'">')})()</script>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -506,7 +506,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='49';
+const APP_VERSION='50';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -702,9 +702,9 @@ const TW=k=>WORDS[THEME()][k];
 const EBW={sea:{log:"Ship's Log",radio:'Radio Room',hunt:'Treasure Hunt',cap:"Captain's Log",anc:'⚓'},tennis:{log:'Match Schedule',radio:'Commentary Box',hunt:'Ball Hunt',cap:"Coach's Notes",anc:'🎾'},dance:{log:'Dance Diary',radio:'Music Room',hunt:'Step Hunt',cap:"Coach's Notes",anc:'💃'},shop:{log:'Style Diary',radio:'Mall Radio',hunt:'Bargain Hunt',cap:'Stylist Notes',anc:'🛍️'},desert:{log:'Caravan Log',radio:'Radio Tent',hunt:'Treasure Hunt',cap:"Caravan Master's Log",anc:'🐪'}};
 const EB=k=>(EBW[THEME()]||EBW.sea)[k];
 const feat=k=>!S.profile||!S.profile.features||S.profile.features[k]!==false;
-const kidName=()=>S.profile?S.profile.name:'יוביק';
+const kidName=()=>S.profile&&S.profile.name?S.profile.name:'';
 function applyProfile(){
-  const n=kidName();const short=isParent()?'Boss':(S.profile&&S.profile.child==='gil')?'GilGul':(S.profile&&S.profile.child==='ariel')?'Ariel':(S.profile&&S.profile.child==='shaili')?'Shai-Li':'Yuvik';
+  const n=kidName();const short=isParent()?'Boss':(S.profile&&S.profile.child==='gil')?'GilGul':(S.profile&&S.profile.child==='ariel')?'Ariel':(S.profile&&S.profile.child==='shaili')?'Shai-Li':(S.profile&&S.profile.child==='yuvik')?'Yuvik':(kidName()||'לומדים בכיף');
   document.title='לומדים בכיף · '+(isParent()?'Boss':n);const h=document.querySelector('.brand h1');if(h)h.textContent='לומדים בכיף';
   const sub=document.querySelector('.brand .who');if(sub)sub.textContent=isParent()?'Boss · '+n:n;
   document.documentElement.dataset.theme=THEME();document.documentElement.dataset.lang=LANG();
@@ -1923,7 +1923,7 @@ function viewCamera(){
 function sessSummary(s){const acts=s.activities||[];const q=acts.filter(a=>a.total&&a.kind!=='read');const c=q.reduce((n,a)=>n+a.correct,0),t=q.reduce((n,a)=>n+a.total,0);return {acts,pct:t?Math.round(c/t*100):null}}
 function buildReport(){
   const s=S.session;const {acts,pct}=sessSummary(s);
-  const lines=[`דוח יומי · האפליקציה של יוביק · ${fmtDate(s.date)}`,`משימות היום: ${tasksOf(s)} מתוך ${GOAL_T()} (${exOf(s)} תרגילים)`];
+  const lines=[`דוח יומי · האפליקציה של ${kidName()} · ${fmtDate(s.date)}`,`משימות היום: ${tasksOf(s)} מתוך ${GOAL_T()} (${exOf(s)} תרגילים)`];
   if(pct!=null)lines.push(`הצלחה בתרגילים: ${pct}%`);
   if(s.readOk+s.readHelp)lines.push(`קריאה בקול: ${s.readOk} משפטים לבד, ${s.readHelp} עם עזרה`);
   if(acts.length){lines.push('','מה נעשה:');acts.forEach(a=>lines.push(`• ${a.islandName} · ${a.title}${a.total&&a.kind!=='read'?` · ${a.correct}/${a.total}`:''}`))}
@@ -2523,7 +2523,7 @@ function ymCheckBoat(){if(!S.loaded)return;if(!S._ymHealed){S._ymHealed=1;const 
 function ymModalHTML(){const M=S.ymModal;if(!M)return '';const F=YM_FLEET(),last=F.length-1;const wrap=x=>`<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox">${x}</div></div>`;
   const row=lv=>`<div class="ymfleet">${F.map((b,k)=>`<span class="${k<=lv?'got':''} ${k===last?'gold':''}" title="${esc(b.n)}">${k<=lv?boatSVG(b,k===last?64:46):'<b>?</b>'}</span>`).join('')}</div>`;
   if(M.kind==='intro')return wrap(`<div class="bpop">${boatSVG(F[0],170)}</div><h3>מסע באיי החשבון</h3>
-    <p>יובל יוצאת למסע בין <b>8 איי חשבון</b>, ויש לה רק רפסודה קטנה: כמה בולי עץ וחבל אחד.</p>
+    <p>${kidName()} יוצאת למסע בין <b>8 איי חשבון</b>, ויש לה רק רפסודה קטנה: כמה בולי עץ וחבל אחד.</p>
     <p>על כל אי שתכבשי, כלומר תעברי בו את כל הרמות, <b>הרפסודה משתדרגת</b> לכלי שייט טוב יותר: סירת גומי, קיאק, מפרשית, סירת מנוע...</p>
     <p>ובסוף: מי שכובשת את <b>כל 8 האיים</b> ועוברת את <b>אי מבחן החזרה</b> (80% ומעלה) מקבלת <b>יאכטת־על מפוארת</b> 🛥️✨, בדיוק בזמן למבחן של יום רביעי.</p>
     ${row(0)}<div class="btns"><button class="btn brass" data-act="ymModalClose">יאללה, מפליגים! ⛵</button></div>`);
@@ -2537,7 +2537,7 @@ function ymBoatCardHTML(){const F=YM_FLEET(),lv=ymBoatLv(),last=F.length-1,b=F[l
   const nxt=lv>=last?'הגעת ליאכטת־העל! 🏆':d<YM_STAGES.length?`האי הבא שתכבשי ← <b>${esc(F[lv+1].n)}</b>`:'עברי את מבחן החזרה (80%+) ← <b>יאכטת־על מפוארת</b> 🛥️';
   return `<button class="fleetcard" data-act="ymFleet">${boatSVG(b,72)}<span class="ft"><b>${esc(b.n)}</b><span>${nxt}</span><span class="fdots">${YM_STAGES.map((s,k)=>`<i class="${k<d?'on':''}"></i>`).join('')}</span></span><span class="flv">${lv+1}/${F.length}</span></button>`}
 function viewYMMap(){const dl=ymDaysLeft();const t=tasksOf(S.session),G=GOAL_T();const tg=ymTopTags(ymAllTags(),3);const won=YM_STAGES.filter(s=>ymDone(s.id)).length;
-  return `${isParent()?'<p class="maphint" style="background:#fff3c4;color:#5a4300;border-radius:12px;padding:8px 12px">👀 מצב בדיקה של הורה: אפשר לתרגל, שום דבר לא נשמר אצל יובל.</p>':''}<section class="card ymhead"><div><span class="eyebrow">חשבון · כיתה ז׳</span><h2>איי החשבון</h2><p>${dl>1?`עוד ${dl} ימים למבחן`:dl===1?'המבחן מחר! 💪':dl===0?'המבחן היום, בהצלחה! 🍀':'המבחן עבר'} · נכבשו ${won} מתוך ${YM_STAGES.length} איים · היום: ${Math.min(t,G)}/${G} משימות</p></div><div class="ymgoal">${t>=G?'⭐':'🏝️'}</div></section>
+  return `${isParent()?'<p class="maphint" style="background:#fff3c4;color:#5a4300;border-radius:12px;padding:8px 12px">👀 מצב בדיקה של הורה: אפשר לתרגל, שום דבר לא נשמר אצל '+esc(kidName())+'.</p>':''}<section class="card ymhead"><div><span class="eyebrow">חשבון · כיתה ז׳</span><h2>איי החשבון</h2><p>${dl>1?`עוד ${dl} ימים למבחן`:dl===1?'המבחן מחר! 💪':dl===0?'המבחן היום, בהצלחה! 🍀':'המבחן עבר'} · נכבשו ${won} מתוך ${YM_STAGES.length} איים · היום: ${Math.min(t,G)}/${G} משימות</p></div><div class="ymgoal">${t>=G?'⭐':'🏝️'}</div></section>
   ${ymBoatCardHTML()}${ymIslandsSVG()}
   ${tg.length?`<section class="card ymwatch"><h3>👀 לשים לב</h3>${tg.map(([k,v])=>`<p><b>${YM_TAGS[k].t}</b> (${v}): ${YM_TAGS[k].tip}</p>`).join('')}<button class="btn small brass" data-act="ymGo" data-id="smart">🧠 תרגול חכם על מה שקשה</button></section>`:''}
   <details class="card ymplanbox"><summary><b>🗺️ התוכנית עד המבחן · ${YM_TEST.label}</b></summary>${ymPlanHTML().replace(/^<section class="card ymplan"><h3>[^<]*<\/h3>/,'').replace(/<\/section>$/,'')}</details>`}
@@ -2578,11 +2578,11 @@ function viewYM(){const sc=S.screen,it=sc.it;const title=sc.mode==='test'?'📝 
    ${sc.state==='ask'&&sc.showHint?`<p class="sub">💡 ${it.hint||''}</p>`:''}
    ${done&&(sc.state==='show'||sc.tries>1||sc.mode==='test'&&false)?`<div class="ymsol"><b>הפתרון צעד אחר צעד</b>${ymStepsHTML(it.steps)}</div>`:done?`<details class="ymsol"><summary>איך פותרים?</summary>${ymStepsHTML(it.steps)}</details>`:''}
    <div class="btns">${done?`<button class="btn brass" data-act="ymNext">${sc.n+1>=sc.total?'לסיכום 🏁':'הבא ←'}</button>`:`<button class="btn brass" data-act="ymCheck">בדיקה ✓</button>${sc.state==='ask'&&!sc.showHint&&it.hint?'<button class="btn ghost" data-act="ymHint">💡 רמז</button>':''}`}</div></section>`}
-const YM_PRAISE=['נכון! 🎯','מעולה! ⭐','בדיוק! 💪','יפה מאוד! 👏','וואו, איזו חדה! 🧠','אלופה! 🏆','מושלם! ✨','בול! 🎯','את מנצחת את התרגילים! 🥇','הראש עובד מצוין! 💡','כל הכבוד, יובל! 🌟','זה בדיוק ככה! ✅'];
+const YM_PRAISE=['נכון! 🎯','מעולה! ⭐','בדיוק! 💪','יפה מאוד! 👏','וואו, איזו חדה! 🧠','אלופה! 🏆','מושלם! ✨','בול! 🎯','את מנצחת את התרגילים! 🥇','הראש עובד מצוין! 💡','כל הכבוד, {N}! 🌟','זה בדיוק ככה! ✅'];
 const YM_STREAK={3:['🔥 3 ברצף! את בוערת!','🔥 שלוש ברצף, שום דבר לא עוצר אותך!'],5:['⚡ 5 ברצף! מכונה של חשבון!','⚡ חמש ברצף! המורה הייתה גאה!'],8:['👑 8 ברצף! סבב מושלם!','👑 שמונה מתוך שמונה ברצף! מלכת החשבון!']};
 function ymBurst(n,big){const C=['#ffd98c','#f2b94a','#2f9468','#1f8fb3','#e0395f','#9b6bd6','#ffffff'];let h='';for(let i=0;i<n;i++){const l=Math.round(Math.random()*100),d=(Math.random()*.5).toFixed(2),r=Math.round(Math.random()*360),c=C[i%C.length],w=big?ri(7,12):ri(5,9),dx=ri(-60,60);h+=`<i style="left:${l}%;background:${c};width:${w}px;height:${Math.round(w*1.6)}px;animation-delay:${d}s;--dx:${dx}px;--r:${r}deg"></i>`}return `<div class="ymburst ${big?'big':''}" aria-hidden="true">${h}</div>`}
 function ymPraiseHTML(sc){const first=sc.tries===1&&!sc.hinted;const st=sc.streak||0;const sk=first&&YM_STREAK[st]?pick(YM_STREAK[st]):null;
-  const main=first?pick(YM_PRAISE):pick(['נכון, הפעם זה יצא! 👏','יש! תיקנת את עצמך 💪','בדיוק! ככה לומדים 🌱']);
+  const main=first?pick(YM_PRAISE).replace('{N}',kidName()):pick(['נכון, הפעם זה יצא! 👏','יש! תיקנת את עצמך 💪','בדיוק! ככה לומדים 🌱']);
   const lvl=sc.cele?(sc.cele.isl?`<div class="ymlvup isl">🏝️ כל הרמות עברו! <b>האי נכבש!</b><br><small>כלי שייט חדש מחכה לך בסוף הסבב ⛵</small></div>`:`<div class="ymlvup">⬆️ <b>רמה ${sc.cele.lv+1} הושלמה!</b> ${ymStage(sc.it.stage).levels[sc.cele.lv+1]?'הבאה: '+ymStage(sc.it.stage).levels[sc.cele.lv+1].n:''}</div>`):'';
   return `<div class="fb ok ympraise">${ymBurst(sk||sc.cele?36:14,!!(sk||sc.cele))}<span class="ympop">${main}</span>${sk?`<span class="ymstreak">${sk}</span>`:st>=2&&first?`<span class="ymstreak sm">🔥 ${st} ברצף</span>`:''}</div>${lvl}`}
 function ymStars(pct){const n=pct>=90?3:pct>=70?2:pct>=40?1:0;return `<div class="ymstars">${[0,1,2].map(k=>`<span class="${k<n?'on':''}" style="animation-delay:${.25+k*.3}s">★</span>`).join('')}</div>`}
@@ -2815,18 +2815,18 @@ function checkFleet(){if(!fleetOn()||isParent()||!S.loaded)return;const p=S.prog
   const fk=THEME()==='desert'?'caravanIntro':'fleetIntro';if(!p[fk]&&!S.boatModal){S.boatModal={kind:'intro'};return}
   if((p.boatLevel||0)<f.lv&&!S.boatModal){S.boatModal={kind:'up',lv:f.lv};p.boatLevel=f.lv;saveState('progress');setTimeout(()=>{sfx.horn();setTimeout(()=>sfx.win(),700)},200)}}
 function boatModalHTML(){const m=S.boatModal;if(!m)return '';
-  if(m.kind==='intro'&&THEME()==='desert')return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="bpop">${desertSVG(0,200)}</div><h3>יוביק והגמל הצעיר</h3>
-    <p>יוביק נחתה בלב המדבר הגדול. בצל עץ דקל חיכה לה גמל צעיר וסקרן, עם דבשת אחת ועיניים גדולות.</p>
+  if(m.kind==='intro'&&THEME()==='desert')return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="bpop">${desertSVG(0,200)}</div><h3>${kidName()} והגמל הצעיר</h3>
+    <p>${kidName()} נחתה בלב המדבר הגדול. בצל עץ דקל חיכה לה גמל צעיר וסקרן, עם דבשת אחת ועיניים גדולות.</p>
     <p>מתוך אוהל גדול יצא שייח' אל־כַּלִמָאת, שייח' המילים. "כל <b>5 נווי מדבר</b> שתסיימי <b>מצוין</b>, כל התחנות ב־85% ומעלה," הוא אמר, "ואתן לך כלי רכיבה חזק יותר."</p>
     <p>20 כלים מחכים לך, מגמל צעיר ועד <b>רכב שטח מפלצתי</b>. ובכל רגע אפשר לפתוח את טבלת האותיות והמספרים בכפתור 🔤 למעלה. מוכנה לרכוב?</p>
     <div class="btns"><button class="btn brass" data-act="bmClose">יאללה, רוכבים! 🐪</button><button class="btn ghost" data-act="fleet">לראות את כל השיירה</button></div></div></div>`;
-  if(m.kind==='intro')return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="bpop">${boatSVG(0,200)}</div><h3>יוביק והרפסודה הקטנה</h3>
-    <p>ביום סוער אחד נסחפה יוביק אל חוף של אי קטן. כל מה שנשאר לה זה רפסודה: כמה בולי עץ, חבל אחד ומפרש מחולצה ישנה.</p>
+  if(m.kind==='intro')return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="bpop">${boatSVG(0,200)}</div><h3>${kidName()} והרפסודה הקטנה</h3>
+    <p>ביום סוער אחד נסחפה ${kidName()} אל חוף של אי קטן. כל מה שנשאר לה זה רפסודה: כמה בולי עץ, חבל אחד ומפרש מחולצה ישנה.</p>
     <p>על הרציף חיכה לה הקפטן הזקן של הנמל, Captain Words. "יש לי הצעה בשבילך," הוא חייך. "על כל <b>5 איים</b> שתסיימי <b>מצוין</b>, כל התחנות ב־85% ומעלה, אתן לך כלי שייט גדול יותר."</p>
     <p>20 כלי שייט מחכים בנמל, מרפסודה ועד ספינת התענוגות הענקית <b class="en">Queen of English</b>. מוכנה להפליג?</p>
     <div class="btns"><button class="btn brass" data-act="bmClose">יאללה, מפליגים! ⛵</button><button class="btn ghost" data-act="fleet">לראות את כל הצי</button></div></div></div>`;
   if(m.kind==='up'){const b=FLEETS()[m.lv];const ds=THEME()==='desert';return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="confetti">🎉✨🎊</div><div class="bpop">${vehSVG(m.lv,220)}</div><h3>שדרוג! ${ds?'כלי רכיבה':'כלי שייט'} חדש: ${esc(fullName(b))}</h3><p style="margin:0;color:var(--ink2);text-align:center;direction:ltr">${esc(b.en)} · ${m.lv+1}/20</p><p>${ds?"שייח' אל־כלמאת":'Captain Words'}: "${esc(b.story)}"</p><div class="btns"><button class="btn brass" data-act="bmClose">ממשיכים להפליג!</button></div></div></div>`}
-  if(m.kind==='fleet'){const f=fleetState();const ds=THEME()==='desert';return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox fleetbox"><h3>${ds?'השיירה':'הצי'} של יוביק · ${f.lv+1}/20</h3><p class="sub" style="margin:0">כל 5 ${ds?'נווי מדבר':'איים'} מצוינים (כל התחנות, ממוצע 85%+) משדרגים את ${ds?'כלי הרכיבה':'כלי השייט'}.</p>
+  if(m.kind==='fleet'){const f=fleetState();const ds=THEME()==='desert';return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox fleetbox"><h3>${ds?'השיירה':'הצי'} של ${kidName()} · ${f.lv+1}/20</h3><p class="sub" style="margin:0">כל 5 ${ds?'נווי מדבר':'איים'} מצוינים (כל התחנות, ממוצע 85%+) משדרגים את ${ds?'כלי הרכיבה':'כלי השייט'}.</p>
     <div class="fleetgrid">${FLEETS().map((b,k)=>`<div class="fitem ${k<=f.lv?'own':'lock'} ${k===f.lv?'cur':''}">${vehSVG(k,96)}<b>${k<=f.lv||k===f.lv+1?esc(b.n):'?'}</b>${k<=f.lv||k===f.lv+1?`<small>"${esc(b.nick)}"</small>`:''}<small>${k*5} איים</small></div>`).join('')}</div>
     <div class="btns"><button class="btn brass" data-act="bmClose">סגירה</button></div></div></div>`}
   return ''}
