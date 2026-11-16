@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script>(function(){var r='child',c='';try{r=JSON.parse(localStorage.getItem('voy:role'))||r;c=JSON.parse(localStorage.getItem('voy:child'))||c}catch(e){}var m=r==='parent'?['manifest-boss.webmanifest','Boss']:c==='gil'?['manifest-gil.webmanifest','GilGul']:c==='ariel'?['manifest-ariel.webmanifest','Ariel']:c==='shaili'?['manifest-shaili.webmanifest','Shai-Li']:c==='yuvik'?['manifest.webmanifest','Yuvik']:['manifest-app.webmanifest','לומדים בכיף'];document.write('<meta name="apple-mobile-web-app-title" content="'+m[1]+'"><link rel="manifest" href="'+m[0]+'">')})()</script>
+<script>(function(){var r='child',c='';try{r=JSON.parse(localStorage.getItem('voy:role'))||r;c=JSON.parse(localStorage.getItem('voy:child'))||c}catch(e){}var m=r==='viewer'?['manifest-report.webmanifest','דוח']:r==='parent'?['manifest-boss.webmanifest','Boss']:c==='gil'?['manifest-gil.webmanifest','GilGul']:c==='ariel'?['manifest-ariel.webmanifest','Ariel']:c==='shaili'?['manifest-shaili.webmanifest','Shai-Li']:c==='yuvik'?['manifest.webmanifest','Yuvik']:['manifest-app.webmanifest','לומדים בכיף'];document.write('<meta name="apple-mobile-web-app-title" content="'+m[1]+'"><link rel="manifest" href="'+m[0]+'">')})()</script>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -519,7 +519,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='64';
+const APP_VERSION='65';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -533,15 +533,15 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 const VAPID_PUB='BBR4fkFfpsYjeBt2gwMCR-f8Uo7xR7Eao2UVjioVPr4f7Q7ysexQZKy707C-etOaB7fGALonLbWB_i9Mb8DCzMU';
 const pushOK=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&window.isSecureContext;
 function u8b64(b){const p='='.repeat((4-b.length%4)%4);const raw=atob((b+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0))}
-async function notifPrefs(){try{const c=await caches.open('notif');const nm=(S.profile&&S.profile.name)||'';await c.put('name',new Response(nm));await c.put('icon',new Response(({gil:'./icon-gil-192.png',ariel:'./icon-ariel-192.png',shaili:'./icon-shaili-192.png'})[(S.profile&&S.profile.child)||CHILD]||'./icon-192.png'));await c.put('api',new Response(JSON.stringify({api:API,key:KEY})))}catch(e){}}
+async function notifPrefs(){try{const c=await caches.open('notif');const nm=(S.profile&&S.profile.name)||'';await c.put('name',new Response(nm));await c.put('icon',new Response(({gil:'./icon-gil-192.png',ariel:'./icon-ariel-192.png',shaili:'./icon-shaili-192.png'})[(S.profile&&S.profile.child)||CHILD]||'./icon-192.png'));await c.put('api',new Response(JSON.stringify({api:API,key:KEY})));await c.put('role',new Response(S.role||''))}catch(e){}}
 async function enablePush(){if(!pushOK()){toast('בטלפון הזה אין תמיכה בתזכורות. באייפון: צריך להתקין את האפליקציה למסך הבית.');return}
   try{const perm=await Notification.requestPermission();if(perm!=='granted'){LS.set('pushOff',1);toast('התזכורות לא הופעלו. אפשר להפעיל אחר כך בהגדרות הדפדפן.');render();return}
     await notifPrefs();const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8b64(VAPID_PUB)});
-    LS.set('pushOn',1);render();toast('🔔 התזכורת הופעלה! ראשון עד חמישי ב-18:00');
+    LS.set('pushOn',1);render();toast(isViewer()?'🔔 הופעל! כל ערב ב־21:00 יגיע סיכום של היום':'🔔 התזכורת הופעלה! ראשון עד חמישי ב-18:00');
     const old=LS.get('pushEp','');await apiPost({action:'pushSub',sub:sub.toJSON(),old:old&&old!==sub.endpoint?old:undefined,ua:navigator.userAgent.slice(0,60)});LS.set('pushEp',sub.endpoint)}
   catch(e){console.warn(e);toast('לא הצלחנו להפעיל תזכורות: '+String(e&&e.message||e).slice(0,60))}}
-async function syncPush(){if(!pushOK()||isParent()||Notification.permission!=='granted')return;try{await notifPrefs();const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(!sub)return;
+async function syncPush(){if(!pushOK()||isParent()&&!isViewer()||Notification.permission!=='granted')return;try{await notifPrefs();const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(!sub)return;
   LS.set('pushOn',1);const old=LS.get('pushEp','');if(old!==sub.endpoint){await apiPost({action:'pushSub',sub:sub.toJSON(),old:old||undefined,ua:navigator.userAgent.slice(0,60)});LS.set('pushEp',sub.endpoint)}}catch(e){}}
 function pushCardHTML(){if(isParent()||!pushOK()||LS.get('pushOff',0)||(Notification.permission==='granted'&&LS.get('pushOn',0)))return '';
   return `<button class="newbanner late" data-act="pushOn"><span class="gift">🔔</span><span>תזכורת יומית לתרגול<small>ראשון עד חמישי ב-18:00</small></span><span class="go">להפעיל</span></button>`}
@@ -697,7 +697,8 @@ const S={
 };
 function newSession(){return {date:today(),minutes:0,activities:[],missed:[],readOk:0,readHelp:0,updatedAt:Date.now()}}
 function cache(){LS.set(cacheKey(),{schedule:S.scheduleState,progress:S.progress,sessions:[S.session,...S.sessions.filter(s=>s.date!==S.session.date)].slice(0,40),classwords:S.classWords,zoom:S.zoom,lessons:S.lessons,pendingPhotos:S.pendingPhotos,transcripts:S.transcripts||[]})}
-const isParent=()=>S.role==='parent';
+const isParent=()=>S.role==='parent'||S.role==='viewer';   // viewer = הורה שרואה רק דוח (בלי כתיבה)
+const isViewer=()=>S.role==='viewer';
 S.profile=LS.get('profile',null);S.children=LS.get('children',null);
 const LANG=()=>WORLD==='ar'?'ar':'en';
 const HEI=()=>document.documentElement.dataset.ilang==='he';
@@ -718,16 +719,16 @@ const EB=k=>(EBW[THEME()]||EBW.sea)[k];
 const feat=k=>!S.profile||!S.profile.features||S.profile.features[k]!==false;
 const kidName=()=>S.profile&&S.profile.name?S.profile.name:'';
 function applyProfile(){
-  const n=kidName();const short=isParent()?'Boss':(S.profile&&S.profile.child==='gil')?'GilGul':(S.profile&&S.profile.child==='ariel')?'Ariel':(S.profile&&S.profile.child==='shaili')?'Shai-Li':(S.profile&&S.profile.child==='yuvik')?'Yuvik':(kidName()||'לומדים בכיף');
-  document.title='לומדים בכיף · '+(isParent()?'Boss':n);const h=document.querySelector('.brand h1');if(h)h.textContent='לומדים בכיף';
-  const sub=document.querySelector('.brand .who');if(sub)sub.textContent=isParent()?'Boss · '+n:n;
+  const n=kidName();const short=isViewer()?'דוח '+n:isParent()?'Boss':(S.profile&&S.profile.child==='gil')?'GilGul':(S.profile&&S.profile.child==='ariel')?'Ariel':(S.profile&&S.profile.child==='shaili')?'Shai-Li':(S.profile&&S.profile.child==='yuvik')?'Yuvik':(kidName()||'לומדים בכיף');
+  document.title=isViewer()?'הדוח של '+n:'לומדים בכיף · '+(isParent()?'Boss':n);const h=document.querySelector('.brand h1');if(h)h.textContent='לומדים בכיף';
+  const sub=document.querySelector('.brand .who');if(sub)sub.textContent=isViewer()?'הדוח של '+n:isParent()?'Boss · '+n:n;
   document.documentElement.dataset.theme=THEME();document.documentElement.dataset.lang=LANG();
   const tn=THEME()==='tennis',bk=THEME()==='shop',dn=THEME()==='dance';const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=tn?'#0b2147':bk?'#2b1830':dn?'#160d2e':'#0a1a29';
   const at=document.querySelector('meta[name="apple-mobile-web-app-title"]');if(at)at.content=short;
-  const want=isParent()?'manifest-boss.webmanifest':tn?'manifest-gil.webmanifest':bk?'manifest-ariel.webmanifest':dn?'manifest-shaili.webmanifest':'manifest.webmanifest';
+  const want=isViewer()?'manifest-report.webmanifest':isParent()?'manifest-boss.webmanifest':tn?'manifest-gil.webmanifest':bk?'manifest-ariel.webmanifest':dn?'manifest-shaili.webmanifest':'manifest.webmanifest';
   const m=document.querySelector('link[rel="manifest"]');if(m&&m.getAttribute('href')!==want)m.setAttribute('href',want);
-  const ic=isParent()?'icon-512.png':tn?'icon-gil-512.png':bk?'icon-ariel-512.png':dn?'icon-shaili-512.png':'icon-512.png';const bi=document.querySelector('.brand img');if(bi&&bi.getAttribute('src')!==ic)bi.setAttribute('src',ic);
-  const ap=document.querySelector('link[rel="apple-touch-icon"]');if(ap)ap.setAttribute('href',isParent()?'apple-touch-icon.png':tn?'apple-touch-gil.png':bk?'apple-touch-ariel.png':dn?'apple-touch-shaili.png':'apple-touch-icon.png');
+  const ic=isParent()&&!isViewer()?'icon-512.png':tn?'icon-gil-512.png':bk?'icon-ariel-512.png':dn?'icon-shaili-512.png':'icon-512.png';const bi=document.querySelector('.brand img');if(bi&&bi.getAttribute('src')!==ic)bi.setAttribute('src',ic);
+  const ap=document.querySelector('link[rel="apple-touch-icon"]');if(ap)ap.setAttribute('href',isParent()&&!isViewer()?'apple-touch-icon.png':tn?'apple-touch-gil.png':bk?'apple-touch-ariel.png':dn?'apple-touch-shaili.png':'apple-touch-icon.png');
   const mt2=document.querySelector('.tab[data-tab="map"] .lbl');if(mt2)mt2.textContent=TW('tab');
 }
 function resetChildState(){Object.assign(S,{progress:{unlocked:1,best:{},xp:0},session:newSession(),sessions:[],classWords:[],zoom:[],lessons:[],pendingPhotos:0,scheduleState:null,transcripts:[],screen:{name:'map'},calDay:null,editLesson:null,shots:[]});_trk=null}
@@ -735,10 +736,10 @@ function worldsOf(){const w=(S.profile&&S.profile.worlds)||[{id:'en',label:'אנ
 function switchWorld(w){if(w===WORLD)return;WORLD=w;LS.set('world:'+(CHILD||'yuvik'),w);if(S.profile)S.profile={...S.profile,world:w};resetChildState();applyProfile();S.loaded=false;render();loadAll()}
 function switchChild(id){if(!isParent()||id===CHILD)return;CHILD=id;LS.set('child',id);WORLD='en';LS.set('world:'+id,'en');const ch=(S.children||[]).find(c=>c.id===id);S.profile={child:id,name:ch?ch.name:id,grade:ch?ch.grade:'',world:'en',worlds:[{id:'en',label:'אנגלית'}],features:{zoom:id==='yuvik',cal:true,camera:true,readtext:true}};LS.set('profile',S.profile);resetChildState();applyProfile();S.loaded=false;render();loadAll()}
 function setRole(r){
-  r=r==='parent'?'parent':'child';
+  r=r==='parent'?'parent':r==='viewer'?'viewer':'child';
   if(r===S.role)return;
   S.role=r;LS.set('role',r);
-  if(r==='parent'){S.tab='parent'}else if(S.tab==='parent'){S.tab='map'}
+  if(r==='parent'||r==='viewer'){S.tab='parent'}else if(S.tab==='parent'){S.tab='map'}
 }
 function saveSession(){if(isParent())return;S.session.updatedAt=Date.now();enqueue('session:'+S.session.date,{action:'saveSession',data:JSON.parse(JSON.stringify(S.session))});cache()}
 function saveState(name){if(isParent()&&name==='progress')return;const data={progress:S.progress,classwords:S.classWords,zoom:S.zoom,schedule:S.scheduleState}[name];enqueue('state:'+name,{action:'saveState',name,data:JSON.parse(JSON.stringify(data))});cache()}
@@ -1039,7 +1040,7 @@ function render(){
   $('#soundBtn').setAttribute('aria-pressed',String(S.sound));{const bf=!!LS.get('bigfont',false);document.documentElement.classList.toggle('big',bf);$('#fontBtn').setAttribute('aria-pressed',String(bf));$('#fontBtn').setAttribute('aria-label',bf?'גופן רגיל':'הגדלת גופן ב־30%')}
   const v=$('#view');
   if(!KEY||S.relink){v.innerHTML=viewGate();$('#tabs').hidden=true;return}
-  $('#tabs').hidden=false;
+  $('#tabs').hidden=isViewer();if(isViewer())S.tab='parent';
   const pt=document.querySelector('.tab[data-tab="parent"]');pt.hidden=!isParent();
   ['zoom','cal','camera'].forEach(k=>{document.querySelector(`.tab[data-tab="${k}"]`).hidden=!feat(k)});
   if(['zoom','cal','camera'].includes(S.tab)&&!feat(S.tab))S.tab='map';
@@ -2001,16 +2002,27 @@ function tracksParentHTML(){const T=tracks();if(!T)return '';const al=S.progress
     return `<div class="zitem"><div class="zt"><b>${t.ic} ${t.t}</b><span class="sub">${t.done.length} נכבשו · ${t.queue.length} בתור</span></div>
     ${i?`<span>אי פעיל: <b>${esc(i.name)}</b> · ${r}% מהתחנות עברו${w.days?` · אחרון: לפני ${w.days} ימים`:''}${(S.progress.seen||{})[i.id]||S.progress.best[i.id]?'':' · עוד לא נכנסה'}</span>`:`<span class="sub">${esc(t.none)}</span>`}</div>`}).join('')}
   </section>`}
+function viewerTopHTML(){const n=kidName();const ios=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const on=pushOK()&&Notification.permission==='granted'&&LS.get('pushOn',0);
+  const push=on?`<p class="maphint" style="text-align:start">🔔 ההתראה היומית פעילה: כל ערב ב־21:00 מגיע סיכום של מה ש${esc(n)} עשתה.</p>`
+    :pushOK()?`<button class="newbanner late" data-act="pushOn"><span class="gift">🔔</span><span>התראה יומית ב־21:00<small>סיכום קצר של מה ש${esc(n)} עשתה היום</small></span><span class="go">להפעיל</span></button>`
+    :ios&&!STANDALONE?`<section class="card"><h2>📲 כדי לקבל התראה יומית באייפון</h2><ol class="dlist"><li>פותחים את הקישור ב<b>ספארי</b></li><li>לוחצים על כפתור <b>השיתוף</b> ⬆️ ובוחרים <b>"הוספה למסך הבית"</b> ← <b>"הוסף"</b></li><li>פותחים את <b>"דוח ${esc(n)}"</b> מהאייקון החדש, ולוחצים כאן <b>"להפעיל"</b> ← <b>"אישור"</b></li></ol><p class="sub">באייפון התראות עובדות רק מאפליקציה שנוספה למסך הבית.</p></section>`
+    :`<p class="maphint" style="text-align:start">🔔 בטלפון הזה אין תמיכה בהתראות.</p>`;
+  return `<div class="ihead"><span class="eyebrow">📊 דוח להורה</span><h2>הדוח של ${esc(n)}</h2><p>הנתונים מתעדכנים מהטלפון שלה בכל פתיחה. כאן רק צופים: שום דבר לא משתנה אצלה.</p></div>${push}`}
 function viewParent(){
   const s=S.session;const {pct}=sessSummary(s);
   const all=[s,...S.sessions.filter(x=>x.date!==s.date)].slice(0,14);
   const week=all.filter(x=>(Date.now()-new Date(x.date))/864e5<7).reduce((n,x)=>n+tasksOf(x),0);
+  if(isViewer())return viewerTopHTML()+viewParentBody(s,pct,all,week);
   return `<div class="ihead"><span class="eyebrow">${EB('cap')}</span><h2>יומן הורה</h2><p>דוח מלא נשלח במייל בכל ערב ב־20:00.</p></div>
   ${S.online===false?`<p class="maphint" style="text-align:start;color:#ffb4a2">⚠️ השרת לא ענה בפתיחה האחרונה: ${esc(S.lastErr||'')}</p>`:''}
   <p class="maphint" style="text-align:start"><button class="syncbtn" data-act="conntest">🔌 בדיקת חיבור</button> <span id="conntest">${CONN.okAt?'חיבור אחרון תקין: '+new Date(CONN.okAt).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})+' ('+CONN.ch+')':''}</span></p>
   <p class="maphint" style="text-align:start">🔔 תזכורות: ${S.profile&&S.profile.pushDevices!=null?(S.profile.pushDevices?`מופעלות ב-${S.profile.pushDevices} מכשירים`:'עוד לא הופעלו בטלפון שלה'):'—'} <button class="syncbtn" data-act="pushTest">📨 לשלוח תזכורת לבדיקה</button></p>
   ${ymParentHTML()}<p class="maphint" style="text-align:start">גרסה ${APP_VERSION}</p>
   <p class="maphint" style="text-align:start">מצב הורה: מה שעושים בטלפון הזה לא נספר כתרגול שלה. הנתונים מתעדכנים מהטלפון שלה בכל פתיחה.</p>
+  `+viewParentBody(s,pct,all,week);
+}
+function viewParentBody(s,pct,all,week){return `
   <section class="card">
     <h2>היום</h2>
     <div class="stats">

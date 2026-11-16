@@ -24,6 +24,8 @@ More than one conversation may work on it, so **never overwrite someone else's w
   When processing her uploads: same topic as an existing island → add the material to that island (more games/rounds), different topic → new island. Never create duplicate islands; identical uploads (same file/link) are processed once and the extra copies trashed.
 If you add or remove a world on purpose, update `EXPECT` in tools/smoke.js in the same commit.
 
+- Parent report app: role `viewer` (server `VIEW_KEY` on a child entry; now only shaili). Read-only: client treats it as parent-like (no writes) and shows only `viewParent` via `viewerTopHTML`. 21:00 daily push to viewer devices (`dailyReminder` → `pushSentV:`), text from server `viewerToday_` via sw.js `todayInfo`.
+
 ## Architecture (short)
 - index.html: the whole client. sw.js: network-first cache + push notifications. status.json: update flag/version.
 - Backend: Google Apps Script web app (not in this repo; it holds the keys). Lesson content = JSON files in Drive.
