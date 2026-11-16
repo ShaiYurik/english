@@ -153,7 +153,7 @@ button.wtag{border:0;cursor:pointer;font:inherit}
 .newbanner .gift{font-size:32px;animation:bobg 1.2s ease-in-out infinite}
 @keyframes bobg{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-4px) rotate(6deg)}}
 .newbanner small{display:block;font-weight:600;opacity:.85}
-.hintbtn{border-color:#f0c35e!important}.hintbox{background:#fff6d6;color:#4a3500;border:1.5px solid #f0c35e;border-radius:14px;padding:10px 12px;line-height:1.55;font-size:15px;text-align:start}.hintbox b{color:#8a5a00}.hgl{padding-bottom:6px;margin-bottom:6px;border-bottom:1px dashed #f0c35e}.hgl:last-child{border:0;margin:0;padding:0}
+.hintbtn{border-color:#f0c35e!important}.hintbox{background:#fff6d6;color:#4a3500;border:1.5px solid #f0c35e;border-radius:14px;padding:10px 12px;line-height:1.55;font-size:15px;text-align:start}.hintbox b{color:#8a5a00}.hintbox .hsay{float:inline-end;margin:-2px 0 4px 8px;padding:4px 10px;font-size:13px}.hgl{padding-bottom:6px;margin-bottom:6px;border-bottom:1px dashed #f0c35e}.hgl:last-child{border:0;margin:0;padding:0}
 .newbanner.procb{background:linear-gradient(135deg,#ffe9a8,#ffc76b);color:#3a2600;cursor:default}.newbanner.procb .gift{animation:hgspin 2s ease-in-out infinite}@keyframes hgspin{0%,40%{transform:rotate(0)}50%,90%{transform:rotate(180deg)}100%{transform:rotate(360deg)}}.procslot .pring{animation:pdash 1.6s linear infinite}@keyframes pdash{to{stroke-dashoffset:-22}}.procslot .phg{animation:pblink 1.4s ease-in-out infinite}@keyframes pblink{50%{opacity:.35}}
 .newbanner.late{background:linear-gradient(135deg,#9fd3ff,#5f9be0);color:#0b1c2b}
 .newbanner .go{margin-inline-start:auto;background:#1a1206;color:#f0c35e;border-radius:999px;padding:8px 14px;white-space:nowrap}
@@ -518,7 +518,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='60';
+const APP_VERSION='61';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1426,7 +1426,7 @@ function hintHTML(sc,i,q,kind){if(sc.answered||WORLD==='math'&&kind==='tf')retur
   if(sc.hintAt!==sc.idx)return `<div><button class="btn ghost small hintbtn" data-act="gHint">💡 רמז</button></div>`;
   if(h.elim)return `<div class="hintbox">💡 מחקתי שתי תשובות שגויות. נשארו שתיים, איזו נכונה?</div>`;
   const gl=(h.gl||[]).map(([k,v])=>`<div class="hgl">📖 <b>${isLatin(k)?`<span class="en">${esc(k)}</span>`:esc(k)}</b> = ${esc(v)}</div>`).join('');
-  return `<div class="hintbox">${gl}${h.t?`<div>💡 ${h.from?'<b>רמז מהסיכום:</b> ':''}${tx(h.t)}</div>`:''}</div>`}
+  return `<div class="hintbox"><button class="btn ghost small hsay" data-act="hintSay">${I.speaker} הקראה</button>${gl}${h.t?`<div>💡 ${h.from?'<b>רמז מהסיכום:</b> ':''}${tx(h.t)}</div>`:''}</div>`}
 function viewGame(){
   const sc=S.screen;const i=islandById(sc.id);
   if(sc.kind==='mc'){
@@ -2068,6 +2068,9 @@ document.addEventListener('click',e=>{
       sc.answered=true;sc.wasOk=q.a.every(x=>sc.picked.includes(x));
       if(sc.wasOk){sc.correct++;sfx.ok();if(q.gap&&q.say)setTimeout(()=>say(q.say),350)}else{sfx.bad();sc.missed.push(q.ans||q.o[q.a[0]])}
       render();break;}
+    case 'hintSay':{const i=islandById(sc.id),q=sc.items[sc.idx];const h=hintOf(i,q,sc.kind);if(!h||!('speechSynthesis' in window))break;hush();
+      const segs=[];(h.gl||[]).forEach(([k,v])=>{segs.push(k);segs.push(v)});if(h.t)segs.push(h.t);
+      segs.forEach(t=>{const he=/[\u0590-\u05FF]/.test(t);const u=new SpeechSynthesisUtterance(String(t).replace(/[📖💡]/g,''));u.lang=he?'he-IL':TTS_LANG();u.rate=.85;const vv=he?heVoice:vox();if(vv)u.voice=vv;speechSynthesis.speak(u)});break;}
     case 'gHint':{const i=islandById(sc.id),q=sc.items[sc.idx];const h=hintOf(i,q,sc.kind);if(!h)break;sc.hintAt=sc.idx;
       if(h.elim){const wrong=q.o.map((o,k)=>k).filter(k=>!q.a.includes(k));sc.elim=shuffle(wrong).slice(0,2)}sfx.tap&&sfx.tap();render();break;}
     case 'tfAns':{if(sc.answered)break;const q=sc.items[sc.idx];sc.pick=el.dataset.v==='1';sc.answered=true;sc.wasOk=sc.pick===q.t;
