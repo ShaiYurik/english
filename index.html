@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script>(function(){var r='child',c='yuvik';try{r=JSON.parse(localStorage.getItem('voy:role'))||r;c=JSON.parse(localStorage.getItem('voy:child'))||c}catch(e){}var m=r==='parent'?['manifest-boss.webmanifest','Boss']:c==='gil'?['manifest-gil.webmanifest','GilGul']:c==='ariel'?['manifest-ariel.webmanifest','Ariel']:['manifest.webmanifest','Yuvik'];document.write('<meta name="apple-mobile-web-app-title" content="'+m[1]+'"><link rel="manifest" href="'+m[0]+'">')})()</script>
+<script>(function(){var r='child',c='yuvik';try{r=JSON.parse(localStorage.getItem('voy:role'))||r;c=JSON.parse(localStorage.getItem('voy:child'))||c}catch(e){}var m=r==='parent'?['manifest-boss.webmanifest','Boss']:c==='gil'?['manifest-gil.webmanifest','GilGul']:c==='ariel'?['manifest-ariel.webmanifest','Ariel']:c==='shaili'?['manifest-shaili.webmanifest','Shai-Li']:['manifest.webmanifest','Yuvik'];document.write('<meta name="apple-mobile-web-app-title" content="'+m[1]+'"><link rel="manifest" href="'+m[0]+'">')})()</script>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,6 +45,16 @@
   --brass:#f2b94a; --brass2:#ffd98c; --signal:#e0395f; --kelp:#2f9468; --kelp2:#dcf3e8; --redsoft:#fcdde4;
   --foam:#fff4f8; --muted:#e9bfd3;
 }
+:root[data-theme="dance"]{
+  --abyss:#160d2e; --sea:#5b2a9e; --sea2:#7a3cc4; --swell:#b07ae8;
+  --chart:#fbf6ff; --chart2:#efe3ff; --ink:#1f1238; --ink2:#5e4b7c;
+  --brass:#ffcf4a; --brass2:#ffe9a3; --signal:#ff4f9a; --kelp:#2fae7f; --kelp2:#dcf6ea; --redsoft:#ffe0ef;
+  --foam:#fff7ff; --muted:#cdb8ef;
+}
+:root[data-theme="dance"] body{background-image:radial-gradient(ellipse at 30% 0%,#ff6fb5 0%,transparent 45%),radial-gradient(ellipse at 80% 5%,#7a5cff 0%,transparent 40%),linear-gradient(180deg,#3a1d6e 0%,#1d1040 55%,#120a26 100%)}
+.dancecard{display:flex;align-items:center;gap:12px;width:100%;border:1px solid var(--swell);background:linear-gradient(135deg,#5b2a9e,#1d1040);color:var(--foam);border-radius:var(--r);padding:8px 12px;font:inherit;text-align:start}
+.dancecard b{color:var(--brass2);font-size:18px}.dancecard .ft{display:grid;gap:2px;flex:1}.dancecard small{color:var(--muted);font-weight:600}.dancecard svg{flex:none}
+.dlv{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:12px;background:#f3eefb;text-align:start;opacity:.55}.dlv.got{opacity:1;background:#efe3ff}.dlv.cur{outline:2px solid #ffcf4a}.dlv>span:first-child{font-size:26px;width:36px;text-align:center}.dlv small{display:block;color:var(--ink2)}
 :root[data-theme="shop"] body{background-image:linear-gradient(180deg,#f3a6c4 0%,#a8336a 40%,#2b1830 85%)}
 .mallcard{display:flex;align-items:center;gap:12px;width:100%;border:1px solid var(--swell);background:linear-gradient(135deg,var(--sea),var(--abyss));color:var(--foam);border-radius:var(--r);padding:10px 12px;font:inherit;text-align:start}
 .mallcard .mw{font-size:40px;line-height:1}.mallcard b{color:var(--brass2);font-size:18px}.mallcard .ft{display:grid;gap:2px;flex:1}.mallcard small{color:var(--muted);font-weight:600}
@@ -495,7 +505,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='46';
+const APP_VERSION='47';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -509,7 +519,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 const VAPID_PUB='BBR4fkFfpsYjeBt2gwMCR-f8Uo7xR7Eao2UVjioVPr4f7Q7ysexQZKy707C-etOaB7fGALonLbWB_i9Mb8DCzMU';
 const pushOK=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&window.isSecureContext;
 function u8b64(b){const p='='.repeat((4-b.length%4)%4);const raw=atob((b+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0))}
-async function notifPrefs(){try{const c=await caches.open('notif');const nm=(S.profile&&S.profile.name)||'';await c.put('name',new Response(nm));await c.put('icon',new Response(({gil:'./icon-gil-192.png',ariel:'./icon-ariel-192.png'})[(S.profile&&S.profile.child)||CHILD]||'./icon-192.png'));await c.put('api',new Response(JSON.stringify({api:API,key:KEY})))}catch(e){}}
+async function notifPrefs(){try{const c=await caches.open('notif');const nm=(S.profile&&S.profile.name)||'';await c.put('name',new Response(nm));await c.put('icon',new Response(({gil:'./icon-gil-192.png',ariel:'./icon-ariel-192.png',shaili:'./icon-shaili-192.png'})[(S.profile&&S.profile.child)||CHILD]||'./icon-192.png'));await c.put('api',new Response(JSON.stringify({api:API,key:KEY})))}catch(e){}}
 async function enablePush(){if(!pushOK()){toast('בטלפון הזה אין תמיכה בתזכורות. באייפון: צריך להתקין את האפליקציה למסך הבית.');return}
   try{const perm=await Notification.requestPermission();if(perm!=='granted'){LS.set('pushOff',1);toast('התזכורות לא הופעלו. אפשר להפעיל אחר כך בהגדרות הדפדפן.');render();return}
     await notifPrefs();const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
@@ -681,27 +691,28 @@ const SR_LANG=()=>LANG()==='ar'?'ar-SA':'en-US';
 const LETTER_RE=()=>LANG()==='ar'?/[^\u0621-\u064A\u0660-\u0669]/g:/[^A-Za-z0-9'-]/g;
 const plainW=w=>LANG()==='ar'?String(w).replace(/[\u064B-\u0652\u0640]/g,'').replace(/[^\u0621-\u064A]/g,''):String(w).toLowerCase();
 const spellable=w=>LANG()==='ar'?(()=>{const p=plainW(w);return p.length>=2&&p.length<=8&&!/\s/.test(String(w).trim())})():/^[a-z]{3,10}$/i.test(w);
-const THEME=()=>WORLD==='ar'?'desert':S.profile&&S.profile.child==='gil'?'tennis':S.profile&&S.profile.child==='ariel'?'shop':'sea';
+const THEME=()=>WORLD==='ar'?'desert':S.profile&&S.profile.child==='gil'?'tennis':S.profile&&S.profile.child==='ariel'?'shop':S.profile&&S.profile.child==='shaili'?'dance':'sea';
 const WORDS={sea:{day:'המסע היומי',done:'הגעת לנמל היום. ',goal:'הספינה מגיעה לנמל אחרי {G} משימות. ',newT:'אי חדש מחכה לך!',go:'להפליג ⛵',late:'יאללה ⛵',arch:'🏆 איים שכבשת',back:'חזרה למפה',win:'כבשת את האי!',full:'האי הושלם במלואו!',flags:'🏝️⚓🏝️',tab:'מפה',loading:'מכינים את הספינה…',waits:'מחכה לך',isl:'האי'},
   desert:{day:'המסע במדבר',done:'הגעת לנווה המדבר היום! ',goal:'השיירה מגיעה לנווה המדבר אחרי {G} משימות. ',newT:'נווה מדבר חדש מחכה לך!',go:'לרכוב 🐪',late:'יאללה 🐪',arch:'🏆 נווי מדבר שכבשת',back:'חזרה למדבר',win:'כבשת את נווה המדבר!',full:'נווה המדבר הושלם במלואו!',flags:'🌴🐪🌴',tab:'מדבר',loading:'מעמיסים את הגמלים…',waits:'מחכה לך',isl:'נווה המדבר'},
+  dance:{day:'האימון של היום',done:'סיימת את האימון היום! ',goal:'האימון נגמר אחרי {G} משימות. ',newT:'כוריאוגרפיה חדשה הגיעה!',go:'לרקוד 💃',late:'יאללה 💃',arch:'🏆 ריקודים שסיימת',back:'חזרה לסטודיו',win:'איזה ריקוד מושלם!',full:'הופעה מושלמת!',flags:'💃🎶💃',tab:'סטודיו',loading:'מדליקים את הזרקורים…',waits:'מחכה לך',isl:'הריקוד'},
   shop:{day:'הקניות של היום',done:'סל הקניות מלא היום! ',goal:'הסל מתמלא אחרי {G} משימות. ',newT:'קולקציה חדשה הגיעה!',go:'לקניון 🛍️',late:'יאללה 🛍️',arch:'🏆 חנויות שסיימת',back:'חזרה לקניון',win:'וואו, איזה לוק!',full:'סל מלא, קנייה מושלמת!',flags:'🛍️👗🛍️',tab:'קניון',loading:'פותחים את הקניון…',waits:'מחכה לך',isl:'החנות'},
   tennis:{day:'האימון היומי',done:'סיימת את האימון היום! ',goal:'האימון היומי נגמר אחרי {G} משימות. ',newT:'מגרש חדש מחכה לך!',go:'לעלות למגרש 🎾',late:'יאללה 🎾',arch:'🏆 משחקים שניצחת',back:'חזרה למגרשים',win:'ניצחת במשחק!',full:'ניצחון מושלם! Game, set, match!',flags:'🎾🏆🎾',tab:'מגרשים',loading:'מכינים את המגרש…',waits:'מחכה לך',isl:'המגרש'}};
 const TW=k=>WORDS[THEME()][k];
-const EBW={sea:{log:"Ship's Log",radio:'Radio Room',hunt:'Treasure Hunt',cap:"Captain's Log",anc:'⚓'},tennis:{log:'Match Schedule',radio:'Commentary Box',hunt:'Ball Hunt',cap:"Coach's Notes",anc:'🎾'},shop:{log:'Style Diary',radio:'Mall Radio',hunt:'Bargain Hunt',cap:'Stylist Notes',anc:'🛍️'},desert:{log:'Caravan Log',radio:'Radio Tent',hunt:'Treasure Hunt',cap:"Caravan Master's Log",anc:'🐪'}};
+const EBW={sea:{log:"Ship's Log",radio:'Radio Room',hunt:'Treasure Hunt',cap:"Captain's Log",anc:'⚓'},tennis:{log:'Match Schedule',radio:'Commentary Box',hunt:'Ball Hunt',cap:"Coach's Notes",anc:'🎾'},dance:{log:'Dance Diary',radio:'Music Room',hunt:'Step Hunt',cap:"Coach's Notes",anc:'💃'},shop:{log:'Style Diary',radio:'Mall Radio',hunt:'Bargain Hunt',cap:'Stylist Notes',anc:'🛍️'},desert:{log:'Caravan Log',radio:'Radio Tent',hunt:'Treasure Hunt',cap:"Caravan Master's Log",anc:'🐪'}};
 const EB=k=>(EBW[THEME()]||EBW.sea)[k];
 const feat=k=>!S.profile||!S.profile.features||S.profile.features[k]!==false;
 const kidName=()=>S.profile?S.profile.name:'יוביק';
 function applyProfile(){
-  const n=kidName();const short=isParent()?'Boss':(S.profile&&S.profile.child==='gil')?'GilGul':(S.profile&&S.profile.child==='ariel')?'Ariel':'Yuvik';
+  const n=kidName();const short=isParent()?'Boss':(S.profile&&S.profile.child==='gil')?'GilGul':(S.profile&&S.profile.child==='ariel')?'Ariel':(S.profile&&S.profile.child==='shaili')?'Shai-Li':'Yuvik';
   document.title='לומדים בכיף · '+(isParent()?'Boss':n);const h=document.querySelector('.brand h1');if(h)h.textContent='לומדים בכיף';
   const sub=document.querySelector('.brand .who');if(sub)sub.textContent=isParent()?'Boss · '+n:n;
   document.documentElement.dataset.theme=THEME();document.documentElement.dataset.lang=LANG();
-  const tn=THEME()==='tennis',bk=THEME()==='shop';const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=tn?'#0b2147':bk?'#2b1830':'#0a1a29';
+  const tn=THEME()==='tennis',bk=THEME()==='shop',dn=THEME()==='dance';const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=tn?'#0b2147':bk?'#2b1830':dn?'#160d2e':'#0a1a29';
   const at=document.querySelector('meta[name="apple-mobile-web-app-title"]');if(at)at.content=short;
-  const want=isParent()?'manifest-boss.webmanifest':tn?'manifest-gil.webmanifest':bk?'manifest-ariel.webmanifest':'manifest.webmanifest';
+  const want=isParent()?'manifest-boss.webmanifest':tn?'manifest-gil.webmanifest':bk?'manifest-ariel.webmanifest':dn?'manifest-shaili.webmanifest':'manifest.webmanifest';
   const m=document.querySelector('link[rel="manifest"]');if(m&&m.getAttribute('href')!==want)m.setAttribute('href',want);
-  const ic=isParent()?'icon-512.png':tn?'icon-gil-512.png':bk?'icon-ariel-512.png':'icon-512.png';const bi=document.querySelector('.brand img');if(bi&&bi.getAttribute('src')!==ic)bi.setAttribute('src',ic);
-  const ap=document.querySelector('link[rel="apple-touch-icon"]');if(ap)ap.setAttribute('href',isParent()?'apple-touch-icon.png':tn?'apple-touch-gil.png':bk?'apple-touch-ariel.png':'apple-touch-icon.png');
+  const ic=isParent()?'icon-512.png':tn?'icon-gil-512.png':bk?'icon-ariel-512.png':dn?'icon-shaili-512.png':'icon-512.png';const bi=document.querySelector('.brand img');if(bi&&bi.getAttribute('src')!==ic)bi.setAttribute('src',ic);
+  const ap=document.querySelector('link[rel="apple-touch-icon"]');if(ap)ap.setAttribute('href',isParent()?'apple-touch-icon.png':tn?'apple-touch-gil.png':bk?'apple-touch-ariel.png':dn?'apple-touch-shaili.png':'apple-touch-icon.png');
   const mt2=document.querySelector('.tab[data-tab="map"] .lbl');if(mt2)mt2.textContent=TW('tab');
 }
 function resetChildState(){Object.assign(S,{progress:{unlocked:1,best:{},xp:0},session:newSession(),sessions:[],classWords:[],zoom:[],lessons:[],pendingPhotos:0,scheduleState:null,transcripts:[],screen:{name:'map'},calDay:null,editLesson:null,shots:[]});_trk=null}
@@ -729,7 +740,7 @@ function mergeProgress(p,loc){if(!loc)return;
   if(loc.mall&&p.mall&&p.mall!==loc.mall){const A=p.mall,B=loc.mall;A.earn=mx(A.earn,B.earn);A.intro=A.intro||B.intro;
     const cp=new Map((A.cps||[]).map(c=>[c.iid,c]));(B.cps||[]).forEach(c=>{const o=cp.get(c.iid);if(!o)cp.set(c.iid,c);else if(c.used)o.used=1});A.cps=[...cp.values()];
     const key=b=>b.id+'|'+b.at;const bs=new Map((A.buys||[]).map(b=>[key(b),b]));(B.buys||[]).forEach(b=>{if(!bs.has(key(b)))bs.set(key(b),b)});A.buys=[...bs.values()]}
-  ['boatLevel','fleetIntro','caravanIntro'].forEach(k=>{if(loc[k]!=null&&typeof loc[k]==='number')p[k]=mx(p[k],loc[k]);else if(loc[k]&&!p[k])p[k]=loc[k]})}
+  ['boatLevel','fleetIntro','caravanIntro','danceLv','danceIntro'].forEach(k=>{if(loc[k]!=null&&typeof loc[k]==='number')p[k]=mx(p[k],loc[k]);else if(loc[k]&&!p[k])p[k]=loc[k]})}
 function applyState(st,fromServer){
   if(!st)return;
   const pend=k=>fromServer&&outbox[NS()+'state:'+k];
@@ -944,7 +955,7 @@ function tracks(){
   const dc=dailyCurrent();if(dc)_trk.push({k:'daily',t:'סיפור יומי',ic:'📖',flag:'#f0c35e',active:dc.isl,done:[],started:[],queue:[],quiet:true,dailyDone:dc.doneToday,dailyLast:dc.last,none:''});
   return _trk;
 }
-const classSlots=()=>['gil','ariel'].includes((S.profile&&S.profile.child)||CHILD)?2:1;
+const classSlots=()=>['gil','ariel','shaili'].includes((S.profile&&S.profile.child)||CHILD)?2:1;
 const activeIds=()=>{const T=tracks();return T?T.filter(t=>t.active).map(t=>t.active.id):[]};
 const daysSince=d=>d?Math.max(0,Math.round((new Date(today())-new Date(d))/864e5)):0;
 function waitInfo(i){const p=S.progress;const since=(p.activeSince||{})[i.id];const touch=(p.touch||{})[i.id];const last=[since,touch].filter(Boolean).sort().pop();return {days:daysSince(last),touched:!!(touch||p.best[i.id])}}
@@ -1019,7 +1030,7 @@ function render(){
   if(S.confirm&&S.tab==='map')v.insertAdjacentHTML('beforeend',confirmHTML());
   if(S.ref&&LANG()==='ar')v.insertAdjacentHTML('beforeend',refHTML());
   if(S.tab==='map'&&!S.confirm&&isYM()&&(S.screen.name==='map'||S.screen.name==='ymEnd')){ymCheckBoat();if(!S.ymModal)ymParentBoat();if(S.ymModal)v.insertAdjacentHTML('beforeend',ymModalHTML())}
-  if(S.tab==='map'&&!S.confirm&&(S.screen.name==='map'||S.screen.name==='result')){checkFleet();if(S.boatModal)v.insertAdjacentHTML('beforeend',boatModalHTML());checkMall();if(S.mallModal&&!S.boatModal)v.insertAdjacentHTML('beforeend',mallModalHTML())}
+  if(S.tab==='map'&&!S.confirm&&(S.screen.name==='map'||S.screen.name==='result')){checkFleet();if(S.boatModal)v.insertAdjacentHTML('beforeend',boatModalHTML());checkMall();if(S.mallModal&&!S.boatModal)v.insertAdjacentHTML('beforeend',mallModalHTML());checkDance();if(S.danceModal&&!S.boatModal&&!S.mallModal)v.insertAdjacentHTML('beforeend',danceModalHTML())}
   updateMeter();refreshRecUI();setSync();armBack();
   if(S.tab==='map'&&S.screen.name==='map'){const c=document.querySelector('.isl.cur');if(c&&!S._scrolledMap){S._scrolledMap=true;c.scrollIntoView({block:'center'})}}else S._scrolledMap=false;
   const cb=$('#camBadge');const n=S.shots.filter(s=>s.status!=='ok').length;cb.hidden=!n;cb.textContent=n;
@@ -1037,8 +1048,8 @@ function meterHTML(){
   return `<section class="voyage" aria-label="${TW('day')}">
     <div class="row"><span class="lbl">${TW('day')}</span><span class="num" id="mNum"></span></div>
     <div class="track"><div class="line"></div><div class="done" id="mDone"></div>
-      ${tn||THEME()==='desert'||THEME()==='shop'?`<span class="port" aria-hidden="true" style="font-size:16px;line-height:18px">${tn?'🏆':THEME()==='shop'?'👗':'🌴'}</span>`:'<svg class="port" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v11M4 9a5 5 0 0 0 10 0M6 5h6" stroke="#d6a64a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'}
-      <div class="ship" id="mShip">${THEME()==='shop'?'<span style="font-size:26px;line-height:30px">🛍️</span>':!tn&&fleetOn()?vehSVG(fleetState().lv,34):tn?'<svg viewBox="0 0 30 30" width="30" height="30"><circle cx="15" cy="15" r="12" fill="#d7f23c" stroke="#9fb61f" stroke-width="1.5"/><path d="M5 9 C11 12 11 18 5 21 M25 9 C19 12 19 18 25 21" stroke="#fff" stroke-width="2" fill="none"/></svg>':I.ship}</div></div>
+      ${tn||THEME()==='desert'||THEME()==='shop'||THEME()==='dance'?`<span class="port" aria-hidden="true" style="font-size:16px;line-height:18px">${tn?'🏆':THEME()==='shop'?'👗':THEME()==='dance'?'🪩':'🌴'}</span>`:'<svg class="port" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v11M4 9a5 5 0 0 0 10 0M6 5h6" stroke="#d6a64a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'}
+      <div class="ship" id="mShip">${THEME()==='dance'?'<span style="font-size:26px;line-height:30px">💃</span>':THEME()==='shop'?'<span style="font-size:26px;line-height:30px">🛍️</span>':!tn&&fleetOn()?vehSVG(fleetState().lv,34):tn?'<svg viewBox="0 0 30 30" width="30" height="30"><circle cx="15" cy="15" r="12" fill="#d7f23c" stroke="#9fb61f" stroke-width="1.5"/><path d="M5 9 C11 12 11 18 5 21 M25 9 C19 12 19 18 25 21" stroke="#fff" stroke-width="2" fill="none"/></svg>':I.ship}</div></div>
     <div class="streak" id="mStreak"></div>
     ${examHTML()}
   </section>`;
@@ -1073,17 +1084,17 @@ function viewMap(){
   updateAlerts();
   const W=360,H=T.length===2?330:T.length<=3?470:180+(T.length-1)*150;const pos=T.length===2?[{x:240,y:240},{x:120,y:95}]:T.length<=3?[{x:248,y:385},{x:110,y:235},{x:250,y:95}]:T.map((_,k)=>({x:k%2?110:250,y:H-85-k*150}));
   const depths=Array.from({length:7},(_,k)=>[[40,320,180,30,330,200][k%6],k*70+40,String(5+(k*7)%27)]).map(([x,y,t])=>`<text x="${x}" y="${y}" font-size="10" fill="#5f84a0" font-family="Assistant" font-style="italic">${t}</text>`).join('');
-  const tn=THEME()==='tennis',ds=THEME()==='desert',bk=THEME()==='shop';const BK=['👗','👠','👜','🧥','👟','🕶️','👒','💍'];
+  const tn=THEME()==='tennis',ds=THEME()==='desert',bk=THEME()==='shop',dn=THEME()==='dance';const BK=['👗','👠','👜','🧥','👟','🕶️','👒','💍'],DN=['💃','🩰','🎶','🪩','🎤','🎀','👯','⭐'];
   const nodes=T.map((t,k)=>{const {x,y}=pos[k];const i=t.active;
     if(!i)return `<g transform="translate(${x},${y})" opacity=".75"><text x="0" y="-44" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="${ds||bk?'#6e4e2f':'#c9d6de'}">${t.ic} ${t.t}</text>
-      <ellipse cx="0" cy="4" rx="40" ry="20" fill="none" stroke="#2a6a92" stroke-dasharray="3 4"/><text x="0" y="9" text-anchor="middle" font-size="22">${ds?'🏜️':tn?'🎾':bk?'🏬':'🌊'}</text>
+      <ellipse cx="0" cy="4" rx="40" ry="20" fill="none" stroke="#2a6a92" stroke-dasharray="3 4"/><text x="0" y="9" text-anchor="middle" font-size="22">${ds?'🏜️':tn?'🎾':bk?'🏬':dn?'🎶':'🌊'}</text>
       <text x="0" y="44" text-anchor="middle" font-family="Assistant" font-size="12" fill="${ds||bk?'#6e4e2f':'#86a2b6'}">${esc(t.none)}</text></g>`;
     const st=islandStars(i.id);const fresh=isNewIsland(i);const w=waitInfo(i);const late=!fresh&&w.days>=2;
     return `<g class="isl" tabindex="0" role="button" aria-label="${esc(t.t+': '+i.name)}" data-act="island" data-id="${esc(i.id)}" transform="translate(${x},${y})">
       <g transform="translate(0,-58)"><rect x="-62" y="-14" width="124" height="26" rx="13" fill="#0b1c2b" stroke="${t.flag}" stroke-width="1.5"/><text x="0" y="4" text-anchor="middle" font-family="Assistant" font-weight="800" font-size="14" fill="${t.flag}">${t.ic} ${t.t}</text></g>
       ${fresh?`<ellipse class="glow" cx="0" cy="4" rx="54" ry="32" fill="rgba(240,195,94,.18)" stroke="#f0c35e" stroke-width="2.5"/>`:''}
       <ellipse class="ring" cx="0" cy="4" rx="48" ry="27" fill="none" stroke="#2a6a92" stroke-width="1" stroke-dasharray="3 4"/>
-      ${bk?(()=>{const st=mallStoreOf(i.id);return `<rect x="-40" y="-22" width="80" height="50" rx="6" fill="#fff" stroke="${st.c}" stroke-width="2"/><path d="M-44 -22 h88 l-6 12 h-76z" fill="${st.c}"/>${[-30,-10,10,30].map(x=>`<path d="M${x-8} -10 q8 10 16 0z" fill="${st.c}" opacity=".85"/>`).join('')}<text x="0" y="-13" text-anchor="middle" font-family="Assistant" font-weight="900" font-size="10" fill="#fff" style="direction:ltr">${esc(st.n)}</text><text x="0" y="22" text-anchor="middle" font-size="28">${BK[[...String(i.id)].reduce((a,c)=>a+c.charCodeAt(0),0)%BK.length]}</text>`})():ds?`<ellipse cx="0" cy="12" rx="40" ry="14" fill="#e8c27a"/><ellipse cx="2" cy="10" rx="24" ry="8" fill="#38a3c9"/><ellipse cx="-4" cy="8" rx="10" ry="3" fill="#8fd6ec"/><text x="-26" y="6" font-size="30">🌴</text><text x="12" y="0" font-size="24">🌴</text>`:tn?`<ellipse cx="0" cy="22" rx="26" ry="6" fill="rgba(0,0,0,.25)"/><circle cx="0" cy="0" r="26" fill="#d7f23c" stroke="#a3bb1c" stroke-width="2"/><path d="M-22 -13 C-8 -6 -8 6 -22 13 M22 -13 C8 -6 8 6 22 13" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+      ${dn?`<ellipse cx="0" cy="14" rx="46" ry="15" fill="url(#dnspot)"/><ellipse cx="0" cy="10" rx="36" ry="14" fill="#2a1658" stroke="#ffcf4a" stroke-width="2"/><text x="0" y="12" text-anchor="middle" font-size="30">${DN[[...String(i.id)].reduce((a,c)=>a+c.charCodeAt(0),0)%DN.length]}</text>`:bk?(()=>{const st=mallStoreOf(i.id);return `<rect x="-40" y="-22" width="80" height="50" rx="6" fill="#fff" stroke="${st.c}" stroke-width="2"/><path d="M-44 -22 h88 l-6 12 h-76z" fill="${st.c}"/>${[-30,-10,10,30].map(x=>`<path d="M${x-8} -10 q8 10 16 0z" fill="${st.c}" opacity=".85"/>`).join('')}<text x="0" y="-13" text-anchor="middle" font-family="Assistant" font-weight="900" font-size="10" fill="#fff" style="direction:ltr">${esc(st.n)}</text><text x="0" y="22" text-anchor="middle" font-size="28">${BK[[...String(i.id)].reduce((a,c)=>a+c.charCodeAt(0),0)%BK.length]}</text>`})():ds?`<ellipse cx="0" cy="12" rx="40" ry="14" fill="#e8c27a"/><ellipse cx="2" cy="10" rx="24" ry="8" fill="#38a3c9"/><ellipse cx="-4" cy="8" rx="10" ry="3" fill="#8fd6ec"/><text x="-26" y="6" font-size="30">🌴</text><text x="12" y="0" font-size="24">🌴</text>`:tn?`<ellipse cx="0" cy="22" rx="26" ry="6" fill="rgba(0,0,0,.25)"/><circle cx="0" cy="0" r="26" fill="#d7f23c" stroke="#a3bb1c" stroke-width="2"/><path d="M-22 -13 C-8 -6 -8 6 -22 13 M22 -13 C8 -6 8 6 22 13" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
       :`<path d="M-38 6 C-34 -16 -9 -22 7 -18 C29 -13 42 -2 36 11 C27 24 -25 26 -38 6Z" fill="${i.kind==='lesson'?'#f2dfae':'#e8d6a4'}"/>
       <path d="M-25 2 C-20 -13 -2 -16 9 -11 C22 -7 25 4 16 9 C2 15 -20 13 -25 2Z" fill="${i.kind==='lesson'?'#2f9f8a':'#3f8f6b'}"/>
       <path d="M7 -11 v-24" stroke="#0f2233" stroke-width="1.6"/><path d="M7 -35 l15 5 -15 5z" fill="${t.flag}"/>`}
@@ -1100,10 +1111,14 @@ function viewMap(){
   const arch=T.filter(t=>!t.fixed).flatMap(t=>[...t.started,...t.done].map(i=>({i,t}))).filter(x=>x.i.id!==(x.t.active||{}).id);
   const archive=arch.length?`<details class="shelf" ${LS.get('shelfOpen',false)?'open':''}><summary data-act="shelfTog">${TW('arch')} <small>${arch.filter(x=>isDone(x.i)).length} נכבשו · אפשר לחזור ולתרגל</small></summary><div class="shelfl">${arch.map(({i,t})=>`<button class="shelfi" data-act="island" data-id="${esc(i.id)}"><span>${t.ic}</span><span class="en" style="font-family:inherit">${esc(i.name)}</span><b>${isDone(i)?'⭐'.repeat(Math.max(1,islandStars(i.id))):'בתהליך'}</b></button>`).join('')}</div></details>`:'';
   const refb=LANG()==='ar'?`<button class="btn small" data-act="ref" style="justify-self:start">🔤 טבלת אותיות ומספרים</button>`:'';
-  return meterHTML()+fleetCardHTML()+mallCardHTML()+refb+banner+pushCardHTML()+`<section class="map" aria-label="מפת האיים">
+  return meterHTML()+fleetCardHTML()+mallCardHTML()+danceCardHTML()+refb+banner+pushCardHTML()+`<section class="map" aria-label="מפת האיים">
     <svg viewBox="0 0 ${W} ${H}" role="group">
       <defs><pattern id="wv" width="40" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="#174260" stroke-width="1.2"/></pattern></defs>
-      ${bk?`<defs><pattern id="tile" width="48" height="48" patternUnits="userSpaceOnUse"><rect width="48" height="48" fill="#fbf1f4"/><path d="M48 0H0V48" fill="none" stroke="#ecd3dd" stroke-width="1.5"/></pattern></defs><rect width="${W}" height="${H}" fill="url(#tile)"/>
+      ${dn?`<defs><radialGradient id="dnspot"><stop offset="0" stop-color="#fff2b0" stop-opacity=".95"/><stop offset="1" stop-color="#ffcf4a" stop-opacity="0"/></radialGradient><linearGradient id="dnfloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b1660"/><stop offset="1" stop-color="#140a2e"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#dnfloor)"/>
+      <g opacity=".22">${[0,1,2].map(k=>`<path d="M${60+k*120} 0 L${20+k*120} ${H} L${110+k*120} ${H}Z" fill="${['#ff6fb5','#ffcf4a','#7ad7ff'][k]}"/>`).join('')}</g>
+      <g stroke="#6b4fb0" stroke-width="1" opacity=".35">${[...Array(9)].map((_,k)=>`<line x1="0" y1="${H*0.15+k*H*0.1}" x2="${W}" y2="${H*0.15+k*H*0.1}"/>`).join('')}</g>
+      <text x="${W/2}" y="34" text-anchor="middle" font-size="30">🪩</text><text x="22" y="${H-22}" font-size="20">🎵</text><text x="${W-40}" y="${H*0.5}" font-size="20">🎶</text><text x="20" y="${H*0.4}" font-size="18">✨</text>
+      <polyline points="${pos.slice(0,T.length).map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#ffcf4a" stroke-width="2.5" stroke-dasharray="1 9" stroke-linecap="round" opacity=".8"/>`:bk?`<defs><pattern id="tile" width="48" height="48" patternUnits="userSpaceOnUse"><rect width="48" height="48" fill="#fbf1f4"/><path d="M48 0H0V48" fill="none" stroke="#ecd3dd" stroke-width="1.5"/></pattern></defs><rect width="${W}" height="${H}" fill="url(#tile)"/>
       <g opacity=".9">${['#111','#d6001c','#2d6fb7','#7a1f3d','#2f5d50'].map((c,k)=>`<rect x="${k*W/5}" y="0" width="${W/5-4}" height="16" fill="${c}"/>`).join('')}</g>
       <text x="${W-44}" y="${H*0.5}" font-size="22">🪴</text><text x="16" y="${H-18}" font-size="22">🪞</text><text x="18" y="${H*0.36}" font-size="20">🎀</text><text x="${W-40}" y="${H-24}" font-size="22">🛒</text>
       <polyline points="${pos.slice(0,T.length).map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#e07aa8" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round" opacity=".9"/>`:ds?`<defs><linearGradient id="sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7d79a"/><stop offset="1" stop-color="#d9a35a"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#sand)"/>
@@ -1121,7 +1136,7 @@ function viewMap(){
       <g stroke="#1d4a6a" stroke-width=".6">${[60,120,180,240,300].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="${H}"/>`).join('')}${[100,200,300,400].map(y=>`<line x1="0" y1="${y}" x2="${W}" y2="${y}"/>`).join('')}</g>
       ${depths}
       <polyline points="${pos.slice(0,T.length).map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#d6a64a" stroke-width="2" stroke-dasharray="6 6" opacity=".5"/>`}
-      ${tn||ds||bk?'':`<g transform="translate(40,${H-40})" opacity=".85"><circle r="22" fill="none" stroke="#5f84a0"/><path d="M0 -20 L4 0 L0 20 L-4 0Z" fill="#d6a64a"/><path d="M-20 0 L0 -4 L20 0 L0 4Z" fill="#5f84a0"/><text y="-26" text-anchor="middle" font-size="10" fill="#d6a64a" font-family="Assistant" font-weight="700">N</text></g>`}
+      ${tn||ds||bk||dn?'':`<g transform="translate(40,${H-40})" opacity=".85"><circle r="22" fill="none" stroke="#5f84a0"/><path d="M0 -20 L4 0 L0 20 L-4 0Z" fill="#d6a64a"/><path d="M-20 0 L0 -4 L20 0 L0 4Z" fill="#5f84a0"/><text y="-26" text-anchor="middle" font-size="10" fill="#d6a64a" font-family="Assistant" font-weight="700">N</text></g>`}
       ${nodes}
     </svg></section>
     ${archive}
@@ -1180,7 +1195,7 @@ function viewIsland(id){
   ${i.kind==='lesson'&&i.source==='זום'?`<span class="zbadge">💻 מהשיעור בזום${i.zoomDate?' · '+dayName(i.zoomDate)+' '+fmtDate(i.zoomDate):''}${zl&&zl.teacher?' · עם '+esc(zl.teacher):''}</span>`:i.kind!=='base'?`<span class="zbadge" style="background:${trackOf(i)==='unseen'?'#ffe1da;color:#9a2f1c':'#d8f3e8;color:#1d6b4f'}">${trackLabel(i)}${i.kind==='lesson'&&i.created?' · '+fmtDate(String(i.created).slice(0,10)):''}</span>`:''}
   <div class="ihead">${i.en?`<span class="eyebrow en">${esc(i.en)}</span>`:''}<h2>${esc(i.name)}</h2><p>${esc(i.topic)}</p></div>
   ${i.howto?`<section class="card howto"><h2>איך עושים את זה?</h2>${i.howto}</section>`:''}
-  ${anyScore?`<section class="card rep-card"><h2>${THEME()==='tennis'?'דוח המאמן':THEME()==='shop'?'דוח הסטייליסטית':'דוח קפטן'} · היום</h2>${islandReportHTML(i)}</section>`:''}
+  ${anyScore?`<section class="card rep-card"><h2>${THEME()==='tennis'?'דוח המאמן':THEME()==='shop'?'דוח הסטייליסטית':THEME()==='dance'?'דוח המאמנת':'דוח קפטן'} · היום</h2>${islandReportHTML(i)}</section>`:''}
   <div class="stations">${st.map(s=>`<button class="station" data-act="station" data-k="${s.k}" data-id="${esc(id)}"><span class="ic">${s.ic}</span><span class="tx"><b>${s.t}</b><span>${esc(s.d)}</span></span><span class="mark">${s.m}</span></button>`).join('')}</div>`;
 }
 
@@ -1965,6 +1980,8 @@ document.addEventListener('click',e=>{
   const a=el.dataset.act;const sc=S.screen;
   if(a!=='answer')sfx.tap();
   switch(a){
+    case 'danceAll':S.danceModal={kind:'all'};render();break;
+    case 'danceClose':{const m=S.danceModal;S.danceModal=null;if(m&&m.kind==='intro'&&!isParent()){S.progress.danceIntro=1;saveState('progress')}render();break;}
     case 'mall':S.mallModal={kind:'mall',tab:el.dataset.tab||'stores'};render();break;
     case 'mallStore':S.mallModal={kind:'mall',tab:'store',store:el.dataset.id};render();break;
     case 'mallBuy':{const r=mallBuy(el.dataset.id);if(r){S.mallModal={kind:'bought',item:el.dataset.id,cp:r.cp,store:S.mallModal&&S.mallModal.store};sfx.win()}render();break;}
@@ -2707,6 +2724,38 @@ const MALL_ITEMS=[['zara','z1','👗','שמלה שחורה',180],['zara','z2','�
  ['bershka','b1','👗','חצאית מיני',80],['bershka','b2','🧥','מעיל פוך',230],['bershka','b3','👙','ביקיני',90],['bershka','b4','💄','שפתון',30]
 ].map(([st,id,e,he,pr])=>({st,id,e,he,pr}));
 const COUPON=50;
+
+/* ---- שי־לי: רמות ריקוד. כל אי שנכבש (85%+) = פריט לבוש חדש ועלייה ברמה, עד סופר רקדנית ---- */
+const DANCE_LV=[{n:'רקדנית מתחילה',it:'אימונית ונעלי ספורט',e:'👟',s:'כל רקדנית גדולה התחילה בצעד הראשון!'},{n:'רקדנית צעירה',it:'סרט שיער ורוד',e:'🎀',s:'הסרט מוכן, הקצב בפנים!'},{n:'רקדנית בתנועה',it:'חולצת ריקוד',e:'👚',s:'הגוף זז, המוזיקה זורמת!'},{n:'רקדנית בלהקה',it:'חצאית מסתובבת',e:'💜',s:'כל סיבוב, החצאית עפה!'},{n:'רקדנית במה',it:'נעלי ריקוד',e:'🩰',s:'עכשיו את על הבמה!'},{n:'סולנית',it:'כפפות נוצצות',e:'🧤',s:'כולם מסתכלים עלייך!'},{n:'רקדנית ראשית',it:'נצנצים על כל התלבושת',e:'✨',s:'את נוצצת מכל כיוון!'},{n:'כוכבת הבמה',it:'כתר',e:'👑',s:'מלכת הרחבה!'},{n:'אלופת הריקוד',it:'צעיף מעופף',e:'🧣',s:'את רוקדת כמו הרוח!'},{n:'סופר רקדנית',it:'תלבושת זהב וזרקור משלך',e:'🌟',s:'הגעת לפסגה! סופר רקדנית אמיתית!'}];
+const danceOn=()=>THEME()==='dance'&&!!S.profile;
+const danceLv=()=>Math.min(DANCE_LV.length-1,allIslands().filter(i=>i.kind!=='daily').filter(isGreat).length);
+function dancerSVG(lv,size){const L=k=>lv>=k;const top=L(9)?'#ffcf4a':L(6)?'#ff3d9a':L(2)?'#ff6fb5':'#c9cfd8',skirt=L(9)?'#ffd75a':L(6)?'#c13fe0':'#9b5de5';const W=size||120,H=Math.round(W*4/3);
+  return `<svg viewBox="0 0 120 160" width="${W}" height="${H}" aria-hidden="true">
+  ${L(9)?'<ellipse cx="60" cy="150" rx="50" ry="10" fill="#ffcf4a" opacity=".45"/><path d="M60 0 L20 150 L100 150Z" fill="#fff6c4" opacity=".25"/>':'<ellipse cx="60" cy="152" rx="34" ry="6" fill="#000" opacity=".25"/>'}
+  ${L(8)?'<path d="M48 46 C20 60 18 95 6 110 C28 100 40 80 52 62Z" fill="#7ad7ff" opacity=".85"/>':''}
+  <path d="M54 82 L44 132" stroke="#f2c7a5" stroke-width="7" stroke-linecap="round"/><path d="M66 82 L86 126" stroke="#f2c7a5" stroke-width="7" stroke-linecap="round"/>
+  ${L(4)?'<ellipse cx="42" cy="136" rx="8" ry="4" fill="#ff8fc4"/><ellipse cx="89" cy="129" rx="8" ry="4" fill="#ff8fc4" transform="rotate(25 89 129)"/><path d="M44 130 l-6 -8 M44 130 l6 -8" stroke="#ff8fc4" stroke-width="1.5"/>':'<ellipse cx="42" cy="136" rx="9" ry="5" fill="#fff" stroke="#9aa3ad"/><ellipse cx="89" cy="129" rx="9" ry="5" fill="#fff" stroke="#9aa3ad" transform="rotate(25 89 129)"/>'}
+  ${L(3)?`<path d="M44 74 L76 74 L90 98 L30 98Z" fill="${skirt}"/>${L(6)?'<g fill="#fff">'+[[42,90],[56,94],[70,90],[80,95],[50,84]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.6"/>`).join('')+'</g>':''}`:'<path d="M50 74 L70 74 L72 88 L48 88Z" fill="#4a5568"/>'}
+  <path d="M50 44 Q60 40 70 44 L72 78 L48 78Z" fill="${top}"/>${L(6)?'<g fill="#fff">'+[[54,52],[64,58],[58,66],[67,70]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.5"/>`).join('')+'</g>':''}
+  <path d="M51 48 L30 18" stroke="#f2c7a5" stroke-width="6" stroke-linecap="round"/><path d="M69 48 L98 54" stroke="#f2c7a5" stroke-width="6" stroke-linecap="round"/>
+  ${L(5)?'<circle cx="29" cy="16" r="5" fill="#ffcf4a"/><circle cx="99" cy="54" r="5" fill="#ffcf4a"/>':''}
+  <path d="M62 24 C74 20 82 30 80 42 C76 36 72 34 70 30Z" fill="#5a3418"/><circle cx="60" cy="28" r="12" fill="#f2c7a5"/><path d="M47 26 C48 12 72 10 73 26 C68 18 54 18 47 26Z" fill="#5a3418"/>
+  <circle cx="56" cy="29" r="1.4" fill="#2b1a10"/><circle cx="64" cy="29" r="1.4" fill="#2b1a10"/><path d="M56 34 Q60 37 64 34" stroke="#c0565e" stroke-width="1.4" fill="none"/>
+  ${L(1)?'<path d="M66 14 l8 -5 l0 10z M66 14 l-8 -5 l0 10z" fill="#ff4f9a"/><circle cx="66" cy="14" r="2.2" fill="#ff8fc4"/>':''}
+  ${L(7)?'<path d="M50 14 L52 4 L56 11 L60 2 L64 11 L68 4 L70 14Z" fill="#ffcf4a" stroke="#c99a12" stroke-width="1"/>':''}
+  ${L(9)?'<g fill="#fff">'+[[14,30],[104,26],[18,96],[106,100]].map(([x,y])=>`<path d="M${x} ${y-5} l1.5 4 4 1.5 -4 1.5 -1.5 4 -1.5 -4 -4 -1.5 4 -1.5z"/>`).join('')+'</g>':''}</svg>`}
+function danceCardHTML(){if(!danceOn())return '';const lv=danceLv(),D=DANCE_LV[lv],nx=DANCE_LV[lv+1];
+  return `<button class="dancecard" data-act="danceAll">${dancerSVG(lv,66)}<span class="ft"><small>רמת ריקוד ${lv+1} מתוך ${DANCE_LV.length}</small><b>${esc(D.n)}</b><span>${nx?`האי הבא שתכבשי ← ${nx.e} ${esc(nx.it)}`:'הגעת לרמה הכי גבוהה! 🌟'}</span><small>אי מצוין (85%+) = בגד חדש ועלייה ברמה</small></span></button>`}
+function checkDance(){if(!danceOn()||!S.loaded||S.danceModal)return;const p=S.progress,lv=danceLv();
+  if(isParent())return;
+  if(!p.danceIntro){S.danceModal={kind:'intro'};return}
+  if((p.danceLv||0)<lv){S.danceModal={kind:'up',lv};p.danceLv=lv;saveState('progress');setTimeout(()=>sfx.win(),250)}}
+function danceModalHTML(){const M=S.danceModal;if(!M)return '';const wrap=x=>`<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox">${x}</div></div>`;const nm=(S.profile&&S.profile.name)||'';
+  const row=lv=>`<div class="ymfleet">${DANCE_LV.map((d,k)=>`<span class="${k<=lv?'got':''}" title="${esc(d.it)}" style="font-size:24px;align-items:center">${k<=lv?d.e:'<b>?</b>'}</span>`).join('')}</div>`;
+  if(M.kind==='intro')return wrap(`<div class="bpop">${dancerSVG(0,140)}</div><h3>${esc(nm)}, ברוכה הבאה לסטודיו! 💃</h3><p>כל אי שתכבשי, כלומר כל התחנות ב־85% ומעלה, נותן לך <b>פריט לבוש חדש</b> ומעלה אותך <b>רמת ריקוד</b>.</p><p>מתחילות באימונית ונעלי ספורט, ומגיעות עד <b>סופר רקדנית</b> עם תלבושת זהב וזרקור משלך 🌟</p>${row(0)}<div class="btns"><button class="btn brass" data-act="danceClose">יאללה, רוקדות! 🎶</button></div>`);
+  if(M.kind==='all'){const lv=danceLv();return wrap(`<h3>רמות הריקוד שלך</h3>${DANCE_LV.map((d,k)=>`<div class="dlv ${k<=lv?'got':''} ${k===lv?'cur':''}"><span>${k<=lv?d.e:'🔒'}</span><span><b>${k+1}. ${esc(d.n)}</b><small>${k<=lv?esc(d.it):k===0?'נקודת ההתחלה':'אחרי '+k+' איים'}</small></span></div>`).join('')}<div class="btns"><button class="btn brass" data-act="danceClose">סגירה</button></div>`)}
+  const D=DANCE_LV[M.lv],fin=M.lv===DANCE_LV.length-1;
+  return wrap(`<div class="confetti">${fin?'🌟🎉🌟':'🎉'}</div><div class="bpop">${dancerSVG(M.lv,fin?170:150)}</div><h3>${fin?'סופר רקדנית! 🌟':pick(['עלית רמה! 💃','איזה ריקוד! 🎶','את כוכבת! ⭐','וואו, איזה צעד! 🩰'])}</h3><p>קיבלת: <b>${D.e} ${esc(D.it)}</b></p><p>רמת הריקוד שלך עכשיו: <b>${esc(D.n)}</b></p><p>${esc(D.s)}</p>${!fin?`<p>עוד ${DANCE_LV.length-1-M.lv} איים עד <b>סופר רקדנית</b> 🌟</p>`:''}${row(M.lv)}<div class="btns"><button class="btn brass" data-act="danceClose">${fin?'אני סופר רקדנית! 🏆':'ממשיכות לרקוד! 💃'}</button><button class="btn ghost" data-act="danceAll">כל הרמות</button></div>`)}
 const mallOn=()=>THEME()==='shop'&&!!S.profile&&!isParent();
 function mallStoreOf(id){return MALL_STORES[[...String(id)].reduce((a,c)=>a+c.charCodeAt(0),0)%MALL_STORES.length]}
 function mallP(){const p=S.progress;if(!p.mall||typeof p.mall!=='object')p.mall={earn:0,cps:[],buys:[]};const m=p.mall;m.cps=m.cps||[];m.buys=m.buys||[];m.earn=m.earn||0;return m}

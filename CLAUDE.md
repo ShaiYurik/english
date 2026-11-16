@@ -20,6 +20,7 @@ More than one conversation may work on it, so **never overwrite someone else's w
 - yuvik: worlds `en` (sea theme), `ar` (desert theme, Arabic) and `math` (client-side test-prep path `YM_STAGES`: one practice card per stage, levels, hints, step-by-step solutions, mistake tags; state in `progress.ym`).
 - gil: worlds `en` (tennis theme) and `math` (client-side math islands, `mathFixedIslands`).
 - ariel: world `en` (shop theme: fashion mall, wallet ₪ from station scores, ₪50 coupon per great island, closet; state in `progress.mall`). Her Drive folders are created by the server on first use (`provision_`).
+- shaili: world `en` (dance theme: studio stage, 10 dance levels to 'סופר רקדנית', one outfit item per great island; state in `progress.danceLv`). Server entry `auto:true` like ariel.
 If you add or remove a world on purpose, update `EXPECT` in tools/smoke.js in the same commit.
 
 ## Architecture (short)
@@ -27,3 +28,6 @@ If you add or remove a world on purpose, update `EXPECT` in tools/smoke.js in th
 - Backend: Google Apps Script web app (not in this repo; it holds the keys). Lesson content = JSON files in Drive.
 - Extra rounds: lesson files with `roundsFor` add more rounds to an island's games (shown after 100%).
 - Do not commit keys, Drive IDs of private folders, or the VAPID private key.
+
+## Pitfall
+Never write a file with `open(f,'w').write(open(f).read()...)` — the write truncates first and leaves an empty file (this emptied sw.js from v36 to v46). Read into a variable, then write.
