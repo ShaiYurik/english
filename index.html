@@ -347,7 +347,7 @@ textarea.paste{width:100%;min-height:80px;border-radius:12px;border:1px solid va
 .rbar i.top{background:var(--kelp)}.rbar i.good{background:var(--brass)}.rbar i.low{background:var(--signal)}
 .rl{font-size:12px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
 .rl.top{color:var(--kelp)}.rl.good{color:#9a6f14}.rl.low{color:var(--signal)}.rl.none{color:var(--ink2)}
-.ymlearn h2{margin:4px 0}.ymlearnbtn{align-self:flex-start;border:1px solid #cfdbe4;background:#f4f8fb;border-radius:999px;padding:5px 12px;font:inherit;font-weight:700;color:var(--ink)}
+.ymarrow{font-size:18px;color:var(--ink2);line-height:1}.ymlearn h2{margin:4px 0}.ymlearnbtn{align-self:flex-start;border:1px solid #cfdbe4;background:#f4f8fb;border-radius:999px;padding:5px 12px;font:inherit;font-weight:700;color:var(--ink)}
 .ymparts{list-style:none;margin:0;padding:0;display:grid;gap:8px}.ymparts .pd{background:#eef9f3;border-radius:12px;padding:8px 10px;display:flex;gap:8px;align-items:center}.ymparts .pd.miss{background:#fff6dc}.ymparts .pc{border:2px dashed var(--brass);border-radius:14px;padding:10px;display:grid;gap:10px}
 .ympraise{position:relative;overflow:visible;display:grid;gap:4px;justify-items:center;text-align:center;font-size:20px;font-weight:800}
 .ympop{display:inline-block;animation:ympop .55s cubic-bezier(.2,1.7,.4,1) both}.ymstreak{font-size:17px;color:#b4540a;animation:ympop .6s .15s cubic-bezier(.2,1.7,.4,1) both}.ymstreak.sm{font-size:14px;font-weight:700}
@@ -495,7 +495,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='45';
+const APP_VERSION='46';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -2269,6 +2269,7 @@ const YM_STAGES=[
   {n:'חיסור: הופכים לחיבור הנגדי',
    learn:[['כלל 1: שני מינוסים צמודים הופכים לפלוס.',`(${MI}10) ${MI} (${MI}3)  →  ${MI}10 + 3`],['כלל 2: מינוס ופלוס נשאר מינוס.',`(+5) ${MI} (+8)  →  5 ${MI} 8`],['ואז חושבים על כסף: מינוס זה חוב, פלוס זה כסף שיש לי.',''],['חייבת 10 ומקבלת 3, אז עדיין חייבת 7:',`${MI}10 + 3 = ${MI}7`],['יש לי 5 ומשלמת 8, אז חסר לי 3:',`5 ${MI} 8 = ${MI}3`]],
    gen(){const a=nz(-12,12),b=nz(-12,12),fl=`${qt(a)} ${b>0?MI:'+'} ${Math.abs(b)}`;return {raw:{a,b},he:'חשבי:',m:`${qp(a)} ${MI} ${qp(b)} =`,a:qI(a-b),alt:[[qI(a+b),b<0?'minusminus':'brackets']],tag:'minusminus',hint:'קודם מורידים סוגריים: שני מינוסים צמודים הופכים לפלוס.',steps:[['מורידים סוגריים:',`${qp(a)} ${MI} ${qp(b)}  →  ${fl}`],['חושבים על כסף (מינוס זה חוב, פלוס זה כסף):',`${fl} = ${qt(a-b)}`]]}},
+   solo(it){const {a,b}=it.raw,flat=`${qt(a)} ${ymFlip(MI,b)} ${Math.abs(b)}`;return [ymSignStep(1,`${qp(a)} ${MI} ${qp(b)}`,`${qt(a)} ? ${Math.abs(b)}`,ymFlip(MI,b),{show:flat}),{he:'שלב 2: פותרים (מינוס זה חוב, פלוס זה כסף):',m:flat+' =',a:it.a,tag:'arith',hint:'חוב ועוד חוב: מחברים. כסף מול חוב: מחסרים את הקטן מהגדול.',show:`${flat} = ${qt(it.a)}`}]},
    guide(it){const {a,b}=it.raw,y=-b,r=a+y;const flat=`${qt(a)} ${y<0?MI:'+'} ${Math.abs(y)}`;const o=shuffle([flat,`${qt(a)} ${y<0?'+':MI} ${Math.abs(y)}`,`${qt(-a)} ${y<0?MI:'+'} ${Math.abs(y)}`]);
      const money=`${a<0?'חייבת '+Math.abs(a):'יש לי '+a}, ${y<0?'ומשלמת '+Math.abs(y):'ומקבלת '+y}.`;
      const P=[{he:'שלב 1: מורידים סוגריים. איזה סימן בא במקום ה־?',m:`${qp(a)} ${MI} ${qp(b)}  →  ${qt(a)} ? ${Math.abs(b)}`,o:['+',MI],ai:b<0?0:1,tag:'minusminus',hint:'מינוס ואחריו מינוס ← פלוס. מינוס ואחריו פלוס ← מינוס.',show:flat}];
@@ -2282,6 +2283,8 @@ const YM_STAGES=[
     if(t===0)return {raw:{t,b,c},he:'מהו המספר החסר?',m:`☐ ${MI} ${qp(b)} = ${qp(c)}`,a:qI(c+b),alt:[[qI(c-b),'minusminus']],tag:'missing',hint:'איזה מספר, אם מחסרים ממנו '+bd(qp(b))+', נותן '+bd(qp(c))+'?',steps:[['☐ = התוצאה + המספר שחיסרנו:',`☐ = ${qp(c)} + ${qp(b)} = ${qt(c+b)}`],['בדיקה:',`${qp(c+b)} ${MI} ${qp(b)} = ${qt(c)}`]]};
     if(t===1){let a=nz(-10,10);while(a===c)a=nz(-10,10);return {raw:{t,a,c},he:'מהו המספר החסר?',m:`${qp(a)} ${MI} ☐ = ${qp(c)}`,a:qI(a-c),alt:[[qI(c-a),'sign']],tag:'missing',hint:'כמה צריך להוריד מ־'+bd(qp(a))+' כדי להגיע ל־'+bd(qp(c))+'?',steps:[['☐ = המספר הראשון פחות התוצאה:',`☐ = ${qp(a)} ${MI} ${qp(c)} = ${qt(a-c)}`],['בדיקה:',`${qp(a)} ${MI} ${qp(a-c)} = ${qt(c)}`]]}}
     return {raw:{t,b,c},he:'מהו המספר החסר?',m:`☐ + ${qp(b)} = ${qp(c)}`,a:qI(c-b),alt:[[qI(c+b),'sign']],tag:'missing',hint:'מה מוסיפים ל־'+bd(qp(b))+' כדי לקבל '+bd(qp(c))+'?',steps:[['☐ = התוצאה פחות המספר:',`☐ = ${qp(c)} ${MI} ${qp(b)} = ${qt(c-b)}`]]}},
+   solo(it){const r=it.raw;if(r.t===1)return null;const sg=ymFlip(r.t===0?MI:'+',r.b),flat=`☐ ${sg} ${Math.abs(r.b)} = ${qt(r.c)}`,ans=qV(it.a);
+     return [ymSignStep(1,it.m,`☐ ? ${Math.abs(r.b)} = ${qt(r.c)}`,sg,{show:flat}),{he:`שלב 2: איזה מספר ${sg==='+'?'ועוד':'פחות'} ${Math.abs(r.b)} נותן ${bd(qt(r.c))}?`,m:flat,a:it.a,tag:'missing',hint:'אפשר לנסות מספר ולבדוק אם יוצא נכון.',show:`☐ = ${qt(ans)}`}]},
    guide(it){const r=it.raw;let flat,opts,q,ans;
      if(r.t===0){const s0=r.b<0?'+':MI;flat=`☐ ${s0} ${Math.abs(r.b)} = ${qt(r.c)}`;opts=[flat,`☐ ${s0==='+'?MI:'+'} ${Math.abs(r.b)} = ${qt(r.c)}`];q=`איזה מספר ${s0==='+'?'ועוד':'פחות'} ${Math.abs(r.b)} נותן ${bd(qt(r.c))}?`;ans=r.c+r.b}
      else if(r.t===2){const s0=r.b<0?MI:'+';flat=`☐ ${s0} ${Math.abs(r.b)} = ${qt(r.c)}`;opts=[flat,`☐ ${s0==='+'?MI:'+'} ${Math.abs(r.b)} = ${qt(r.c)}`];q=`איזה מספר ${s0==='+'?'ועוד':'פחות'} ${Math.abs(r.b)} נותן ${bd(qt(r.c))}?`;ans=r.c-r.b}
@@ -2291,8 +2294,9 @@ const YM_STAGES=[
        {he:`${r.t===1?'':'שלב 2: '}${q}`,m:flat,a:qI(ans),tag:'missing',hint:r.t===1?`על ציר המספרים: מ־${bd(qt(r.a))} ל־${bd(qt(r.c))}. אם הולכים שמאלה ☐ חיובי, אם ימינה ☐ שלילי.`:'אפשר לנסות מספר ולבדוק אם יוצא נכון.',show:`☐ = ${qt(ans)}`}]}},
   {n:'שברים ועשרוניים',gen(){const op=pick(['+',MI]);let a,b,dec=false;
     if(Math.random()<.5){dec=true;a=Q(nz(-99,99),10);b=Q(nz(-99,99),10)}else{const d=pick([2,3,4,5,6,8]);a=Q(nz(-3*d,3*d),d);b=Q(nz(-2*d,2*d),pick([d,d,2]))}
-    const r=op==='+'?qA(a,b):qS(a,b);return {he:'חשבי:',m:`${qp(a,dec)} ${op} ${qp(b,dec)} =`,a:r,dec,alt:[[op==='+'?qS(a,b):qA(a,b),op==='+'?'sign':'minusminus']],tag:'arith',hint:dec?'אפשר לחשב כמו במספרים שלמים ולשים לב לנקודה.':'מכנה משותף, ואז חיבור או חיסור.',
-      steps:[op===MI?['משנים חיסור לחיבור הנגדי:',`${qp(a,dec)} + ${qp(qN(b),dec)}`]:['מחברים:',`${qp(a,dec)} + ${qp(b,dec)}`],['התוצאה:',qt(r,dec)]]}}}]},
+    const r=op==='+'?qA(a,b):qS(a,b);return {raw:{a,b,op,dec},he:'חשבי:',m:`${qp(a,dec)} ${op} ${qp(b,dec)} =`,a:r,dec,alt:[[op==='+'?qS(a,b):qA(a,b),op==='+'?'sign':'minusminus']],tag:'arith',hint:dec?'אפשר לחשב כמו במספרים שלמים ולשים לב לנקודה.':'מכנה משותף, ואז חיבור או חיסור.',
+      steps:[['מורידים סוגריים:',`${qt(a,dec)} ${ymFlip(op,qV(b))} ${qt(qAbs(b),dec)}`],['התוצאה:',qt(r,dec)]]}},
+   solo(it){const {a,b,op,dec}=it.raw,sg=ymFlip(op,qV(b)),flat=`${qt(a,dec)} ${sg} ${qt(qAbs(b),dec)}`;return [ymSignStep(1,`${qp(a,dec)} ${op} ${qp(b,dec)}`,`${qt(a,dec)} ? ${qt(qAbs(b),dec)}`,sg,{show:flat}),{he:'שלב 2: פותרים:',m:flat+' =',a:it.a,tag:'arith',hint:dec?'חשבי כמו במספרים שלמים ושימי לב לנקודה.':'מכנה משותף, ואז חיבור או חיסור.',show:`${flat} = ${qt(it.a,dec)}`}]}}]},
 {id:'s3',ic:'🧮',t:'השמטת סוגריים ותרגילים ארוכים',pages:'עמ׳ 91–97',
  rule:`<p><b>השמטת סוגריים:</b> ${bd('+(+) → +')} · ${bd('−(−) → +')} · ${bd('+(−) → −')} · ${bd('−(+) → −')}</p><p><b>תרגיל ארוך בלי סוגריים:</b> הסימן משמאל למספר שייך לו. אפשר לחבר את כל החיוביים, את כל השליליים, ואז לחבר את שתי התוצאות.</p><p><b>שאלה מילולית:</b> עלייה, הפקדה ← +. ירידה, משיכה ← −. כותבים תרגיל ואז מחשבים.</p>`.replace(/−/g,MI),
  ex:[['בלי סוגריים:',`${qp(-5)} ${MI} ${qp(-7)} = ${MI}5 + 7`],['חיוביים לחוד, שליליים לחוד:',`${MI}3 + 2 + 9 ${MI} 2 = (2 + 9) + (${MI}3 ${MI} 2) = 11 ${MI} 5 = 6`]],
@@ -2303,7 +2307,10 @@ const YM_STAGES=[
   {n:'משמיטים סוגריים ומחשבים',gen(){const v=[nz(-15,15),nz(-15,15),nz(-15,15)],ops=[pick(['+',MI]),pick(['+',MI])];
     let r=v[0],wr=v[0];ops.forEach((o,k)=>{const x=v[k+1];r+=o==='+'?x:-x;wr+=o==='+'?x:-Math.abs(x)});
     const flat=qt(v[0])+ops.map((o,k)=>{const x=v[k+1];return ` ${(o==='+')===(x>0)?'+':MI} ${Math.abs(x)}`}).join('');
-    return {he:'השמיטי סוגריים וחשבי:',m:`${qp(v[0])} ${ops[0]} ${qp(v[1])} ${ops[1]} ${qp(v[2])} =`,a:qI(r),alt:wr!==r?[[qI(wr),'minusminus']]:[],tag:'brackets',hint:'כותבים קודם בלי סוגריים.',steps:[['בלי סוגריים:',flat],['מחשבים:',`= ${qt(r)}`]]}}},
+    return {raw:{v,ops},he:'השמיטי סוגריים וחשבי:',m:`${qp(v[0])} ${ops[0]} ${qp(v[1])} ${ops[1]} ${qp(v[2])} =`,a:qI(r),alt:wr!==r?[[qI(wr),'minusminus']]:[],tag:'brackets',hint:'כותבים קודם בלי סוגריים.',steps:[['בלי סוגריים:',flat],['מחשבים:',`= ${qt(r)}`]]}},
+   solo(it){const {v,ops}=it.raw,sg=ops.map((o,k)=>ymFlip(o,v[k+1])),orig=`${qp(v[0])} ${ops[0]} ${qp(v[1])} ${ops[1]} ${qp(v[2])}`;const show=(a,b)=>`${qt(v[0])} ${a} ${Math.abs(v[1])} ${b==='…'?ops[1]+' '+qp(v[2]):b+' '+Math.abs(v[2])}`;const flat=show(sg[0],sg[1]);
+     return [ymSignStep(1,orig,show('?','…'),sg[0],{he:'שלב 1: מורידים סוגריים. איזה סימן בא במקום ה־? הראשון',show:show(sg[0],'…')}),ymSignStep(2,orig,show(sg[0],'?'),sg[1],{he:'שלב 2: ועכשיו ה־? השני:',show:flat}),
+       {he:'שלב 3: פותרים. אפשר לחבר קודם את החיוביים ואחר כך את השליליים.',m:flat+' =',a:it.a,tag:'arith',hint:'חיוביים לחוד, שליליים לחוד, ואז ביחד.',show:`${flat} = ${qt(it.a)}`}]}},
   {n:'תרגיל ארוך בלי סוגריים',gen(){const k=ri(4,6),v=[];for(let i=0;i<k;i++)v.push(nz(-12,12));const pos=v.filter(x=>x>0).reduce((a,b)=>a+b,0),neg=v.filter(x=>x<0).reduce((a,b)=>a+b,0);
     const m=qt(v[0])+v.slice(1).map(x=>` ${x<0?MI:'+'} ${Math.abs(x)}`).join('')+' =';
     return {he:'חשבי:',m,a:qI(pos+neg),tag:'arith',hint:'חברי קודם את כל החיוביים, ואחר כך את כל השליליים.',steps:[['החיוביים:',String(pos)],['השליליים:',qt(neg)],['ביחד:',`${pos} ${MI} ${Math.abs(neg)} = ${qt(pos+neg)}`]]}}},
@@ -2401,7 +2408,10 @@ function ymTopTags(x,n){return Object.entries(x||{}).filter(([k,v])=>v>0&&YM_TAG
 function ymAllTags(){const t={};Object.values(ymP().s).forEach(x=>Object.entries(x.tags||{}).forEach(([k,v])=>t[k]=(t[k]||0)+v));return t}
 
 /* ---- בניית סבב ---- */
-function ymMake(stageId,lv,guided){const st=ymStage(stageId),L=st.levels[lv];const it=L.gen.call(L);it.stage=stageId;it.lv=lv;if(guided&&L.guide)it.parts=L.guide(it);return it}
+function ymMake(stageId,lv,guided){const st=ymStage(stageId),L=st.levels[lv];const it=L.gen.call(L);it.stage=stageId;it.lv=lv;if(guided&&L.guide){it.parts=L.guide(it);it.guided=1}else if(L.solo){const P=L.solo(it);if(P&&P.length)it.parts=P}return it}
+// שלב "הופכים סימנים": סימן ואחריו סוגריים עם סימן → סימן אחד
+const ymFlip=(op,x)=>(op==='+')===(x>0)?'+':MI;
+function ymSignStep(n,orig,shown,res,extra){return {he:`שלב ${n}: מורידים סוגריים. איזה סימן בא במקום ה־?`,m:`${orig}  →  ${shown}`,o:['+',MI],ai:res==='+'?0:1,tag:'brackets',hint:'סימנים זהים ← פלוס. סימנים שונים ← מינוס.',...(extra||{})}}
 function ymNext(sc){
   if(sc.mode==='test'){const pool=[];YM_STAGES.forEach(st=>st.levels.forEach((l,k)=>{if(k>0||st.levels.length<4)pool.push([st.id,k])}));const order=['s1','s2','s2','s3','s3','s4','s4','s5','s5','s6','s6','s7','s7','s8'];const sid=order[sc.n%order.length];const opts=pool.filter(p=>p[0]===sid);const [s,k]=pick(opts);return ymMake(s,k)}
   if(sc.mode==='smart'){const w=[];YM_STAGES.forEach(st=>{const x=ymSt(st.id);st.levels.forEach((l,k)=>{const wt=1+3*(x.w[k]||0)-Math.min(2,(x.ok[k]||0)/3);if(wt>0)w.push([st.id,k,wt])})});let r=Math.random()*w.reduce((a,b)=>a+b[2],0);for(const [s,k,wt] of w){r-=wt;if(r<=0)return ymMake(s,k)}return ymMake(w[0][0],w[0][1])}
@@ -2436,12 +2446,12 @@ function ymAdvance(){const sc=S.screen;sc.n++;if(sc.n>=sc.total){ymFinish();retu
 function ymParentBoat(){if(!isParent())return;const lv=ymBoatLv();S._ymPrev=S._ymPrev||{};if(S._ymPrev.boat==null)S._ymPrev.boat=lv;else if(lv>S._ymPrev.boat){const won=YM_STAGES.filter(s=>ymDone(s.id));S.ymModal={kind:'up',lv,isl:lv===YM_FLEET().length-1?'מבחן החזרה':(won.length?YM_SHORT[won[won.length-1].id]:'')};S._ymPrev.boat=lv}}
 function ymFinish(){const sc=S.screen;const title=sc.mode==='test'?'מבחן חזרה':sc.mode==='smart'?'תרגול חכם':ymStage(sc.id).t;
   if(sc.mode==='test'){const by={};sc.log.forEach(l=>{const b=by[l.stage]||(by[l.stage]=[0,0]);b[1]++;if(l.ok)b[0]++});ymP().tests.push({at:Date.now(),c:sc.firstOk,t:sc.total,by});ymP().tests=ymP().tests.slice(-10)}
-  const lvs={};sc.log.forEach(l=>{if(l.ok&&sc.mode==='stage')lvs[l.lv]=(lvs[l.lv]||0)+1});S.session.activities.push({kind:'ymath',island:'ym-'+sc.id,islandName:'חשבון · '+title,title,correct:sc.firstOk,total:sc.total,at:Date.now(),tags:sc.tags,lvs,mode:sc.mode});
+  const lvs={};sc.log.forEach(l=>{if(l.ok&&sc.mode==='stage')lvs[l.lv]=(lvs[l.lv]||0)+1});S.session.activities.push({kind:'ymath',island:'ym-'+sc.id,islandName:'חשבון · '+title,title,correct:sc.firstOk,total:sc.total,at:Date.now(),tags:sc.tags,lvs,mode:sc.mode,v:+APP_VERSION});
   if(tasksOf(S.session)===GOAL_T()){setTimeout(()=>{sfx.win();toast(TW('done')+GOAL_T()+' משימות היום 🎉')},700)}
   saveSession();saveState('progress');S.screen={name:'ymEnd',id:sc.id,mode:sc.mode,c:sc.firstOk,t:sc.total,tags:sc.tags,log:sc.log,best:sc.best||0};sfx.win();render();scrollTo({top:0})}
 
 /* ---- תצוגה ---- */
-const ymM=s=>`<div class="ymm" dir="ltr">${fx(s)}</div>`;
+const ymM=s=>String(s).includes('  →  ')?`<div class="ymm" dir="ltr">${String(s).split('  →  ').map(x=>`<div>${fx(x)}</div>`).join('<div class="ymarrow">↓</div>')}</div>`:`<div class="ymm" dir="ltr">${fx(s)}</div>`;
 function ymStepsHTML(steps){return `<ol class="ymsteps">${(steps||[]).map(([h,m])=>`<li>${h?`<span>${h}</span>`:''}${m?` <span class="ymsm" dir="ltr">${fx(m)}</span>`:''}</li>`).join('')}</ol>`}
 function ymDaysLeft(){const t=new Date(YM_TEST.date+'T08:00:00');const d=Math.ceil((t-new Date(today()+'T08:00:00'))/864e5);return d}
 function ymPlanHTML(){const td=today();const cur=YM_PLAN.findIndex(p=>td>=p.d&&td<=(p.to||p.d));
@@ -2479,12 +2489,13 @@ function ymBoatLv(){const d=YM_STAGES.filter(s=>ymDone(s.id)).length;const t=ymP
 function ymHeal(){if(isParent()&&!S.progress)return;const P=ymP();const all=[...(S.sessions||[]),S.session].filter(Boolean).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
   const rep={},tg={};all.forEach(s=>(s.activities||[]).forEach(a=>{if(a.kind!=='ymath')return;const id=String(a.island||'').replace(/^ym-/,'');const st=ymStage(id);
     if(a.tags)Object.entries(a.tags).forEach(([t,v])=>{(tg[id]=tg[id]||{})[t]=((tg[id]||{})[t]||0)+v});
-    if(!st)return;const ok=rep[id]||(rep[id]=st.levels.map(()=>0));if(a.lvs){Object.entries(a.lvs).forEach(([k,v])=>{if(ok[k]!=null)ok[k]=Math.min(YM_NEED,ok[k]+v)});return}
+    if(!st)return;if(id==='s2'&&!(+a.v>=46))return;const ok=rep[id]||(rep[id]=st.levels.map(()=>0));if(a.lvs){Object.entries(a.lvs).forEach(([k,v])=>{if(ok[k]!=null)ok[k]=Math.min(YM_NEED,ok[k]+v)});return}
     const x0=ymP().s[id];if(x0&&(x0.ok||[]).some(v=>v>0))return;let c=+a.correct||0;for(let k=0;k<ok.length&&c>0;k++){const need=YM_NEED-ok[k];if(need<=0)continue;const take=Math.min(need,c);ok[k]+=take;c-=take}}));
   let ch=false;Object.entries(rep).forEach(([id,ok])=>{const x=ymSt(id);ok.forEach((v,k)=>{if(v>(x.ok[k]||0)){x.ok[k]=v;x.n[k]=Math.max(x.n[k]||0,v);ch=true}})});
   Object.entries(tg).forEach(([id,t])=>{if(!ymStage(id))return;const x=ymSt(id);Object.entries(t).forEach(([k,v])=>{if((x.tags[k]||0)<v){x.tags[k]=v;ch=true}})});
   if(ch&&!isParent()){P.boat=Math.min(P.boat||0,ymBoatLv());saveState('progress')}}
-function ymCheckBoat(){if(!S.loaded)return;if(!S._ymHealed){S._ymHealed=1;const P0=ymP();if(!P0.fix43&&!isParent()){const x=ymSt('s2');[2,3,4].forEach(k=>{x.ok[k]=0});P0.fix43=1;P0.boat=Math.min(P0.boat||0,ymBoatLv());saveState('progress')}try{ymHeal()}catch(e){}}const P=ymP();const lv=ymBoatLv();
+function ymCheckBoat(){if(!S.loaded)return;if(!S._ymHealed){S._ymHealed=1;const P0=ymP();if(!P0.fix43&&!isParent()){const x=ymSt('s2');[2,3,4].forEach(k=>{x.ok[k]=0});P0.fix43=1;P0.boat=Math.min(P0.boat||0,ymBoatLv());saveState('progress')}
+    if(!P0.fix46){const x=ymSt('s2');[2,3,4].forEach(k=>{x.ok[k]=0});if(!isParent()){P0.fix46=1;P0.boat=Math.min(P0.boat||0,ymBoatLv());saveState('progress')}}try{ymHeal()}catch(e){}}const P=ymP();const lv=ymBoatLv();
   if(isParent()){S._ymPrev=S._ymPrev||{};if(!S._ymPrev.intro&&!S.ymModal){S._ymPrev.intro=1;S.ymModal={kind:'intro'}}return}
   if(!P.intro&&!S.ymModal){S.ymModal={kind:'intro'};return}
   if((P.boat||0)<lv&&!S.ymModal){const won=YM_STAGES.filter(s=>ymDone(s.id));S.ymModal={kind:'up',lv,from:P.boat||0,isl:lv===YM_FLEET().length-1?'מבחן החזרה':(won.length?YM_SHORT[won[won.length-1].id]:'')};P.boat=lv;saveState('progress');setTimeout(()=>{sfx.horn();setTimeout(()=>sfx.win(),700)},200)}}
@@ -2528,7 +2539,7 @@ function viewYM(){const sc=S.screen,it=sc.it;const title=sc.mode==='test'?'📝 
   const guided=it.parts&&(sc.pi||0)<it.parts.length&&!done;
   if(guided){const T=it.parts[sc.pi||0];return `<button class="back" data-act="ymBack">${I.back} ${sc.mode==='stage'?'חזרה לשלב':'חזרה למסלול'}</button>
   <div class="ymtop"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${title}</span><span style="flex:none" dir="ltr">${sc.n+1} / ${sc.total}</span></div><div class="bar"><i style="width:${sc.n/sc.total*100}%"></i></div>
-  <section class="card ymcard"><span class="eyebrow">רמה ${it.lv+1}: ${lvName} · פותרים יחד 🪜</span>${Lv.learn?'<button class="ymlearnbtn" data-act="ymLearnShow">📖 איך פותרים?</button>':''}
+  <section class="card ymcard"><span class="eyebrow">${sc.mode==='stage'?'רמה '+(it.lv+1)+': ':''}${lvName}${it.guided?' · פותרים יחד 🪜':' · בשלבים'}</span>${Lv.learn?'<button class="ymlearnbtn" data-act="ymLearnShow">📖 איך פותרים?</button>':''}
    <div class="ymhe">${it.he||''}</div>${it.m?ymM(it.m):''}
    <ol class="ymparts">${(sc.pdone||[]).map(d=>`<li class="pd ${d.miss?'miss':''}"><span>${d.miss?'💡':'✅'}</span> <span dir="ltr" class="ymsm">${fx(d.show||'')}</span></li>`).join('')}
     <li class="pc"><div class="ymhe">${T.he}</div>${T.m?ymM(T.m):''}
