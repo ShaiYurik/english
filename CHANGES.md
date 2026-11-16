@@ -1,5 +1,6 @@
 # Changes
 
+- v64 (2026-11-16): one read-aloud button in question games instead of two: '🔊 הקראה: שאלה ותשובות' reads the question and then each option (fill-in questions read with '...' so the answer isn't revealed).
 - v63 (2026-11-16): question games: '🔊 תשובות' button next to 'השמע' reads all answer options aloud ('תשובה 1… תשובה 2…'), skipping options removed by the hint; Hebrew/English voice per option.
 - v62 (2026-11-16): highlighter in the reading screen (summary/karaoke): '🖍️ מרקר' button, tap a word to mark/unmark its whole sentence in yellow; marked sentences are listed under the text with read-aloud. Saved in `progress.marks` {islandId: ['para:sentence']}.
 - v61 (2026-11-16): '🔊 הקראה' button inside the hint box reads the word explanations and the hint aloud (Hebrew parts with the Hebrew voice, English with English).

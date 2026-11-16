@@ -519,7 +519,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='63';
+const APP_VERSION='64';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1437,7 +1437,7 @@ function viewGame(){
     return gameHead(sc,i,sc.items.length,sc.idx)+`
     ${q.pic||q.gap?`<div class="prompt">${q.pic?'מה בתמונה?':'השלימי את החסר'}</div>`:''}${qHTML}
     ${multi&&!sc.answered?'<p class="sub">יש כאן שתי תשובות נכונות. בחרי שתיים.</p>':''}
-    <div class="btns" style="justify-content:flex-start">${q.say&&!q.gap&&!q.pic?`<button class="btn ghost small" data-act="say" data-text="${esc(q.say)}">${I.speaker} השמע</button>`:''}${WORLD!=='math'?`<button class="btn ghost small" data-act="optSay">${I.speaker} תשובות</button>`:''}</div>
+    ${WORLD!=='math'&&!sc.answered?`<div><button class="btn ghost small" data-act="optSay">${I.speaker} הקראה: שאלה ותשובות</button></div>`:q.say&&!q.gap&&!q.pic&&!sc.answered?`<div><button class="btn ghost small" data-act="say" data-text="${esc(q.say)}">${I.speaker} השמע</button></div>`:''}
     ${hintHTML(sc,i,q,'mc')}
     <div class="opts">${q.o.map((o,k)=>{if(!sc.answered&&sc.hintAt===sc.idx&&(sc.elim||[]).includes(k))return '';let cls='opt'+(isLatin(o)?' en':'');if(sc.answered){if(q.a.includes(k))cls+=' ok';else if(sc.picked.includes(k))cls+=' bad'}else if(sc.picked.includes(k))cls+=' sel';return `<button class="${cls}" data-act="gAns" data-k="${k}" ${sc.answered?'disabled':''}>${tx(o)}</button>`}).join('')}</div>
     <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?(q.odd?oddFeedback(q,sc):(sc.wasOk?'נכון!':'כמעט.')+(q.why&&(!sc.wasOk||WORLD==='math')?` <span class="sub">${tx(q.why)}</span>`:'')):''}</div>
@@ -2075,8 +2075,8 @@ document.addEventListener('click',e=>{
       sc.answered=true;sc.wasOk=q.a.every(x=>sc.picked.includes(x));
       if(sc.wasOk){sc.correct++;sfx.ok();if(q.gap&&q.say)setTimeout(()=>say(q.say),350)}else{sfx.bad();sc.missed.push(q.ans||q.o[q.a[0]])}
       render();break;}
-    case 'optSay':{const q=sc.items[sc.idx];if(!q||!('speechSynthesis' in window))break;hush();const segs=[];
-      q.o.forEach((o,k)=>{if(!sc.answered&&sc.hintAt===sc.idx&&(sc.elim||[]).includes(k))return;segs.push('תשובה '+(segs.length/2+1)+'.');segs.push(String(o))});speakSegs(segs);break;}
+    case 'optSay':{const q=sc.items[sc.idx];if(!q||!('speechSynthesis' in window))break;hush();const segs=[];{const qt=q.pic?'':q.gap?String(q.q).replace('___','...'):(q.say||q.q||'');if(qt)segs.push(qt)}const base=segs.length;
+      q.o.forEach((o,k)=>{if(!sc.answered&&sc.hintAt===sc.idx&&(sc.elim||[]).includes(k))return;segs.push('תשובה '+((segs.length-base)/2+1)+'.');segs.push(String(o))});speakSegs(segs);break;}
     case 'hintSay':{const i=islandById(sc.id),q=sc.items[sc.idx];const h=hintOf(i,q,sc.kind);if(!h||!('speechSynthesis' in window))break;hush();
       const segs=[];(h.gl||[]).forEach(([k,v])=>{segs.push(k);segs.push(v)});if(h.t)segs.push(h.t);
       segs.forEach(t=>{const he=/[\u0590-\u05FF]/.test(t);const u=new SpeechSynthesisUtterance(String(t).replace(/[📖💡]/g,''));u.lang=he?'he-IL':TTS_LANG();u.rate=.85;const vv=he?heVoice:vox();if(vv)u.voice=vv;speechSynthesis.speak(u)});break;}
