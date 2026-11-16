@@ -53,7 +53,7 @@
 }
 :root[data-theme="dance"] body{background-image:radial-gradient(ellipse at 30% 0%,#ff6fb5 0%,transparent 45%),radial-gradient(ellipse at 80% 5%,#7a5cff 0%,transparent 40%),linear-gradient(180deg,#3a1d6e 0%,#1d1040 55%,#120a26 100%)}
 .dancecard{display:flex;align-items:center;gap:12px;width:100%;border:1px solid var(--swell);background:linear-gradient(135deg,#5b2a9e,#1d1040);color:var(--foam);border-radius:var(--r);padding:8px 12px;font:inherit;text-align:start}
-.dancecard b{color:var(--brass2);font-size:18px}.dancecard .ft{display:grid;gap:2px;flex:1}.dancecard small{color:var(--muted);font-weight:600}.dancecard svg{flex:none}
+.dancecard b{color:var(--brass2);font-size:18px}.dancecard.dempty{margin-top:10px;background:linear-gradient(135deg,#ff5fa8,#7b3fe4);border-color:#ff9fd0}.dancecard.dempty b{color:#fff}.dancecard.dempty small{color:#ffe3f1}.dancecard .de{font-size:40px;flex:none;padding:0 6px}.dsteps{display:flex;justify-content:center;gap:6px;margin-bottom:6px}.dsteps i{width:8px;height:8px;border-radius:50%;background:#d9cdea}.dsteps i.on{background:#c13fe0;width:22px;border-radius:4px}.dsteps i.done{background:#e8a6ff}.dlist{text-align:right;margin:6px 0;padding-inline-start:22px;display:grid;gap:8px;line-height:1.5}.dlist li::marker{color:#c13fe0;font-weight:800}.kb{display:inline-block}.dancecard .ft{display:grid;gap:2px;flex:1}.dancecard small{color:var(--muted);font-weight:600}.dancecard svg{flex:none}
 .dlv{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:12px;background:#f3eefb;text-align:start;opacity:.55}.dlv.got{opacity:1;background:#efe3ff}.dlv.cur{outline:2px solid #ffcf4a}.dlv>span:first-child{font-size:26px;width:36px;text-align:center}.dlv small{display:block;color:var(--ink2)}
 :root[data-theme="shop"] body{background-image:linear-gradient(180deg,#f3a6c4 0%,#a8336a 40%,#2b1830 85%)}
 .mallcard{display:flex;align-items:center;gap:12px;width:100%;border:1px solid var(--swell);background:linear-gradient(135deg,var(--sea),var(--abyss));color:var(--foam);border-radius:var(--r);padding:10px 12px;font:inherit;text-align:start}
@@ -505,7 +505,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='47';
+const APP_VERSION='48';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1981,6 +1981,9 @@ document.addEventListener('click',e=>{
   if(a!=='answer')sfx.tap();
   switch(a){
     case 'danceAll':S.danceModal={kind:'all'};render();break;
+    case 'dancePush':(async()=>{try{await enablePush()}catch(e){}if(S.danceModal){S.danceModal.pushStep=1;S.danceModal.step=(S.danceModal.step||0)+1;render()}})();break;
+    case 'danceStep':if(S.danceModal){S.danceModal.step=(S.danceModal.step||0)+1;render()}break;
+    case 'danceGoCam':{S.danceModal=null;if(!isParent()){S.progress.danceIntro=1;saveState('progress')}stopAll();S.tab='camera';render();scrollTo({top:0});break;}
     case 'danceClose':{const m=S.danceModal;S.danceModal=null;if(m&&m.kind==='intro'&&!isParent()){S.progress.danceIntro=1;saveState('progress')}render();break;}
     case 'mall':S.mallModal={kind:'mall',tab:el.dataset.tab||'stores'};render();break;
     case 'mallStore':S.mallModal={kind:'mall',tab:'store',store:el.dataset.id};render();break;
@@ -2745,14 +2748,24 @@ function dancerSVG(lv,size){const L=k=>lv>=k;const top=L(9)?'#ffcf4a':L(6)?'#ff3
   ${L(7)?'<path d="M50 14 L52 4 L56 11 L60 2 L64 11 L68 4 L70 14Z" fill="#ffcf4a" stroke="#c99a12" stroke-width="1"/>':''}
   ${L(9)?'<g fill="#fff">'+[[14,30],[104,26],[18,96],[106,100]].map(([x,y])=>`<path d="M${x} ${y-5} l1.5 4 4 1.5 -4 1.5 -1.5 4 -1.5 -4 -4 -1.5 4 -1.5z"/>`).join('')+'</g>':''}</svg>`}
 function danceCardHTML(){if(!danceOn())return '';const lv=danceLv(),D=DANCE_LV[lv],nx=DANCE_LV[lv+1];
-  return `<button class="dancecard" data-act="danceAll">${dancerSVG(lv,66)}<span class="ft"><small>רמת ריקוד ${lv+1} מתוך ${DANCE_LV.length}</small><b>${esc(D.n)}</b><span>${nx?`האי הבא שתכבשי ← ${nx.e} ${esc(nx.it)}`:'הגעת לרמה הכי גבוהה! 🌟'}</span><small>אי מצוין (85%+) = בגד חדש ועלייה ברמה</small></span></button>`}
+  return `<button class="dancecard" data-act="danceAll">${dancerSVG(lv,66)}<span class="ft"><small>רמת ריקוד ${lv+1} מתוך ${DANCE_LV.length}</small><b>${esc(D.n)}</b><span>${nx?`האי הבא שתכבשי ← ${nx.e} ${esc(nx.it)}`:'הגעת לרמה הכי גבוהה! 🌟'}</span><small>אי מצוין (85%+) = בגד חדש ועלייה ברמה</small></span></button>`+(allIslands().some(i=>i.kind!=='daily')?'':`<button class="dancecard dempty" data-act="tab" data-tab="camera"><span class="de">📸</span><span class="ft"><b>הסטודיו מחכה לחומר הראשון שלך!</b><span>צלמי דף באנגלית שאת רוצה ללמוד, והריקוד הראשון שלך יופיע כאן 🎶</span><small>לחצי כאן כדי לצלם</small></span></button>`)}
 function checkDance(){if(!danceOn()||!S.loaded||S.danceModal)return;const p=S.progress,lv=danceLv();
   if(isParent())return;
   if(!p.danceIntro){S.danceModal={kind:'intro'};return}
   if((p.danceLv||0)<lv){S.danceModal={kind:'up',lv};p.danceLv=lv;saveState('progress');setTimeout(()=>sfx.win(),250)}}
 function danceModalHTML(){const M=S.danceModal;if(!M)return '';const wrap=x=>`<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox">${x}</div></div>`;const nm=(S.profile&&S.profile.name)||'';
   const row=lv=>`<div class="ymfleet">${DANCE_LV.map((d,k)=>`<span class="${k<=lv?'got':''}" title="${esc(d.it)}" style="font-size:24px;align-items:center">${k<=lv?d.e:'<b>?</b>'}</span>`).join('')}</div>`;
-  if(M.kind==='intro')return wrap(`<div class="bpop">${dancerSVG(0,140)}</div><h3>${esc(nm)}, ברוכה הבאה לסטודיו! 💃</h3><p>כל אי שתכבשי, כלומר כל התחנות ב־85% ומעלה, נותן לך <b>פריט לבוש חדש</b> ומעלה אותך <b>רמת ריקוד</b>.</p><p>מתחילות באימונית ונעלי ספורט, ומגיעות עד <b>סופר רקדנית</b> עם תלבושת זהב וזרקור משלך 🌟</p>${row(0)}<div class="btns"><button class="btn brass" data-act="danceClose">יאללה, רוקדות! 🎶</button></div>`);
+  if(M.kind==='intro'){const pushNeed=pushOK()&&Notification.permission!=='granted';const steps=['hi',...(STANDALONE?[]:['install']),...(pushNeed||M.pushStep?['push']:[]),'photo','grow'],k=Math.min(M.step||0,steps.length-1),st=steps[k],last=k===steps.length-1;
+    const dots=`<div class="dsteps">${steps.map((x,j)=>`<i class="${j===k?'on':j<k?'done':''}"></i>`).join('')}</div>`;
+    const next=t=>`<div class="btns"><button class="btn brass" data-act="danceStep">${t}</button></div>`;
+    const ios=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+    let body='';
+    if(st==='hi')body=`<div class="bpop">${dancerSVG(0,140)}</div><h3>${esc(nm)}, ברוכה הבאה לסטודיו! 💃</h3><p>זה הסטודיו שלך ללימוד אנגלית. כאן כל שיעור הוא <b>ריקוד</b>, וכל ריקוד שתלמדי הופך אותך לרקדנית טובה יותר.</p><p>בואי אראה לך איך זה עובד, זה לוקח דקה 🎶</p>${next('בואי נתחיל ←')}`;
+    else if(st==='install')body=`<div class="confetti">📲</div><h3>קודם כל: הסטודיו במסך הבית</h3><p>ככה תפתחי אותו בלחיצה אחת, כמו אפליקציה, ותקבלי תזכורת לאימון.</p>${ios?`<ol class="dlist"><li>לוחצים על כפתור <b>השיתוף</b> <span class="kb">⬆️</span> (בתחתית ספארי, או ב־⋯)</li><li>גוללים ובוחרים <b>"הוספה למסך הבית"</b></li><li>לוחצים <b>"הוסף"</b>, ופותחים את הסטודיו מהאייקון החדש 💃</li><li>בסטודיו לוחצים <b>"להפעיל"</b> בכרטיס התזכורת, ומאשרים 🔔</li></ol>`:`<ol class="dlist"><li>לוחצים על <b>⋮</b> (שלוש הנקודות למעלה בכרום)</li><li>בוחרים <b>"הוספה למסך הבית"</b> או <b>"התקנת אפליקציה"</b></li><li>מאשרים, ופותחים את הסטודיו מהאייקון החדש 💃</li></ol>`}${next('הבא ←')}`;
+    else if(st==='push')body=`<div class="confetti">🔔</div><h3>תזכורת לאימון</h3><p>כל רקדנית טובה מתאמנת קצת כל יום. נפעיל תזכורת קטנה בשש בערב (ראשון עד חמישי), כדי שלא תפספסי אימון 🎶</p><p>אחרי הלחיצה, הטלפון ישאל אם לאשר התראות: לוחצים <b>"אישור"</b> / <b>"Allow"</b>.</p><div class="btns"><button class="btn brass" data-act="dancePush">להפעיל תזכורות 🔔</button><button class="btn ghost" data-act="danceStep">אחר כך</button></div>`;
+    else if(st==='photo')body=`<div class="confetti">📸</div><h3>איך מקבלים ריקוד חדש?</h3><ol class="dlist"><li>נכנסים ללשונית <b>"צילום"</b> למטה</li><li>מצלמים את מה שאת רוצה ללמוד באנגלית: דף מהמחברת, דף עבודה, רשימת מילים או טקסט מהספר</li><li>אחרי זמן קצר מופיע בסטודיו <b>ריקוד חדש</b>, עם משחקים ותרגולים בדיוק על החומר שלך 🎶</li></ol><p>הכי טוב לצלם חומר לפני מבחן, ככה מגיעים מוכנות 💪</p>${next('הבא ←')}`;
+    else body=`<div class="bpop">${dancerSVG(3,120)}</div><h3>ככל שתתקדמי, תרקדי יותר טוב 🌟</h3><p>כל ריקוד שתסיימי ב־85% ומעלה נותן לך <b>בגד חדש</b> ומעלה אותך <b>רמת ריקוד</b>.</p><p>מתחילות באימונית ונעלי ספורט, ומגיעות עד <b>סופר רקדנית</b> עם תלבושת זהב וזרקור משלך!</p>${row(0)}<div class="btns"><button class="btn brass" data-act="danceGoCam">לצלם חומר עכשיו 📸</button><button class="btn ghost" data-act="danceClose">אחר כך</button></div>`;
+    return wrap(dots+body)}
   if(M.kind==='all'){const lv=danceLv();return wrap(`<h3>רמות הריקוד שלך</h3>${DANCE_LV.map((d,k)=>`<div class="dlv ${k<=lv?'got':''} ${k===lv?'cur':''}"><span>${k<=lv?d.e:'🔒'}</span><span><b>${k+1}. ${esc(d.n)}</b><small>${k<=lv?esc(d.it):k===0?'נקודת ההתחלה':'אחרי '+k+' איים'}</small></span></div>`).join('')}<div class="btns"><button class="btn brass" data-act="danceClose">סגירה</button></div>`)}
   const D=DANCE_LV[M.lv],fin=M.lv===DANCE_LV.length-1;
   return wrap(`<div class="confetti">${fin?'🌟🎉🌟':'🎉'}</div><div class="bpop">${dancerSVG(M.lv,fin?170:150)}</div><h3>${fin?'סופר רקדנית! 🌟':pick(['עלית רמה! 💃','איזה ריקוד! 🎶','את כוכבת! ⭐','וואו, איזה צעד! 🩰'])}</h3><p>קיבלת: <b>${D.e} ${esc(D.it)}</b></p><p>רמת הריקוד שלך עכשיו: <b>${esc(D.n)}</b></p><p>${esc(D.s)}</p>${!fin?`<p>עוד ${DANCE_LV.length-1-M.lv} איים עד <b>סופר רקדנית</b> 🌟</p>`:''}${row(M.lv)}<div class="btns"><button class="btn brass" data-act="danceClose">${fin?'אני סופר רקדנית! 🏆':'ממשיכות לרקוד! 💃'}</button><button class="btn ghost" data-act="danceAll">כל הרמות</button></div>`)}
