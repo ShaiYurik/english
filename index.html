@@ -319,12 +319,12 @@ textarea.paste{width:100%;min-height:80px;border-radius:12px;border:1px solid va
 .boatbtn svg{width:30px;height:30px;color:var(--sea2)}
 .boatbtn b{font-size:19px;overflow-wrap:anywhere}.boatbtn span{font-size:12px;color:var(--ink2)}
 .boatbtn.ok{background:var(--kelp2);border-color:var(--kelp)}.boatbtn.bad{background:var(--redsoft);border-color:var(--signal)}
-.memo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.mcard{aspect-ratio:4/3;max-width:100%;border:0;border-radius:12px;background:var(--sea);color:var(--brass2);display:grid;place-items:center;font-size:22px;font-weight:700;padding:4px;transition:transform .2s}
+.memo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:100px;gap:8px}
+.mcard{height:100px;width:100%;min-width:0;overflow:hidden;line-height:1.2;text-align:center;border:0;border-radius:12px;background:var(--sea);color:var(--brass2);display:grid;place-items:center;font-size:22px;font-weight:700;padding:4px;transition:transform .2s}
 .mcard .back-face{font-size:26px;opacity:.8}
 .mcard.open{background:#fff;color:var(--ink);border:2px solid var(--chart2);transform:rotateY(0)}
 .mcard.done{background:var(--kelp2);border-color:var(--kelp)}
-.mcard .en{overflow-wrap:anywhere}
+.mcard .en{overflow-wrap:break-word;text-align:center!important;direction:auto}.mcard.m{font-size:17px}.mcard.s{font-size:14px}.mcard.xs{font-size:12px;font-weight:600}.mcard.xs .en,.mcard.s .en{line-height:1.2}
 .mrun{display:inline-flex;align-items:center;gap:6px;direction:ltr;unicode-bidi:isolate;white-space:nowrap;vertical-align:middle}
 .mx{display:inline-flex;align-items:center;gap:5px;direction:ltr;vertical-align:middle;font-family:Assistant,sans-serif}
 .mx b{font-size:1.25em}
@@ -518,7 +518,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='59';
+const APP_VERSION='60';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1468,7 +1468,7 @@ function viewGame(){
     return `<button class="back" data-act="island" data-id="${esc(sc.id)}">${I.back} ${esc(i.name)}</button>
     <section class="card"><div class="qtop"><span>${esc(sc.title)}</span><span>${sc.found} / ${sc.total} זוגות</span></div>
     <p class="sub">הופכים שני קלפים ומחפשים זוג שמתאים. אין פה טעויות, רק מנסים עד שמוצאים הכל.</p>
-    <div class="memo">${sc.cards.map(c=>`<button class="mcard ${c.open||c.done?'open':''} ${c.done?'done':''}" data-act="memo" data-k="${c.k}" ${c.done?'disabled':''}>${c.open||c.done?(WORLD==='math'?fx(c.t):`<span class="en">${esc(c.t)}</span>`):`<span class="back-face">${EB('anc')}</span>`}</button>`).join('')}</div>
+    <div class="memo">${sc.cards.map(c=>`<button class="mcard ${c.open||c.done?'open':''} ${c.done?'done':''} ${(()=>{const t=String(c.t),L=t.length,W=Math.max(...t.split(/\s+/).map(w=>w.length));const r=Math.max(L<=8?0:L<=16?1:L<=28?2:3,W>=9?2:W>=7?1:0);return ['','m','s','xs'][r]})()}" data-act="memo" data-k="${c.k}" ${c.done?'disabled':''}>${c.open||c.done?(WORLD==='math'?fx(c.t):`<span class="en">${esc(c.t)}</span>`):`<span class="back-face">${EB('anc')}</span>`}</button>`).join('')}</div>
     </section>`;
   }
   if(sc.kind==='order'){

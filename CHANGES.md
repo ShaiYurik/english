@@ -1,5 +1,6 @@
 # Changes
 
+- v60 (2026-11-16): memory game cards keep one fixed size (100px rows) after flipping; long text and long words get a smaller font instead of stretching the card; text centered.
 - v59 (2026-11-16): the hint also explains words from the question: lesson `terms` {term: explanation}, the text's `gloss`, and English words from the island's word list. An explanation that would give the answer away (matches an option / the true-false statement) is skipped.
 - v58 (2026-11-16): '💡 רמז' button before answering in question games (mc, tf) for all profiles: shows the item's own `hint` if it has one, otherwise the best-matching paragraph from the island's summary/text, otherwise (4-option questions) removes two wrong answers.
 - v57 (2026-11-16): 'א+' button in the header for every profile: enlarges all page content by 30% (CSS zoom on #view children; pop-ups stay normal size). Remembered per device (`bigfont`).
