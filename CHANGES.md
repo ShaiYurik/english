@@ -1,5 +1,6 @@
 # Changes
 
+- v54 (2026-11-16): pasting a Google Drive/Docs link in the camera tab shows how to share it ('anyone with the link') or attach the file instead, since a private link from the child's own Drive can't be opened.
 - v53 (2026-11-16): Hebrew islands (any non-English subject) get Hebrew read-aloud: summary station '📖 הסיכום · הקראה' with highlighted words, he-IL voice, tap a word to hear it; speaker buttons no longer hidden; True/False buttons in Hebrew; English speech-recognition stations hidden. Content for such islands: `text` (summary) + games mc / tf / pairs / order.
 - v52 (2026-11-16): presentations can be uploaded from the camera tab (.ppt/.pptx/.pps/.ppsx/.odp). They are sent as application/octet-stream, which the current server already accepts (server FILE_MIMES_ has no presentation types yet; 10MB limit).
 - v51 (2026-11-16): Shai-Li learns every subject, not only English: lesson field `subject` (אנגלית, עברית, חשבון, מדעים, היסטוריה…) gives each subject its own track on the stage map, with up to two open dances per subject; non-English subjects render as Hebrew (RTL). In the camera tab she picks the subject (tag `class-new subject:X`); every upload becomes a new dance. Welcome/hint texts updated.

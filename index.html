@@ -506,7 +506,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='53';
+const APP_VERSION='54';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -2913,7 +2913,7 @@ document.addEventListener('submit',e=>{
     const t=($('#pasteIn').value||'').trim();if(!t){toast('אין מה לשלוח');return}const zm=zoomMeta('pasteZoom');if(!zm){toast('בחרי למה זה שייך');return}
     const blob=new Blob([t],{type:'text/plain'});const id=uid('f');
     S.shots.push({id,blob,name:'טקסט שהודבק.txt',file:true,status:'wait'});queueUpload({id,kind:'file',blob,meta:{note:'טקסט שהודבק',name:'טקסט שהודבק.txt',...zm}});
-    sfx.ok();toast('נשלח לדרייב');render();
+    sfx.ok();if(/(drive|docs)\.google\.com/.test(t))S.confirm=null,setTimeout(()=>alert('נשלח! שימי לב: זה קישור לקובץ בדרייב שלך, ואנחנו לא יכולים לפתוח אותו.\nכדי שזה יעבוד: בדרייב לוחצים על הקובץ ← ⋮ ← "שיתוף" ← "כל מי שיש לו את הקישור".\nאו פשוט: מורידים את הקובץ לטלפון ומצרפים אותו ב"צרף קובץ" 📎'),50);else toast('נשלח לדרייב');render();
   }else if(f.dataset.form==='shots'){
     const note=($('#shotNote')?.value||'').trim();const zm=zoomMeta('shotZoom');if(!zm){toast('בחרי למה זה שייך');return}
     S.shots.filter(s=>s.status==='new').forEach(s=>{s.status='wait';queueUpload({id:s.id,kind:s.file?'file':'photo',blob:s.blob,meta:s.file?{note,name:s.name,...zm}:{note,...zm}})});
