@@ -344,6 +344,7 @@ textarea.paste{width:100%;min-height:80px;border-radius:12px;border:1px solid va
 .tiles{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;direction:ltr}
 .tile{width:46px;height:50px;border:0;border-radius:10px;background:var(--brass);color:var(--ink);font-size:26px;font-weight:700;box-shadow:0 3px 0 #a87d27}
 .tile[disabled]{opacity:.25;box-shadow:none}
+.kara .sent{border-radius:4px;transition:background .2s}.kara .sent.mk{background:linear-gradient(transparent 30%,#fff176 30%,#fff176 92%,transparent 92%);box-decoration-break:clone;-webkit-box-decoration-break:clone}.kara.marking .w{cursor:pointer}.kara.marking .sent:hover{background:#fff8c4}.mkbtn.on{background:#fff176!important;color:#3a2a00!important;border-color:#e6c200!important}.mkhelp{margin:4px 0}.mklist{background:#fffbe0;border:1.5px solid #f3d84b;border-radius:14px;padding:10px 12px;margin:8px 0}.mklist .mkhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}.mklist p{margin:6px 0;padding-inline-start:10px;border-inline-start:4px solid #f3d84b;color:#3a2a00}
 .kara .w.hl{background:var(--brass2);box-shadow:0 0 0 2px var(--brass2)}
 .kp{margin:0 0 12px}
 .gloss{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.gloss .sub{width:100%;margin:0}
@@ -518,7 +519,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='61';
+const APP_VERSION='62';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1507,19 +1508,24 @@ function dictOfText(i){const seen=new Set(),out=[];(i.text.paras||[]).join(' ').
   if(!k||seen.has(lk)||BASICW.has(lk)||/^\d+$/.test(k))return;seen.add(lk);const h=wordHe(k,i);if(h)out.push([k,h])});return out}
 function viewKaraoke(){
   const sc=S.screen;const i=islandById(sc.id);const t=i.text;let wi=0;
-  const paras=t.paras.map((p,pi)=>`<p class="kp" data-p="${pi}">${p.split(' ').map(w=>`<span class="w" id="kw${wi++}" data-act="sayw" data-text="${esc(w.replace(LETTER_RE(),''))}">${esc(w)}</span>`).join(' ')}</p>`).join('');
+  const mk=new Set(((S.progress.marks||{})[sc.id])||[]);
+  const paras=t.paras.map((p,pi)=>`<p class="kp" data-p="${pi}">${sentsOf(p).map((ws,si)=>`<span class="sent ${mk.has(pi+':'+si)?'mk':''}" data-s="${pi}:${si}">${ws.map(w=>`<span class="w" id="kw${wi++}" data-act="sayw" data-text="${esc(w.replace(LETTER_RE(),''))}">${esc(w)}</span>`).join(' ')}</span>`).join(' ')}</p>`).join('');
+  const marked=[...mk].map(k=>k.split(':').map(Number)).sort((a,b)=>a[0]-b[0]||a[1]-b[1]).map(([pi,si])=>{const ss=t.paras[pi]?sentsOf(t.paras[pi]):[];return ss[si]?ss[si].join(' '):''}).filter(Boolean);
   const gl=Object.entries(t.gloss||{});
   return `<button class="back" data-act="island" data-id="${esc(sc.id)}">${I.back} ${esc(i.name)}</button>
   <section class="card">
     <h2 class="en" style="text-align:left">${esc(t.title)}</h2>
     <p class="tip">${i.lang==='he'?'לוחצים "הקראה" ועוקבים אחרי המילה הצבועה. אפשר להאט עם 🐢. לחיצה על מילה משמיעה אותה.':i.kind==='daily'?'קוראים לבד, ואם צריך לוחצים "הקראה". לא מכירה מילה? לוחצים עליה ורואים מה היא אומרת.':'לוחצים "הקראה" ועוקבים אחרי המילה הצבועה. לחיצה על מילה משמיעה אותה ומראה תרגום.'}</p>
-    <div class="btns"><button class="btn brass small" data-act="kPlay">${I.play} הקראה</button>${speedBtn()}<button class="btn ghost small" data-act="kStop">עצור</button></div>
-    <div class="read story kara">${paras}</div>
+    <div class="btns"><button class="btn brass small" data-act="kPlay">${I.play} הקראה</button>${speedBtn()}<button class="btn ghost small" data-act="kStop">עצור</button><button class="btn ghost small mkbtn ${S.marker?'on':''}" data-act="marker" aria-pressed="${!!S.marker}">🖍️ ${S.marker?'מרקר פעיל':'מרקר'}</button></div>
+    ${S.marker?'<p class="sub mkhelp">🖍️ לוחצים על משפט חשוב כדי לסמן אותו. לחיצה נוספת מורידה את הסימון.</p>':''}
+    <div class="read story kara ${S.marker?'marking':''}">${paras}</div>
+    ${marked.length?`<div class="mklist"><div class="mkhead"><b>🖍️ המשפטים החשובים שסימנת (${marked.length})</b><button class="btn ghost small" data-act="mkSay">${I.speaker} הקראה</button></div>${marked.map(x=>`<p>${esc(x)}</p>`).join('')}</div>`:''}
     ${gl.length?`<div class="gloss"><p class="sub">מילים שהחוברת מתרגמת:</p>${gl.map(([e,h])=>`<span class="wtag"><span class="en">${esc(e)}</span> ${esc(h)}</span>`).join('')}</div>`:''}
     <button class="btn" data-act="kDone">${i.kind==='daily'?'קראתי את הקטע ✓':'קראתי את הטקסט'}</button>
   </section>`;
 }
 let kTimer=null,kRun=0;
+function sentsOf(p){const out=[[]];String(p).split(' ').forEach(w=>{out[out.length-1].push(w);if(/[.!?:]["״'”)]*$/.test(w))out.push([])});if(!out[out.length-1].length)out.pop();return out}
 function kHighlight(n){document.querySelectorAll('.kara .w.hl').forEach(x=>x.classList.remove('hl'));const el=document.getElementById('kw'+n);if(el){el.classList.add('hl');el.scrollIntoView({block:'nearest',behavior:'smooth'})}}
 function kPlay(){
   if(!('speechSynthesis' in window)){toast('הטלפון לא תומך בהקראה');return}
@@ -2162,7 +2168,11 @@ document.addEventListener('click',e=>{
     case 'speed':{const k=SPEED_ORDER[(SPEED_ORDER.indexOf(S.speed)+1)%3];S.speed=k;LS.set('speed',k);kRun++;hush();toast('מהירות: '+SPEEDS[k].label);render();break;}
     case 'saySlow':sayPaced(el.dataset.text,null,null,'x');break;
     case 'stopSay':hush();break;
-    case 'sayw':{const t=el.dataset.text;if(t){document.querySelectorAll('.w.hl').forEach(x=>x.classList.remove('hl'));el.classList.add('hl');say(t,.75);
+    case 'marker':S.marker=!S.marker;render();break;
+    case 'mkSay':{const i=islandById(sc.id);if(!i||!i.text||!('speechSynthesis' in window))break;hush();const mk=((S.progress.marks||{})[sc.id])||[];
+      [...mk].map(k=>k.split(':').map(Number)).sort((a,b)=>a[0]-b[0]||a[1]-b[1]).forEach(([pi,si])=>{const ss=i.text.paras[pi]?sentsOf(i.text.paras[pi]):[];if(ss[si]){const u=utter(ss[si].join(' '),SPEEDS[S.speed].rate);speechSynthesis.speak(u)}});break;}
+    case 'sayw':{if(S.marker&&S.screen&&S.screen.name==='karaoke'){const se=el.closest('.sent');if(se){const id=S.screen.id,k=se.dataset.s;const M=S.progress.marks||(S.progress.marks={});const a=new Set(M[id]||[]);if(a.has(k))a.delete(k);else a.add(k);M[id]=[...a];if(!isParent())saveState('progress');se.classList.toggle('mk',a.has(k));sfx.tap&&sfx.tap();render()}break}
+      const t=el.dataset.text;if(t){document.querySelectorAll('.w.hl').forEach(x=>x.classList.remove('hl'));el.classList.add('hl');say(t,.75);
       if(S.screen&&S.screen.name==='karaoke'&&!HEI()){const i=islandById(S.screen.id);const he=wordHe(t,i);let b=document.getElementById('wbub');if(!b){b=document.createElement('div');b.id='wbub';b.className='wbub';document.body.appendChild(b)}
         b.innerHTML=`<span class="en">${esc(t)}</span> = ${he?esc(he):'<span class="sub">אין לי תרגום למילה הזאת</span>'}`;b.hidden=false;clearTimeout(b._t);b._t=setTimeout(()=>{b.hidden=true},3500)}}break;}
     case 'kDict':{S.screen.dict=!S.screen.dict;render();break;}
