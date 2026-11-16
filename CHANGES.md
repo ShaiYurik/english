@@ -1,5 +1,6 @@
 # Changes
 
+- v66 (2026-11-16): reading screen player controls: '▶ הקראה' → '⏸ עצירה' → '▶ המשך' (continues from the highlighted word) + '⏮ מההתחלה'. Leaving the screen pauses instead of losing the place.
 - v65 (2026-11-16): parent report app ('viewer' role, server v17): a separate read-only key per child (`VIEW_KEY`, now Shai-Li). Opens straight to her report (today, report text, tracks, log), no tabs, no writes, nothing counts as her practice; own manifest (`manifest-report.webmanifest`, iOS title 'דוח <name>'). Daily 21:00 push to the viewer's devices with a summary (server `viewerToday_`, push list `push:<child>:v`); iPhone shows add-to-home-screen steps first. Server also: evening email only when material waits for processing.
 - v64 (2026-11-16): one read-aloud button in question games instead of two: '🔊 הקראה: שאלה ותשובות' reads the question and then each option (fill-in questions read with '...' so the answer isn't revealed).
 - v63 (2026-11-16): question games: '🔊 תשובות' button next to 'השמע' reads all answer options aloud ('תשובה 1… תשובה 2…'), skipping options removed by the hint; Hebrew/English voice per option.
