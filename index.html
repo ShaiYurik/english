@@ -506,7 +506,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='51';
+const APP_VERSION='52';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -579,7 +579,7 @@ async function flushUploads(){
       upStatus[it.id]='up';refreshUploadUI();
       try{
         const b64=await blobToB64(it.blob);
-        const res=await apiPost({action:it.kind==='rec'?'uploadRec':it.kind==='file'?'uploadFile':'uploadPhoto',b64,mime:it.blob.type||'application/octet-stream',...it.meta});
+        const res=await apiPost({action:it.kind==='rec'?'uploadRec':it.kind==='file'?'uploadFile':'uploadPhoto',b64,mime:(/presentation|powerpoint/.test(it.blob.type)?'':it.blob.type)||'application/octet-stream',...it.meta});
         await IDB.del(it.id);upStatus[it.id]='ok';
         if(it.kind==='rec')onRecUploaded(it,res.file);
         if(it.kind==='photo'||it.kind==='file'){S.pendingPhotos=(S.pendingPhotos||0)+1;cache()}
@@ -1868,8 +1868,8 @@ async function compress(file){
     return await new Promise(res=>c.toBlob(b=>res(b||file),'image/jpeg',.85));
   }catch(e){return file}finally{URL.revokeObjectURL(url)}
 }
-const FILE_OK=/^(application\/(pdf|msword|rtf|vnd\.openxmlformats-officedocument\.wordprocessingml\.document|vnd\.oasis\.opendocument\.text)|text\/(plain|html|rtf)|message\/rfc822)$/;
-const FILE_EXT=/\.(pdf|docx?|odt|rtf|txt|html?|eml)$/i;
+const FILE_OK=/^(application\/(pdf|msword|rtf|vnd\.ms-powerpoint|vnd\.openxmlformats-officedocument\.presentationml\.(presentation|slideshow)|vnd\.oasis\.opendocument\.presentation|vnd\.openxmlformats-officedocument\.wordprocessingml\.document|vnd\.oasis\.opendocument\.text)|text\/(plain|html|rtf)|message\/rfc822)$/;
+const FILE_EXT=/\.(pdf|docx?|odt|rtf|txt|html?|eml|pptx?|ppsx?|odp)$/i;
 const MAX_FILE=10*1024*1024;
 function addFiles(files){
   let n=0;const imgs=[];
@@ -1912,7 +1912,7 @@ function viewCamera(){
   const label={new:'חדש',wait:'ממתין',up:'עולה…',ok:'נשמר',err:'ינסה שוב'};
   return `<div class="ihead"><span class="eyebrow">${EB('hunt')}</span><h2>צילום חומר</h2><p>מצלמים דף עבודה, מילים מהלוח או טקסט מהספר, והחומר הופך לאי חדש במפה.</p></div>
   <div class="shoot">
-    <label class="main wide" for="fileIn"><span>📎</span>צרף קובץ (צילום, גלריה, PDF, Word)<input id="fileIn" type="file" accept="application/pdf,.pdf,.doc,.docx,.odt,.rtf,.txt,.html,.htm,.eml,image/*" multiple></label>
+    <label class="main wide" for="fileIn"><span>📎</span>צרף קובץ (צילום, גלריה, PDF, Word, מצגת)<input id="fileIn" type="file" accept="application/pdf,.pdf,.doc,.docx,.odt,.rtf,.txt,.html,.htm,.eml,.ppt,.pptx,.pps,.ppsx,.odp,image/*" multiple></label>
   </div>
   ${S.shots.length?`<section class="card">
     <h2>מה שהעלית</h2>

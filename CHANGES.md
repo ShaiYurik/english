@@ -1,5 +1,6 @@
 # Changes
 
+- v52 (2026-11-16): presentations can be uploaded from the camera tab (.ppt/.pptx/.pps/.ppsx/.odp). They are sent as application/octet-stream, which the current server already accepts (server FILE_MIMES_ has no presentation types yet; 10MB limit).
 - v51 (2026-11-16): Shai-Li learns every subject, not only English: lesson field `subject` (אנגלית, עברית, חשבון, מדעים, היסטוריה…) gives each subject its own track on the stage map, with up to two open dances per subject; non-English subjects render as Hebrew (RTL). In the camera tab she picks the subject (tag `class-new subject:X`); every upload becomes a new dance. Welcome/hint texts updated.
 - v50 (2026-11-16): no hard-coded 'יוביק'/'יובל' in what a child sees: daily report, desert/raft intros, fleet title, math intro/praise and parent test note use the profile name (`kidName()`). First visit before the child is known uses a neutral manifest (`manifest-app.webmanifest`, 'לומדים בכיף') instead of Yuvik's; non-listed children get their own name as the home-screen title.
 - v49 (2026-11-16): Shai-Li's texts no longer mention 'אבא' uploading material: they speak to her ('כשתצלמי חומר…', 'ריקוד חדש בסטודיו', 'במה נוספת'), via `SHL()`. Other profiles unchanged.
