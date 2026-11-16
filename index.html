@@ -319,6 +319,7 @@ textarea.paste{width:100%;min-height:80px;border-radius:12px;border:1px solid va
 .boatbtn{border:2px solid var(--chart2);background:#fff;color:var(--ink);border-radius:14px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
 .boatbtn svg{width:30px;height:30px;color:var(--sea2)}
 .boatbtn b{font-size:19px;overflow-wrap:anywhere}.boatbtn span{font-size:12px;color:var(--ink2)}
+.boatbtn.tried{opacity:.45}
 .boatbtn.ok{background:var(--kelp2);border-color:var(--kelp)}.boatbtn.bad{background:var(--redsoft);border-color:var(--signal)}
 .memo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:100px;gap:8px}
 .mcard{height:100px;width:100%;min-width:0;overflow:hidden;line-height:1.2;text-align:center;border:0;border-radius:12px;background:var(--sea);color:var(--brass2);display:grid;place-items:center;font-size:22px;font-weight:700;padding:4px;transition:transform .2s}
@@ -520,7 +521,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='67';
+const APP_VERSION='68';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1474,8 +1475,8 @@ function viewGame(){
     return gameHead(sc,i,sc.items.length,sc.idx)+`
     <p class="sub">לאיזו סירה המילה שייכת?</p>
     <div class="cargo"><span class="en">${esc(q.w)}</span><button class="speak sm" data-act="say" data-text="${esc(q.w)}" aria-label="השמע">${I.speaker}</button></div>
-    <div class="boats">${sc.groups.map((g,gi)=>{let cls='boatbtn';if(sc.answered){if(gi===q.gi)cls+=' ok';else if(gi===sc.pick)cls+=' bad'}return `<button class="${cls}" data-act="sortAns" data-g="${gi}" ${sc.answered?'disabled':''}>${I.boat}<b class="en">${esc(g.name)}</b><span>${esc(g.he)}</span></button>`}).join('')}</div>
-    <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?(sc.wasOk?'נכון!':'המילה שייכת לסירה '+esc(sc.groups[q.gi].he)):''}</div>
+    <div class="boats">${sc.groups.map((g,gi)=>{const w1=sc.tryAt===sc.idx&&gi===sc.wrong1;let cls='boatbtn';if(sc.answered){if(gi===q.gi)cls+=' ok';else if(gi===sc.pick||w1)cls+=' bad'}else if(w1)cls+=' bad tried';return `<button class="${cls}" data-act="sortAns" data-g="${gi}" ${sc.answered||w1?'disabled':''}>${I.boat}<b class="en">${esc(g.name)}</b><span>${esc(g.he)}</span></button>`}).join('')}</div>
+    <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):sc.tryAt===sc.idx?'bad':''}">${sc.answered?(sc.wasOk?(sc.tryAt===sc.idx?'נכון! הצלחת בניסיון השני 💪':'נכון!'):'התשובה: '+esc(sc.groups[q.gi].name)+(sc.groups[q.gi].he&&!/^\p{Extended_Pictographic}/u.test(sc.groups[q.gi].he)?' ('+esc(sc.groups[q.gi].he)+')':'')):sc.tryAt===sc.idx?'לא בדיוק 🙂 נסי שוב!':''}</div>
     ${sc.answered?`<div class="btns"><button class="btn brass" data-act="gNext">${sc.idx===sc.items.length-1?'לתוצאות':'הבאה'}</button></div>`:''}
     </section>`;
   }
@@ -2119,8 +2120,10 @@ document.addEventListener('click',e=>{
     case 'tfAns':{if(sc.answered)break;const q=sc.items[sc.idx];sc.pick=el.dataset.v==='1';sc.answered=true;sc.wasOk=sc.pick===q.t;
       if(sc.wasOk){sc.correct++;sfx.ok()}else{sfx.bad();sc.missed.push(q.s)}
       render();if(q.fix)setTimeout(()=>say(q.fix),400);break;}
-    case 'sortAns':{if(sc.answered)break;const q=sc.items[sc.idx];sc.pick=+el.dataset.g;sc.answered=true;sc.wasOk=sc.pick===q.gi;
-      if(sc.wasOk){sc.correct++;sfx.ok()}else{sfx.bad();sc.missed.push(q.w)}render();break;}
+    case 'sortAns':{if(sc.answered)break;const q=sc.items[sc.idx];const g=+el.dataset.g;
+      if(g!==q.gi&&sc.tryAt!==sc.idx){sc.tryAt=sc.idx;sc.wrong1=g;sfx.bad();sc.missed.push(q.w);render();break}   // טעות ראשונה: נסי שוב
+      const second=sc.tryAt===sc.idx;sc.pick=g;sc.answered=true;sc.wasOk=g===q.gi;
+      if(sc.wasOk){if(!second)sc.correct++;sfx.ok()}else{sfx.bad()}render();break;}
     case 'gNext':{sc.answered=false;sc.picked=[];sc.pick=null;
       const total=sc.items.length;if(sc.idx<total-1){sc.idx++;render()}else gameDone(sc,sc.correct,total,sc.missed);break;}
     case 'memo':{if(sc.lock)break;const c=sc.cards[+el.dataset.k];if(c.open||c.done)break;c.open=true;sfx.flip();say(c.t);
