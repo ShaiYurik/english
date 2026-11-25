@@ -1,5 +1,6 @@
 # Changes
 
+- v71 (2026-11-25): lesson files can carry a rules box (`howto` HTML + `howtoTitle`), `simple:true` (no automatic read-aloud stations: fewer cards) and `order`. Lessons with `source:'אנסין'` go to the 'אנסין' track as a queue by `order` (next one opens when the previous is done). Yuval's map keeps the track layout without the book file. Gil's math world fully Hebrew: islands `lang:'he'` (Hebrew voice, read-aloud button), Hebrew eyebrows (`EBH`), no 'Game, set, match'.
 - v70 (2026-11-25): Gil's math world: new track '📐 גיאומטריה: מרובעים' with a client-side island (`geoIsland`, from her book pages on parallelograms, rectangles, rhombuses, squares): a rules box (`howto` + `howtoTitle`) with drawings, the shape family and the ✓/בחלק/✗ table, then 4 cards: מי אני? riddles, true/false, בכל/בחלק/בשום sort (like the book table), מה ההבדל?. Hebrew island (`lang:'he'`) with `terms` for hints.
 - v69 (2026-11-25): conversation lessons (lesson `source: 'שיחה'`, e.g. Ariel's Talking Kids summaries) get their own map track '🗣️ שיחה באנגלית', so they open immediately instead of queueing behind unfinished class islands.
 - v68 (2026-11-16): sorting game: a wrong pick shows 'לא בדיוק 🙂 נסי שוב!' and greys out that boat; a second try is allowed before the answer is shown. Only first-try answers count toward the score.
