@@ -227,6 +227,14 @@ button.wtag{border:0;cursor:pointer;font:inherit}
 .opt.bad{background:var(--redsoft);border-color:var(--signal)}
 .opt[disabled]{cursor:default}
 .fb{font-weight:700;min-height:24px}
+.examc .exrow{display:flex;gap:12px;justify-content:center;align-items:stretch}.exbig,.exold{border-radius:16px;padding:8px 18px;text-align:center;display:flex;flex-direction:column;justify-content:center}.exbig{background:#fff6d6;border:2px solid #f2a93b;color:#4a3000}.exbig.up{background:#e3f8ea;border-color:#7fd6a0;color:#16502e}.exbig b{font-size:44px;line-height:1.1}.exold{background:#f3f3f6;color:#666;border:1.5px dashed #bbb}.exold b{font-size:26px}
+.fbwin{position:relative;text-align:center;padding:10px 6px;margin:6px 0}.fbpop{display:inline-block;font-size:28px;font-weight:900;color:#1f8a4c;background:#e3f8ea;border:2px solid #7fd6a0;border-radius:18px;padding:8px 18px;animation:fbpop .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes fbpop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+.conf{position:absolute;top:10px;left:20%;font-size:24px;animation:conf 1.1s ease-out forwards;pointer-events:none}.conf.c2{left:50%;animation-delay:.1s}.conf.c3{left:78%;animation-delay:.2s}@keyframes conf{0%{transform:translateY(10px) scale(.4);opacity:0}30%{opacity:1}100%{transform:translateY(-46px) scale(1.2) rotate(25deg);opacity:0}}
+.fbbad{background:#fff3ef;border:2px solid #f0a08a;border-radius:16px;padding:12px 14px;margin:8px 0;color:#3a1a10;text-align:start}.fbt{font-size:19px;font-weight:800;line-height:1.5}.fbt b{color:#1f8a4c}.fbx{font-size:18px;line-height:1.6;margin-top:6px}
+.fbalt{margin-top:10px;padding:10px 12px;background:#fff;border-radius:12px;border:1.5px dashed #f0a08a;font-size:17px;line-height:1.6}.fbalt>div{margin:4px 0}.fbh{font-weight:800;color:#b5482a}.fbsent{background:#fff8d6;border-radius:8px;padding:6px 8px;font-size:18px}.fbsent mark{background:#bff0cf;padding:0 3px;border-radius:4px}
+.fbq{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;font-weight:700}.fbyes{background:#1f8a4c!important;color:#fff!important}.fbok{color:#1f8a4c;font-size:17px}
+.tw,.prompt .w.tw,.gap .w.tw{display:inline;padding:0;margin:0;border:0;border-radius:0;background:none;cursor:pointer;border-bottom:1px dotted rgba(120,120,160,.55)}.prompt.long,.prompt.long .en{font-size:21px;line-height:1.5}.prompt .tw,.gap .tw{font-size:inherit!important;font-weight:inherit}
 .fb.ok{color:var(--kelp)} .fb.bad{color:var(--signal)}
 
 .read{font-family:var(--f-en);direction:ltr;text-align:left;font-size:26px;line-height:1.7}
@@ -521,7 +529,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='71';
+const APP_VERSION='72';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -759,7 +767,7 @@ function mergeProgress(p,loc){if(!loc)return;
   if(loc.mall&&p.mall&&p.mall!==loc.mall){const A=p.mall,B=loc.mall;A.earn=mx(A.earn,B.earn);A.intro=A.intro||B.intro;
     const cp=new Map((A.cps||[]).map(c=>[c.iid,c]));(B.cps||[]).forEach(c=>{const o=cp.get(c.iid);if(!o)cp.set(c.iid,c);else if(c.used)o.used=1});A.cps=[...cp.values()];
     const key=b=>b.id+'|'+b.at;const bs=new Map((A.buys||[]).map(b=>[key(b),b]));(B.buys||[]).forEach(b=>{if(!bs.has(key(b)))bs.set(key(b),b)});A.buys=[...bs.values()]}
-  ['boatLevel','fleetIntro','caravanIntro','danceLv','danceIntro'].forEach(k=>{if(loc[k]!=null&&typeof loc[k]==='number')p[k]=mx(p[k],loc[k]);else if(loc[k]&&!p[k])p[k]=loc[k]})}
+  ['boatLevel','fleetIntro','caravanIntro','danceLv','danceIntro','portN'].forEach(k=>{if(loc[k]!=null&&typeof loc[k]==='number')p[k]=mx(p[k],loc[k]);else if(loc[k]&&!p[k])p[k]=loc[k]})}
 function applyState(st,fromServer){
   if(!st)return;
   const pend=k=>fromServer&&outbox[NS()+'state:'+k];
@@ -923,7 +931,7 @@ function allIslands(){
   const list=book.length?book:legacy?ISLANDS.map(i=>({...i,kind:'base'})):[];
   if(S.classWords.length>=4)list.push({id:'cove',kind:'class',name:'מפרץ המטמון',en:'Treasure Cove',topic:'מילים מהכיתה',words:S.classWords.map(w=>({en:w.en,he:w.he,ex:w.ex||''}))});
   dailyIslands().forEach(x=>list.push(x));
-  (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule||l.roundsFor||l.dailyStory)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,stories:Array.isArray(l.stories)?l.stories.filter(x=>x&&x.qs&&x.qs.length&&(x.text||x.paras)):[],lang:l.lang==='he'||(l.subject&&!/אנגלית|english/i.test(l.subject))?'he':undefined,subject:l.subject||'',terms:l.terms&&typeof l.terms==='object'?l.terms:{},mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],zoomId:l.zoomId||'',zoomDate:l.zoomDate||'',howto:typeof l.howto==='string'?l.howto:'',howtoTitle:l.howtoTitle||'',order:+l.order||0,simple:!!l.simple,created:l.created||''})});
+  (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule||l.roundsFor||l.dailyStory)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,stories:Array.isArray(l.stories)?l.stories.filter(x=>x&&x.qs&&x.qs.length&&(x.text||x.paras)):[],lang:l.lang==='he'||(l.subject&&!/אנגלית|english/i.test(l.subject))?'he':undefined,subject:l.subject||'',terms:l.terms&&typeof l.terms==='object'?l.terms:{},mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],zoomId:l.zoomId||'',zoomDate:l.zoomDate||'',howto:typeof l.howto==='string'?l.howto:'',howtoTitle:l.howtoTitle||'',order:+l.order||0,simple:!!l.simple,exam:l.exam&&typeof l.exam==='object'?l.exam:null,created:l.created||''})});
   return list;
 }
 /* ---- סיפור יומי: קטע אחד ביום. הקטע הבא נפתח ביום שאחרי שקראו את הקטע הקודם ---- */
@@ -934,8 +942,10 @@ function dailyIslands(){if(LANG()==='ar'||WORLD==='math')return [];return dailyS
 function dailyCurrent(){const st=dailyStories()[0];if(!st)return null;const D=(S.progress.daily||{})[st.id]||{};let n=D.n||0;
   const doneToday=D.doneN===n&&D.doneOn===today();if(D.doneN===n&&D.doneOn&&D.doneOn<today()&&n<st.parts.length-1)n++;
   const isl=dailyIslands().find(i=>i.id===`D-${st.id}-${n}`);return isl?{isl,doneToday:D.doneN===n&&D.doneOn===today(),last:n===st.parts.length-1&&D.doneN===n}:null}
+let DICTX=null;try{fetch('dict-en-he.json').then(r=>r.json()).then(d=>{DICTX=d}).catch(()=>{})}catch(e){}
+function dictLook(k){if(!DICTX)return '';const tries=[k,k.replace(/'s$/,''),k.replace(/ies$/,'y'),k.replace(/ied$/,'y'),k.replace(/es$/,''),k.replace(/s$/,''),k.replace(/ed$/,''),k.replace(/d$/,''),k.replace(/ing$/,''),k.replace(/ing$/,'e'),k.replace(/([a-z])\1(ed|ing)$/,'$1'),k.replace(/er$/,''),k.replace(/est$/,''),k.replace(/ly$/,'')];for(const t of tries)if(t&&DICTX[t])return DICTX[t];return ''}
 function wordHe(w,i){const k=String(w).replace(/[\u2018\u2019]/g,"'").replace(/^[^\w']+|[^\w']+$/g,'').toLowerCase();if(!k)return '';const d=(i&&i.dict)||{};
-  const tries=[k,k.replace(/'s$/,''),k.replace(/s$/,''),k.replace(/es$/,''),k.replace(/ed$/,''),k.replace(/ing$/,'')];for(const t of tries)if(d[t])return d[t];for(const t of tries){const h=heOf(t);if(h)return h}return ''}
+  const tries=[k,k.replace(/'s$/,''),k.replace(/s$/,''),k.replace(/es$/,''),k.replace(/ed$/,''),k.replace(/ing$/,'')];for(const t of tries)if(d[t])return d[t];for(const t of tries){const h=heOf(t);if(h)return h}for(const t of tries){const h=(i&&i.terms||{})[t];if(h)return h}return dictLook(k)}
 function islandById(id){return allIslands().find(i=>i.id===id)}
 /* ---- three tracks: class / zoom / unseen. one active island each ---- */
 const TRACKS=[{k:'class',t:'מהכיתה',ic:'🏫',flag:'#2fbf8f',none:'כל האיים נכבשו!',get empty(){return SHL()?'יופיע כשתצלמי חומר מהכיתה':'יופיע כשיעלה חומר מהכיתה'}},{k:'zoom',t:'שיעור זום',ic:'💻',flag:'#7fb7ff',none:'האי יופיע אחרי שיעור הזום',empty:'האי יופיע אחרי שיעור הזום'},{k:'unseen',t:'אנסין',ic:'📖',flag:'#e2553b',none:'סיימת את כל האנסינים!',empty:'עוד אין אנסינים'}];
@@ -956,7 +966,8 @@ function tracks(){
   const lists={
     he:all.filter(i=>i.kind==='lesson'&&i.lang==='he').sort(byC),
     talk:all.filter(i=>i.kind==='lesson'&&i.source==='שיחה'&&i.lang!=='he').sort(byC),
-    class:[...all.filter(i=>i.kind==='lesson'&&i.source!=='זום'&&i.source!=='שיחה'&&i.source!=='אנסין'&&i.lang!=='he').sort(byC),...all.filter(i=>i.kind==='class'),...book.filter(i=>!i.text)],
+    exam:all.filter(i=>i.kind==='lesson'&&i.source==='מבחן').sort(byC),
+    class:[...all.filter(i=>i.kind==='lesson'&&i.source!=='זום'&&i.source!=='שיחה'&&i.source!=='אנסין'&&i.source!=='מבחן'&&i.lang!=='he').sort(byC),...all.filter(i=>i.kind==='class'),...book.filter(i=>!i.text)],
     zoom:all.filter(i=>i.kind==='lesson'&&i.source==='זום').sort(byC),
     unseen:[...book.filter(i=>i.text),...all.filter(i=>i.kind==='lesson'&&i.source==='אנסין').sort((a,b)=>(a.order-b.order)||byC(a,b))]};
   _trk=TRACKS.filter(t=>t.k!=='zoom'||feat('zoom')).map(t=>{const list=lists[t.k];const active=list.find(i=>!isDone(i))||null;
@@ -964,6 +975,7 @@ function tracks(){
     const queue=list.filter(i=>i!==active&&!isDone(i)&&!S.progress.best[i.id]);
     return {...t,active,done,started,queue,none:list.length?t.none:t.empty,...(!active&&t.k==='class'&&procList().length?{proc:true,none:'⏳ החומר בעיבוד, האי יופיע כאן בקרוב'}:{})}});
   // שיעורי שיחה (למשל Talking Kids): מסלול משלהם, כדי שלא יחכו בתור מאחורי איי הכיתה
+  if(lists.exam.length){const list=lists.exam,active=list.find(i=>!isDone(i))||list[list.length-1];_trk.push({k:'exam',t:'מבחן חוזר',ic:'📝',flag:'#f2a93b',none:'',active,done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})}
   if(lists.talk.length){const list=lists.talk,active=list.find(i=>!isDone(i))||list[list.length-1];_trk.push({k:'talk',t:'שיחה באנגלית',ic:'🗣️',flag:'#e0569b',none:'כל שיעורי השיחה נכבשו!',active,done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})}
   if(lists.he.length){const list=lists.he,active=list.find(i=>!isDone(i))||list[list.length-1];_trk.push({k:'he',t:'עברית',ic:'📝',flag:'#3a6fd8',none:'כל האיים בעברית נכבשו!',active,done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})}
   if(classSlots()>1){const ci=_trk.findIndex(t=>t.k==='class');if(ci>=0){const c=_trk[ci];const open=lists.class.filter(i=>!isDone(i));const a2=open[1]||null,rest=open.slice(2);
@@ -1015,7 +1027,7 @@ function stationsOf(i){
   const st=[];const b=S.progress.best[i.id]||{};const w=i.words||[];
   const pct=k=>b[k]!=null?b[k]+'%':'';
   if(i.text)st.push(i.lang==='he'?{k:'story',ic:I.book,t:'📖 הסיכום · הקראה',d:i.text.title+' · מקריאים לך ועוקבים אחרי המילה',m:b.story?'נקרא':''}:{k:'story',ic:I.book,t:'קוראים יחד',d:i.text.title+' · הקראה עם מילים מודגשות',m:b.story?'נקרא':''});
-  if(i.text&&i.lang!=='he'&&!i.simple)st.push({k:'readtext',ic:I.mic2,t:'קוראת עם המורה 🧑‍🏫',d:readSR()?'את קוראת, המורה מסמן ועוזר לתקן':'עובד בטלפון עם כרום (אנדרואיד)',m:pct('readtext'),scored:readSR()?1:0});
+  if(i.text&&i.lang!=='he')st.push({k:'readtext',ic:I.mic2,t:'קוראת עם המורה 🧑‍🏫',d:readSR()?'את קוראת, המורה מסמן ועוזר לתקן':'עובד בטלפון עם כרום (אנדרואיד)',m:pct('readtext'),scored:readSR()?1:0});
   if(w.length)st.push({k:'learn',ic:I.cards,t:'כרטיסיות מילים',d:`${w.length} מילים עם הקראה`,m:b.learn?'נלמד':''});
   if(w.filter(x=>spellable(x.en)).length>=3)st.push({k:'spell',ic:I.spell,t:'בונים מילה',d:'שומעים ובונים את המילה מאותיות',m:pct('spell'),scored:1});
   if(w.length>=4)st.push({k:'quiz',ic:I.quiz,t:'משחק מילים',d:'תרגום והאזנה',m:pct('quiz'),scored:1});
@@ -1103,8 +1115,16 @@ function streakDays(){
   while(set.has(ymd(d))){n++;d.setDate(d.getDate()-1)}
   return n;
 }
+function voyageOn(){return !isParent()&&WORLD==='en'&&((S.profile&&S.profile.child)||CHILD)==='yuvik'}
+function totalTasks(){const t=today();return (S.sessions||[]).filter(x=>x&&x.date!==t).reduce((n,x)=>n+tasksOf(x),0)+tasksOf(S.session)}
 function updateMeter(){
   const n=$('#mNum');if(!n)return;
+  if(voyageOn()){const G=GOAL_T(),T=totalTasks(),port=Math.floor(T/G),in_=T%G,pct=in_/G*100,tk=tasksOf(S.session);
+    n.textContent=`⚓ נמל ${port} · עוד ${G-in_} ${G-in_===1?'משימה':'משימות'} לנמל ${port+1}`;
+    $('#mDone').style.width=pct+'%';$('#mShip').style.right=`calc(${pct}% - ${pct/100*30}px)`;
+    $('#mStreak').textContent=`היום: ${tk} ${tk===1?'משימה':'משימות'} · הסירה שלך תמיד בדרך 🌊`+(streakDays()?` · רצף: ${streakDays()} ימים`:'');
+    const P=S.progress;if(port>(P.portN||0)){const first=P.portN==null;P.portN=port;saveState('progress');if(!first){toast(`⚓ הגעת לנמל ${port}! ממשיכים להפליג 🌊`);sfx.horn&&sfx.horn()}}
+    return}
   const G=GOAL_T(),tk=tasksOf(S.session),ex=exOf(S.session);const pct=Math.min(tk,G)/G*100;
   n.textContent=`${tk} מתוך ${G} משימות`+(ex?` · ${ex} תרגילים`:'');
   $('#mDone').style.width=pct+'%';
@@ -1243,6 +1263,7 @@ function viewIsland(id){
   return `<button class="back" data-act="home">${I.back} ${TW('back')}</button>
   ${i.kind==='lesson'&&i.source==='זום'?`<span class="zbadge">💻 מהשיעור בזום${i.zoomDate?' · '+dayName(i.zoomDate)+' '+fmtDate(i.zoomDate):''}${zl&&zl.teacher?' · עם '+esc(zl.teacher):''}</span>`:i.kind!=='base'?`<span class="zbadge" style="background:${trackOf(i)==='unseen'?'#ffe1da;color:#9a2f1c':'#d8f3e8;color:#1d6b4f'}">${trackLabel(i)}${i.kind==='lesson'&&i.created?' · '+fmtDate(String(i.created).slice(0,10)):''}</span>`:''}
   <div class="ihead">${i.en?`<span class="eyebrow en">${esc(i.en)}</span>`:''}<h2>${esc(i.name)}</h2><p>${esc(i.topic)}</p></div>
+  ${i.exam?examCardHTML(i):''}
   ${i.howto?`<section class="card howto"><h2>${i.howtoTitle||'איך עושים את זה?'}</h2>${i.howto}</section>`:''}
   ${anyScore?`<section class="card rep-card"><h2>${THEME()==='tennis'?'דוח המאמן':THEME()==='shop'?'דוח הסטייליסטית':THEME()==='dance'?'דוח המאמנת':'דוח קפטן'} · היום</h2>${islandReportHTML(i)}</section>`:''}
   <div class="stations">${st.map(s=>`<button class="station" data-act="station" data-k="${s.k}" data-id="${esc(id)}"><span class="ic">${s.ic}</span><span class="tx"><b>${s.t}</b><span>${esc(s.d)}</span></span><span class="mark">${s.m}</span></button>`).join('')}</div>`;
@@ -1385,6 +1406,8 @@ function finishActivity(kind,title,correct,total,missed,extra){
 const isLatinOld=s=>/[A-Za-z]/.test(s)&&!/[֐-׿]/.test(s);
 const isLatin=s=>LANG()==='ar'?/[\u0600-\u06FF]/.test(s):isLatinOld(s);
 const enSpan=s=>WORLD==='math'?fx(s):isLatin(s)?`<span class="en">${esc(s)}</span>`:esc(s);
+// מילים באנגלית בשאלה: לחיצה משמיעה ומתרגמת (לא בתוך כפתורי תשובה)
+const tapEn=s=>String(s).split(/(\s+)/).map(t=>/[A-Za-z]/.test(t)?`<span class="w tw" data-act="sayw" data-text="${esc(t.replace(/[^A-Za-z']/g,''))}">${esc(t)}</span>`:esc(t)).join('');
 function fx(s){const fr=t=>t.replace(/(\d+)\s+(\d+)\/(\d+)|(\d+)\/(\d+)/g,(m,w,n1,d1,n2,d2)=>`<span class="mx">${w?`<b>${w}</b>`:''}<span class="fr"><i>${n1||n2}</i><i>${d1||d2}</i></span></span>`);return esc(s).replace(/\d[\d \u00f7\u00d7+=\/]*\d|\d/g,r=>/[\/\u00f7\u00d7+=]/.test(r)?`<span class="mrun" dir="ltr">${fr(r.trim())}</span>${/ $/.test(r)?' ':''}`:r)}
 const tx=s=>WORLD==='math'?fx(s):esc(s);
 function sentencesOf(text){return String(text).replace(/\s+/g,' ').split(/(?<=[.!?])\s+(?=[A-Z"])/).map(x=>x.trim()).filter(Boolean)}
@@ -1409,8 +1432,8 @@ function buildGame(i,n){
   const g={...RR[ri],title:(RR[0].title||'תרגיל')+(RR.length>1?` · סבב ${ri+1}`:'')};
   if(['mc','fill','odd','pic'].includes(g.kind)){
     let items;
-    if(g.kind==='mc')items=g.items.map(it=>({q:it.q,o:it.o,a:Array.isArray(it.a)?it.a:[it.a],why:it.why,say:WORLD==='math'?null:it.q}));
-    else if(g.kind==='fill')items=shuffle(g.items).map(it=>({q:it.t,gap:true,o:shuffle(it.o),a:null,ans:it.a,why:it.why,say:it.t.replace('___',it.a)}));
+    if(g.kind==='mc')items=g.items.map(it=>({q:it.q,o:it.o,a:Array.isArray(it.a)?it.a:[it.a],why:it.why,why2:it.why2,hint:it.hint,say:WORLD==='math'?null:it.q}));
+    else if(g.kind==='fill')items=shuffle(g.items).map(it=>({q:it.t,gap:true,o:shuffle(it.o),a:null,ans:it.a,why:it.why,why2:it.why2,hint:it.hint,say:it.t.replace('___',it.a)}));
     else if(g.kind==='odd'){const tr={};[...(i.words||[]),...WORDS_ALL()].forEach(w=>{if(w&&w.en&&w.he&&!tr[w.en.toLowerCase()])tr[w.en.toLowerCase()]=w.he});
       items=shuffle(g.items).map(it=>({q:'איזו מילה לא שייכת?',o:shuffle(it.o),ans:it.a,why:it.why,odd:true,tr:it.o.map(w=>tr[String(w).toLowerCase()]?`${w} = ${tr[String(w).toLowerCase()]}`:'').filter(Boolean).join(' · ')}))}
     else{const all=g.items.map(x=>x[1]);items=shuffle(g.items).map(([e,w])=>({pic:e,q:'מה בתמונה?',o:shuffle([w,...shuffle(all.filter(x=>x!==w)).slice(0,3)]),ans:w,say:w}))}
@@ -1433,6 +1456,29 @@ function oddFeedback(q,sc){const pk=q.o[sc.picked[0]];
   return head+(q.why?`<br><span class="sub">${esc(q.why)}</span>`:'')+(q.tr?`<br><span class="sub" dir="ltr" style="display:inline-block">${esc(q.tr)}</span>`:'')}
 /* ---- רמז לפני התשובה: רמז שנכתב לשאלה, או הפסקה המתאימה מהסיכום, ובשאלות בלי טקסט: מוחקים שתי תשובות שגויות ---- */
 function speakSegs(segs){segs.forEach(t=>{const he=/[\u0590-\u05FF]/.test(t);const u=new SpeechSynthesisUtterance(String(t).replace(/[📖💡]/g,''));u.lang=he?'he-IL':TTS_LANG();u.rate=.85;const vv=he?heVoice:vox();if(vv)u.voice=vv;speechSynthesis.speak(u)})}
+const PRAISE=['בול! 🎯','אלופה! 🏆','יש! צדקת 💪','מדויק! ⭐','כל הכבוד! 🌟','וואו, איזה יופי! ✨','בדיוק ככה! 🙌','תותחית! 🚀','מושלם! 💯','את בעננים! ☁️'];
+function praiseOf(sc){const k=(sc.idx*7+(sc.correct||0)*3)%PRAISE.length;return PRAISE[k]}
+function rightText(q,kind){return kind==='tf'?(q.t?'נכון':'לא נכון'):(q.a||[]).map(k=>q.o[k]).join(' / ')}
+function altExplain(i,q,kind){const right=rightText(q,kind);const parts=[];
+  if(q.why2)parts.push(`<div>${tx(q.why2)}</div>`);
+  const qt=kind==='tf'?q.s:(q.q||'');
+  if(q.gap&&isLatin(qt))parts.push(`<div>קוראים את כל המשפט עם התשובה:</div><div class="fbsent en">${esc(qt).replace('___','<mark>'+esc(right)+'</mark>')}</div>`);
+  const gl=hintGloss(i||{},qt+' '+(kind==='tf'?'':right),[]);if(gl.length)parts.push(gl.map(([k,v])=>`<div>📖 <b>${isLatin(k)?`<span class="en">${esc(k)}</span>`:esc(k)}</b> = ${esc(v)}</div>`).join(''));
+  const pp=i?hintPara(i,qt+' '+right):'';if(pp)parts.push(`<div>בקטע כתוב:</div><div class="fbsent ${isLatin(pp)?'en':''}">${esc(pp)}</div>`);
+  if(!parts.length)parts.push(`<div>בואי נקרא שוב לאט. התשובה הנכונה היא <b>${enSpan(right)}</b>.${kind==='tf'&&q.fix?' '+tx(q.fix):q.why?' '+tx(q.why):''}</div>`);
+  return parts.join('')}
+function fbBox(sc,i,q,kind){if(!sc.answered)return '<div class="fb"></div>';
+  if(sc.wasOk)return `<div class="fbwin"><span class="fbpop">${praiseOf(sc)}</span>${q.why&&WORLD==='math'&&kind!=='tf'?`<div class="sub">${tx(q.why)}</div>`:''}<span class="conf" aria-hidden="true">🎉</span><span class="conf c2" aria-hidden="true">✨</span><span class="conf c3" aria-hidden="true">⭐</span></div>`;
+  const ex=kind==='tf'?q.fix:q.why;const st=(sc.und||{})[sc.idx];const right=rightText(q,kind);
+  return `<div class="fbbad"><div class="fbt">כמעט 🙂 התשובה הנכונה: <b>${enSpan(right)}</b></div>
+    ${ex?`<div class="fbx">💡 ${WORLD==='math'?fx(ex):tx(ex)}</div>`:''}
+    ${st==='n'||st==='y2'?`<div class="fbalt"><div class="fbh">🔄 הסבר אחר:</div>${altExplain(i,q,kind)}</div>`:''}
+    <div class="fbq">${!st?`<span>הבנת את ההסבר?</span><button class="btn small fbyes" data-act="fbYes">👍 הבנתי</button><button class="btn ghost small" data-act="fbNo">🤔 לא הבנתי</button>`:st==='n'?`<button class="btn small fbyes" data-act="fbYes">👍 עכשיו הבנתי</button><button class="btn ghost small" data-act="fbSay">🔊 הקראה</button>`:'<span class="fbok">מעולה! ממשיכים 💪</span>'}</div></div>`}
+// מבחן חוזר: ציון לפי הנקודות של כל חלק (g.pts) והתוצאה הכי טובה בכל כרטיסייה
+function examScore(i){const b=S.progress.best[i.id]||{};let tot=0,got=0,done=0;(i.games||[]).forEach((g,n)=>{const p=+g.pts||0;if(!p)return;tot+=p;const v=b['g'+n];if(v!=null){done++;got+=p*v/100}});return {got:Math.round(got),tot,done,parts:(i.games||[]).filter(g=>+g.pts).length}}
+function examCardHTML(i){const e=examScore(i),o=i.exam.orig;const all=e.done===e.parts;
+  return `<section class="card examc"><div class="exrow"><div class="exbig ${all&&e.got>=o?'up':''}"><small>${all?'הציון שלך עכשיו':'הציון עד עכשיו'}</small><b>${e.got}</b><small>מתוך ${e.tot}</small></div>${o!=null?`<div class="exold"><small>במבחן בכיתה</small><b>${o}</b></div>`:''}</div>
+  <p class="sub">${all?(e.got>o?`🎉 עלית ב־${e.got-o} נקודות לעומת המבחן!`:'אפשר לנסות שוב כל חלק ולשפר את הציון.'):`ענית על ${e.done} מתוך ${e.parts} חלקים. כל חלק שתסיימי מוסיף לציון.`}</p></section>`}
 function hintPara(i,txt){if(!i||!i.text||!i.text.paras||!i.text.paras.length)return '';const norm=w=>w.replace(/[^\u0590-\u05FFA-Za-z0-9]/g,'').toLowerCase();
   const ws=[...new Set(String(txt).split(/\s+/).map(norm).filter(w=>w.length>=3))];let best='',bs=0;
   i.text.paras.forEach(p=>{const P=p.toLowerCase();let sc=0;ws.forEach(w=>{if(P.includes(w))sc+=2;else if(/^[\u0590-\u05FF]/.test(w)&&w.length>=4&&P.includes(w.slice(1)))sc+=1});if(sc>bs){bs=sc;best=p}});return bs>=2?best:''}
@@ -1451,26 +1497,26 @@ function viewGame(){
   const sc=S.screen;const i=islandById(sc.id);
   if(sc.kind==='mc'){
     const q=sc.items[sc.idx];const multi=q.a.length>1;
-    const qHTML=q.pic?`<div class="pic">${q.pic}</div>`:q.gap?`<div class="gap">${esc(q.q).replace('___','<u></u>')}</div>`:`<div class="prompt">${enSpan(q.q)}</div>`;
+    const qHTML=q.pic?`<div class="pic">${q.pic}</div>`:q.gap?`<div class="gap">${WORLD!=='math'&&isLatin(q.q)?tapEn(q.q).replace('___','<u></u>'):esc(q.q).replace('___','<u></u>')}</div>`:`<div class="prompt${String(q.q).length>40?' long':''}">${WORLD!=='math'&&isLatin(q.q)?`<span class="en">${tapEn(q.q)}</span>`:enSpan(q.q)}</div>`;
     return gameHead(sc,i,sc.items.length,sc.idx)+`
     ${q.pic||q.gap?`<div class="prompt">${q.pic?'מה בתמונה?':'השלימי את החסר'}</div>`:''}${qHTML}
     ${multi&&!sc.answered?'<p class="sub">יש כאן שתי תשובות נכונות. בחרי שתיים.</p>':''}
     ${(WORLD!=='math'||i.lang==='he')&&!sc.answered?`<div><button class="btn ghost small" data-act="optSay">${I.speaker} הקראה: שאלה ותשובות</button></div>`:q.say&&!q.gap&&!q.pic&&!sc.answered?`<div><button class="btn ghost small" data-act="say" data-text="${esc(q.say)}">${I.speaker} השמע</button></div>`:''}
     ${hintHTML(sc,i,q,'mc')}
     <div class="opts">${q.o.map((o,k)=>{if(!sc.answered&&sc.hintAt===sc.idx&&(sc.elim||[]).includes(k))return '';let cls='opt'+(isLatin(o)?' en':'');if(sc.answered){if(q.a.includes(k))cls+=' ok';else if(sc.picked.includes(k))cls+=' bad'}else if(sc.picked.includes(k))cls+=' sel';return `<button class="${cls}" data-act="gAns" data-k="${k}" ${sc.answered?'disabled':''}>${tx(o)}</button>`}).join('')}</div>
-    <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?(q.odd?oddFeedback(q,sc):(sc.wasOk?'נכון!':'כמעט.')+(q.why&&(!sc.wasOk||WORLD==='math')?` <span class="sub">${tx(q.why)}</span>`:'')):''}</div>
+    ${q.odd?`<div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?oddFeedback(q,sc):''}</div>`:fbBox(sc,i,q,'mc')}
     ${sc.answered?`<div class="btns">${q.say?`<button class="btn ghost small" data-act="say" data-text="${esc(q.say)}">${I.speaker} השמע</button>`:''}<button class="btn brass" data-act="gNext">${sc.idx===sc.items.length-1?'לתוצאות':'הבאה'}</button></div>`:''}
     </section>`;
   }
   if(sc.kind==='tf'){
     const q=sc.items[sc.idx];
     return gameHead(sc,i,sc.items.length,sc.idx)+`
-    <div class="prompt">${WORLD==='math'?fx(q.s):`<span class="en">${esc(q.s)}</span>`}</div>
+    <div class="prompt${String(q.s).length>40?' long':''}">${WORLD==='math'?fx(q.s):isLatin(q.s)?`<span class="en">${tapEn(q.s)}</span>`:esc(q.s)}</div>
     ${WORLD==='math'?'':`<div><button class="btn ghost small" data-act="say" data-text="${esc(q.s)}">${I.speaker} השמע</button></div>`}
     ${hintHTML(sc,i,q,'tf')}
     <div class="tfbtns"><button class="opt tfb ${sc.answered?(q.t?'ok':sc.pick===true?'bad':''):''}" data-act="tfAns" data-v="1" ${sc.answered?'disabled':''}>${WORLD==='math'||i.lang==='he'?'✓ נכון':'✓ True · נכון'}</button><button class="opt tfb ${sc.answered?(!q.t?'ok':sc.pick===false?'bad':''):''}" data-act="tfAns" data-v="0" ${sc.answered?'disabled':''}>${WORLD==='math'||i.lang==='he'?'✗ לא נכון':'✗ False · לא נכון'}</button></div>
-    <div class="fb ${sc.answered?(sc.wasOk?'ok':'bad'):''}">${sc.answered?(sc.wasOk?'נכון!':'כמעט.'):''}</div>
-    ${sc.answered&&q.fix?(WORLD==='math'?`<div class="fixbox"><span class="sub">${q.t?'נכון, כי:':'התשובה הנכונה:'}</span><div>${fx(q.fix)}</div></div>`:`<div class="fixbox"><span class="sub">המשפט הנכון:</span><div class="en">${esc(q.fix)}</div><button class="btn ghost small" data-act="say" data-text="${esc(q.fix)}">${I.speaker} השמע</button></div>`):''}
+    ${fbBox(sc,i,q,'tf')}
+    ${sc.answered&&q.fix&&sc.wasOk?(WORLD==='math'?`<div class="fixbox"><span class="sub">${q.t?'נכון, כי:':'התשובה הנכונה:'}</span><div>${fx(q.fix)}</div></div>`:`<div class="fixbox"><span class="sub">המשפט הנכון:</span><div class="en">${esc(q.fix)}</div><button class="btn ghost small" data-act="say" data-text="${esc(q.fix)}">${I.speaker} השמע</button></div>`):''}
     ${sc.answered?`<div class="btns"><button class="btn brass" data-act="gNext">${sc.idx===sc.items.length-1?'לתוצאות':'הבאה'}</button></div>`:''}
     </section>`;
   }
@@ -2116,6 +2162,9 @@ document.addEventListener('click',e=>{
       render();break;}
     case 'optSay':{const q=sc.items[sc.idx];if(!q||!('speechSynthesis' in window))break;hush();const segs=[];{const qt=q.pic?'':q.gap?String(q.q).replace('___','...'):(q.say||q.q||'');if(qt)segs.push(qt)}const base=segs.length;
       q.o.forEach((o,k)=>{if(!sc.answered&&sc.hintAt===sc.idx&&(sc.elim||[]).includes(k))return;segs.push('תשובה '+((segs.length-base)/2+1)+'.');segs.push(String(o))});speakSegs(segs);break;}
+    case 'fbYes':{sc.und=sc.und||{};sc.und[sc.idx]=sc.und[sc.idx]==='n'?'y2':'y';render();break;}
+    case 'fbNo':{sc.und=sc.und||{};sc.und[sc.idx]='n';(sc.notUnd=sc.notUnd||[]).push(sc.idx);render();setTimeout(()=>{const a=document.querySelector('.fbalt');if(a)a.scrollIntoView({behavior:'smooth',block:'center'})},60);break;}
+    case 'fbSay':{const a=document.querySelector('.fbalt');if(a&&'speechSynthesis' in window){hush();speakSegs(a.innerText.split(/\n+/).filter(Boolean))}break;}
     case 'hintSay':{const i=islandById(sc.id),q=sc.items[sc.idx];const h=hintOf(i,q,sc.kind);if(!h||!('speechSynthesis' in window))break;hush();
       const segs=[];(h.gl||[]).forEach(([k,v])=>{segs.push(k);segs.push(v)});if(h.t)segs.push(h.t);
       segs.forEach(t=>{const he=/[\u0590-\u05FF]/.test(t);const u=new SpeechSynthesisUtterance(String(t).replace(/[📖💡]/g,''));u.lang=he?'he-IL':TTS_LANG();u.rate=.85;const vv=he?heVoice:vox();if(vv)u.voice=vv;speechSynthesis.speak(u)});break;}
@@ -2220,8 +2269,8 @@ document.addEventListener('click',e=>{
       [...mk].map(k=>k.split(':').map(Number)).sort((a,b)=>a[0]-b[0]||a[1]-b[1]).forEach(([pi,si])=>{const ss=i.text.paras[pi]?sentsOf(i.text.paras[pi]):[];if(ss[si]){const u=utter(ss[si].join(' '),SPEEDS[S.speed].rate);speechSynthesis.speak(u)}});break;}
     case 'sayw':{if(S.marker&&S.screen&&S.screen.name==='karaoke'){const se=el.closest('.sent');if(se){const id=S.screen.id,k=se.dataset.s;const M=S.progress.marks||(S.progress.marks={});const a=new Set(M[id]||[]);if(a.has(k))a.delete(k);else a.add(k);M[id]=[...a];if(!isParent())saveState('progress');se.classList.toggle('mk',a.has(k));sfx.tap&&sfx.tap();render()}break}
       const t=el.dataset.text;if(t){document.querySelectorAll('.w.hl').forEach(x=>x.classList.remove('hl'));el.classList.add('hl');say(t,.75);
-      if(S.screen&&S.screen.name==='karaoke'&&!HEI()){const i=islandById(S.screen.id);const he=wordHe(t,i);let b=document.getElementById('wbub');if(!b){b=document.createElement('div');b.id='wbub';b.className='wbub';document.body.appendChild(b)}
-        b.innerHTML=`<span class="en">${esc(t)}</span> = ${he?esc(he):'<span class="sub">אין לי תרגום למילה הזאת</span>'}`;b.hidden=false;clearTimeout(b._t);b._t=setTimeout(()=>{b.hidden=true},3500)}}break;}
+      if(!HEI()&&/[A-Za-z]/.test(t)){const i=S.screen&&S.screen.id?islandById(S.screen.id):null;const he=wordHe(t,i);let b=document.getElementById('wbub');if(!b){b=document.createElement('div');b.id='wbub';b.className='wbub';document.body.appendChild(b)}
+        b.innerHTML=`<span class="en">${esc(t)}</span> = ${he?esc(he):/^[A-Z]/.test(t)?'<span class="sub">שם (של אדם או מקום)</span>':'<span class="sub">אין לי תרגום למילה הזאת</span>'}`;b.hidden=false;clearTimeout(b._t);b._t=setTimeout(()=>{b.hidden=true},3500)}}break;}
     case 'kDict':{S.screen.dict=!S.screen.dict;render();break;}
     case 'learnNext':{const i=islandById(sc.id);sfx.flip();if(sc.idx<i.words.length-1){sc.idx++;render();say(i.words[sc.idx].en)}else finishActivity('learn','כרטיסיות מילים',i.words.length,i.words.length,[]);break;}
     case 'learnPrev':if(sc.idx>0){sc.idx--;sfx.flip();render();say(islandById(sc.id).words[sc.idx].en)}break;
