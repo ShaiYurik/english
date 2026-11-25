@@ -1,5 +1,6 @@
 # Changes
 
+- v69 (2026-11-25): conversation lessons (lesson `source: 'שיחה'`, e.g. Ariel's Talking Kids summaries) get their own map track '🗣️ שיחה באנגלית', so they open immediately instead of queueing behind unfinished class islands.
 - v68 (2026-11-16): sorting game: a wrong pick shows 'לא בדיוק 🙂 נסי שוב!' and greys out that boat; a second try is allowed before the answer is shown. Only first-try answers count toward the score.
 - v67 (2026-11-16): Shai-Li's stage map is more compact (122px per spot instead of 150, softer and narrower spotlight beams, smaller disco ball) and always ends with a '✨ הריקוד הבא שלך' teaser spot (🎁 + lock, 'מחכה לחומר חדש · צלמי נושא חדש לפתיחה') that opens the camera tab.
 - v66 (2026-11-16): reading screen player controls: '▶ הקראה' → '⏸ עצירה' → '▶ המשך' (continues from the highlighted word) + '⏮ מההתחלה'. Leaving the screen pauses instead of losing the place.

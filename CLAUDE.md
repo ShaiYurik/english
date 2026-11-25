@@ -24,6 +24,7 @@ More than one conversation may work on it, so **never overwrite someone else's w
   When processing her uploads: same topic as an existing island → add the material to that island (more games/rounds), different topic → new island. Never create duplicate islands; identical uploads (same file/link) are processed once and the extra copies trashed.
 If you add or remove a world on purpose, update `EXPECT` in tools/smoke.js in the same commit.
 
+- Conversation lessons (Talking Kids summaries etc.): lesson `source: 'שיחה'` → own track '🗣️ שיחה באנגלית' (all profiles).
 - Parent report app: role `viewer` (server `VIEW_KEY` on a child entry; now only shaili). Read-only: client treats it as parent-like (no writes) and shows only `viewParent` via `viewerTopHTML`. 21:00 daily push to viewer devices (`dailyReminder` → `pushSentV:`), text from server `viewerToday_` via sw.js `todayInfo`.
 
 ## Architecture (short)

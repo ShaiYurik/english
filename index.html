@@ -521,7 +521,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='68';
+const APP_VERSION='69';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -954,13 +954,16 @@ function tracks(){
   const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));
   const lists={
     he:all.filter(i=>i.kind==='lesson'&&i.lang==='he').sort(byC),
-    class:[...all.filter(i=>i.kind==='lesson'&&i.source!=='זום'&&i.lang!=='he').sort(byC),...all.filter(i=>i.kind==='class'),...book.filter(i=>!i.text)],
+    talk:all.filter(i=>i.kind==='lesson'&&i.source==='שיחה'&&i.lang!=='he').sort(byC),
+    class:[...all.filter(i=>i.kind==='lesson'&&i.source!=='זום'&&i.source!=='שיחה'&&i.lang!=='he').sort(byC),...all.filter(i=>i.kind==='class'),...book.filter(i=>!i.text)],
     zoom:all.filter(i=>i.kind==='lesson'&&i.source==='זום').sort(byC),
     unseen:book.filter(i=>i.text)};
   _trk=TRACKS.filter(t=>t.k!=='zoom'||feat('zoom')).map(t=>{const list=lists[t.k];const active=list.find(i=>!isDone(i))||null;
     const done=list.filter(isDone);const started=list.filter(i=>i!==active&&!isDone(i)&&S.progress.best[i.id]);
     const queue=list.filter(i=>i!==active&&!isDone(i)&&!S.progress.best[i.id]);
     return {...t,active,done,started,queue,none:list.length?t.none:t.empty,...(!active&&t.k==='class'&&procList().length?{proc:true,none:'⏳ החומר בעיבוד, האי יופיע כאן בקרוב'}:{})}});
+  // שיעורי שיחה (למשל Talking Kids): מסלול משלהם, כדי שלא יחכו בתור מאחורי איי הכיתה
+  if(lists.talk.length){const list=lists.talk,active=list.find(i=>!isDone(i))||list[list.length-1];_trk.push({k:'talk',t:'שיחה באנגלית',ic:'🗣️',flag:'#e0569b',none:'כל שיעורי השיחה נכבשו!',active,done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})}
   if(lists.he.length){const list=lists.he,active=list.find(i=>!isDone(i))||list[list.length-1];_trk.push({k:'he',t:'עברית',ic:'📝',flag:'#3a6fd8',none:'כל האיים בעברית נכבשו!',active,done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})}
   if(classSlots()>1){const ci=_trk.findIndex(t=>t.k==='class');if(ci>=0){const c=_trk[ci];const open=lists.class.filter(i=>!isDone(i));const a2=open[1]||null,rest=open.slice(2);
     const L1={...c,queue:rest.filter(i=>!S.progress.best[i.id]),started:rest.filter(i=>S.progress.best[i.id])};
