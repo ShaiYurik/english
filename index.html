@@ -334,7 +334,7 @@ textarea.paste{width:100%;min-height:80px;border-radius:12px;border:1px solid va
 .fr i{font-style:normal;padding:0 4px}
 .fr i:first-child{border-bottom:2px solid currentColor}
 .prompt .mrun{font-size:1.5em}
-.howto p{margin:6px 0}
+.howto p{margin:6px 0}.geog{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.geoc{border:2px solid;border-radius:14px;padding:6px 8px;background:#fff;text-align:center;color:#1f2a36}.geoc b{display:block;font-size:17px}.geoc ul{margin:4px 0 0;padding-inline-start:16px;text-align:start;font-size:13.5px;line-height:1.4}.geofam{background:#fff6d6;color:#3a2a00;border-radius:12px;padding:8px 10px}.geotw{overflow-x:auto}.geot{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;color:#1f2a36;border-radius:10px;overflow:hidden}.geot th,.geot td{border:1px solid #d6dee8;padding:4px 3px;text-align:center}.geot td:first-child{text-align:start;font-weight:700}.geot th{background:#eaf3ff}.gy{color:#1f8a4c;font-weight:800}.gh{color:#b07a00;font-weight:800}.gn{color:#c0392b;font-weight:800}
 .olist{display:grid;gap:8px}
 .ordr{display:flex;gap:10px;align-items:flex-start;font-size:22px}
 .ordr .num{flex:0 0 26px;height:26px;border-radius:50%;background:var(--chart2);display:grid;place-items:center;font-family:var(--f-body);font-size:14px}
@@ -521,7 +521,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='69';
+const APP_VERSION='70';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1242,7 +1242,7 @@ function viewIsland(id){
   return `<button class="back" data-act="home">${I.back} ${TW('back')}</button>
   ${i.kind==='lesson'&&i.source==='זום'?`<span class="zbadge">💻 מהשיעור בזום${i.zoomDate?' · '+dayName(i.zoomDate)+' '+fmtDate(i.zoomDate):''}${zl&&zl.teacher?' · עם '+esc(zl.teacher):''}</span>`:i.kind!=='base'?`<span class="zbadge" style="background:${trackOf(i)==='unseen'?'#ffe1da;color:#9a2f1c':'#d8f3e8;color:#1d6b4f'}">${trackLabel(i)}${i.kind==='lesson'&&i.created?' · '+fmtDate(String(i.created).slice(0,10)):''}</span>`:''}
   <div class="ihead">${i.en?`<span class="eyebrow en">${esc(i.en)}</span>`:''}<h2>${esc(i.name)}</h2><p>${esc(i.topic)}</p></div>
-  ${i.howto?`<section class="card howto"><h2>איך עושים את זה?</h2>${i.howto}</section>`:''}
+  ${i.howto?`<section class="card howto"><h2>${i.howtoTitle||'איך עושים את זה?'}</h2>${i.howto}</section>`:''}
   ${anyScore?`<section class="card rep-card"><h2>${THEME()==='tennis'?'דוח המאמן':THEME()==='shop'?'דוח הסטייליסטית':THEME()==='dance'?'דוח המאמנת':'דוח קפטן'} · היום</h2>${islandReportHTML(i)}</section>`:''}
   <div class="stations">${st.map(s=>`<button class="station" data-act="station" data-k="${s.k}" data-id="${esc(id)}"><span class="ic">${s.ic}</span><span class="tx"><b>${s.t}</b><span>${esc(s.d)}</span></span><span class="mark">${s.m}</span></button>`).join('')}</div>`;
 }
@@ -2250,12 +2250,63 @@ document.addEventListener('click',e=>{
 
 /* ============ MATH WORLD (גיל): fractions and mixed numbers ============ */
 // עולם חשבון בצד הלקוח בלבד: הנתונים נשמרים יחד עם עולם האנגלית של גיל (מזהי איים שונים, בלי התנגשות)
-const MATH_TRACKS=[{k:'fractions',t:'שברים',ic:'➗',flag:'#d7f23c'}];
+const MATH_TRACKS=[{k:'fractions',t:'שברים',ic:'➗',flag:'#d7f23c'},{k:'geo',t:'גיאומטריה: מרובעים',ic:'📐',flag:'#7fd0ff'}];
 const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 function mixPool(){const out=[];for(let d=2;d<=9;d++)for(let w=1;w<=4;w++)for(let r=1;r<d;r++)out.push({w,r,d,n:w*d+r});return out}
 const fS=(n,d)=>n+'/'+d, mS=(w,r,d)=>w+' '+r+'/'+d;
 function pickDistinct(pool,k,key){const seen=new Set(),out=[];for(const x of shuffle(pool)){const kk=key(x);if(seen.has(kk))continue;seen.add(kk);out.push(x);if(out.length>=k)break}return out}
 function optsWith(correct,cands){const o=[correct];for(const c of shuffle(cands))if(c&&!o.includes(c)&&o.length<4)o.push(c);const sh=shuffle(o);return {o:sh,a:sh.indexOf(correct)}}
+
+/* ---- גיל: גיאומטריה, סוגי מרובעים (מהספר: "מה למדנו על מקביליות / מלבנים / מעוינים / ריבועים?") ---- */
+function geoShape(kind){const P={par:'14,46 30,10 86,10 70,46',rect:'14,10 86,10 86,46 14,46',rho:'50,4 82,28 50,52 18,28',sq:'28,6 72,6 72,50 28,50'}[kind];
+  const marks={rect:'<path d="M14 18h8v-8M86 18h-8v-8M14 38h8v8M86 38h-8v8" fill="none" stroke="#1d6fd8" stroke-width="1.6"/>',sq:'<path d="M28 14h8v-8M72 14h-8v-8M28 42h8v8M72 42h-8v8" fill="none" stroke="#1d6fd8" stroke-width="1.6"/>'}[kind]||'';
+  return `<svg viewBox="0 0 100 56" width="100" height="56" aria-hidden="true"><polygon points="${P}" fill="#dff1ff" stroke="#1d4f91" stroke-width="2.4" stroke-linejoin="round"/>${marks}</svg>`}
+function geoHowto(){const card=(k,n,rules,c)=>`<div class="geoc" style="border-color:${c}">${geoShape(k)}<b style="color:${c}">${n}</b><ul>${rules.map(r=>`<li>${r}</li>`).join('')}</ul></div>`;
+  const Y='<span class="gy">✓</span>',H='<span class="gh">בחלק</span>',N='<span class="gn">✗</span>';
+  const rows=[['2 זוגות צלעות מקבילות',Y,Y,Y,Y],['2 זוגות צלעות נגדיות שוות',Y,Y,Y,Y],['כל הצלעות שוות',H,H,Y,Y],['2 זוגות זוויות נגדיות שוות',Y,Y,Y,Y],['כל הזוויות ישרות',H,Y,H,Y],['סימטריה סיבובית',Y,Y,Y,Y],['רק זוג אחד של צלעות מקבילות',N,N,N,N]];
+  return `<p>4 מרובעים, ולכל אחד חוקים משלו. <b>הסוד:</b> הם משפחה. כל אחד מקבל את החוקים של ההורה שלו, ועוד חוק משלו.</p>
+  <div class="geog">${card('par','מקבילית',['2 זוגות של צלעות מקבילות','צלעות נגדיות שוות','זוויות נגדיות שוות'],'#2f6fb5')}
+  ${card('rect','מלבן',['מקבילית +','<b>כל הזוויות ישרות</b> (90°)'],'#d8572a')}
+  ${card('rho','מעוין',['מקבילית +','<b>כל הצלעות שוות</b>'],'#2f8a63')}
+  ${card('sq','ריבוע',['מלבן <b>וגם</b> מעוין:','כל הזוויות ישרות + כל הצלעות שוות'],'#8a4fd8')}</div>
+  <p class="geofam">👨‍👩‍👧 <b>המשפחה:</b> ריבוע ← הוא גם מלבן וגם מעוין ← ושניהם מקביליות.<br>לכן: <b>כל ריבוע הוא מלבן</b>, אבל <b>לא כל מלבן הוא ריבוע</b>.</p>
+  <p>🔄 <b>סימטריה סיבובית:</b> מסובבים את הצורה חצי סיבוב סביב המרכז, והיא נראית בדיוק אותו דבר. זה קורה <b>בכל</b> מקבילית, ולכן גם בכל מלבן, מעוין וריבוע.</p>
+  <p>✗ <b>רק זוג אחד</b> של צלעות מקבילות? זה <b>אף אחד</b> מהארבעה: לכולם יש 2 זוגות.</p>
+  <div class="geotw"><table class="geot"><tr><th></th><th>מקבילית</th><th>מלבן</th><th>מעוין</th><th>ריבוע</th></tr>${rows.map(r=>`<tr><td>${r[0]}</td>${r.slice(1).map(x=>`<td>${x}</td>`).join('')}</tr>`).join('')}</table></div>
+  <p class="sub"><span class="gy">✓</span> = בכל · <span class="gh">בחלק</span> = יש כאלה ויש לא · <span class="gn">✗</span> = בשום. למשל: יש מלבנים שכל הצלעות שלהם שוות (אלה ריבועים!), ויש שלא.</p>`}
+function geoIsland(){
+  const mi={kind:'mc',title:'מי אני? חידות מרובעים',desc:'קוראים את הרמזים ומנחשים איזה מרובע מדבר',help:'מחפשים את המילים החשובות: «כל הצלעות שוות»? «כל הזוויות ישרות»? שניהם? אף אחד?',items:shuffle([
+    {q:'כל הצלעות שלי שוות, אבל הזוויות שלי לא ישרות. מי אני?',o:['מעוין','ריבוע','מלבן','מקבילית'],a:0,why:'צלעות שוות בלי זוויות ישרות = מעוין. אם גם הזוויות היו ישרות, הייתי ריבוע.'},
+    {q:'כל הזוויות שלי ישרות, אבל לא כל הצלעות שלי שוות. מי אני?',o:['ריבוע','מלבן','מעוין','מקבילית'],a:1,why:'זוויות ישרות בלי שכל הצלעות שוות = מלבן.'},
+    {q:'כל הצלעות שלי שוות וגם כל הזוויות שלי ישרות. מי אני?',o:['מעוין','מלבן','ריבוע','מקבילית'],a:2,why:'גם צלעות שוות וגם זוויות ישרות = ריבוע.'},
+    {q:'יש לי 2 זוגות של צלעות מקבילות, הזוויות שלי לא ישרות ולא כל הצלעות שוות. מי אני?',o:['ריבוע','מקבילית','מלבן','מעוין'],a:1,why:'רק החוקים הבסיסיים של המשפחה = מקבילית "רגילה".'},
+    {q:'אני גם מלבן וגם מעוין. מי אני?',o:['מקבילית','ריבוע','מעוין','מלבן'],a:1,why:'ריבוע מקבל את החוק של המלבן (זוויות ישרות) וגם של המעוין (צלעות שוות).'},
+    {q:'יש לי 4 זוויות של 90°, וצלע אחת שלי באורך 5 ס״מ והשכנה שלה באורך 8 ס״מ. מי אני?',o:['ריבוע','מעוין','מלבן','מקבילית'],a:2,why:'זוויות ישרות + צלעות שכנות לא שוות = מלבן (לא ריבוע).'},
+    {q:'כל הצלעות שלי באורך 6 ס״מ, ויש לי זווית של 60°. מי אני?',o:['ריבוע','מלבן','מעוין','מקבילית'],a:2,why:'כל הצלעות שוות, אבל יש זווית שאינה ישרה = מעוין.'}])};
+  const tf={kind:'tf',title:'נכון או לא נכון?',desc:'משפטים על ההבדלים בין המרובעים',items:shuffle([
+    {s:'כל ריבוע הוא מלבן.',t:true,fix:'נכון: בריבוע כל הזוויות ישרות, כמו בכל מלבן.'},
+    {s:'כל מלבן הוא ריבוע.',t:false,fix:'לא נכון: רק בחלק מהמלבנים כל הצלעות שוות.'},
+    {s:'כל ריבוע הוא מעוין.',t:true,fix:'נכון: בריבוע כל הצלעות שוות, כמו בכל מעוין.'},
+    {s:'בכל מעוין כל הזוויות ישרות.',t:false,fix:'לא נכון: רק בחלק מהמעוינים (אלה הריבועים).'},
+    {s:'בכל מקבילית יש 2 זוגות של צלעות מקבילות.',t:true,fix:'נכון: זה החוק הבסיסי של כל המשפחה.'},
+    {s:'במלבן כל הצלעות תמיד שוות.',t:false,fix:'לא נכון: במלבן הצלעות הנגדיות שוות, אבל לא תמיד כולן.'},
+    {s:'בכל מעוין הזוויות הנגדיות שוות זו לזו.',t:true,fix:'נכון: מעוין הוא מקבילית, ובכל מקבילית הזוויות הנגדיות שוות.'},
+    {s:'למלבן יש רק זוג אחד של צלעות מקבילות.',t:false,fix:'לא נכון: למלבן יש 2 זוגות של צלעות מקבילות.'},
+    {s:'אם מסובבים מקבילית חצי סיבוב, היא נראית אותו דבר.',t:true,fix:'נכון: לכל מקבילית יש סימטריה סיבובית.'},
+    {s:'כל מעוין הוא מקבילית.',t:true,fix:'נכון: יש לו 2 זוגות של צלעות מקבילות.'}])};
+  const W=(sh,pr)=>sh+': '+pr;
+  const ALL=[['מלבן','זוויות ישרות','all'],['מלבן','צלעות שוות','some'],['מעוין','צלעות שוות','all'],['מעוין','זוויות ישרות','some'],['ריבוע','צלעות שוות','all'],['ריבוע','זוויות ישרות','all'],['מקבילית','זוויות ישרות','some'],['מקבילית','צלעות שוות','some'],['מקבילית','זוג מקביל אחד','none'],['מלבן','זוג מקביל אחד','none'],['מעוין','זוג מקביל אחד','none'],['ריבוע','זוג מקביל אחד','none']];
+  const grp=r=>[{name:'✓ בכל',he:'תמיד',words:r.filter(x=>x[2]==='all').map(x=>W(x[0],x[1]))},{name:'🔸 בחלק',he:'לפעמים',words:r.filter(x=>x[2]==='some').map(x=>W(x[0],x[1]))},{name:'✗ בשום',he:'אף פעם',words:r.filter(x=>x[2]==='none').map(x=>W(x[0],x[1]))}];
+  const srt={kind:'sort',title:'בכל, בחלק או בשום?',desc:'כמו הטבלה בספר',help:'«מלבן: צלעות שוות» שואל: האם בכל המלבנים כל הצלעות שוות? בחלק מהם? באף אחד?',groups:grp(ALL)};
+  const diff={kind:'mc',title:'מה ההבדל?',desc:'מוצאים מה יש לאחד ואין לשני',help:'חושבים על החוק המיוחד של כל אחד: מלבן = זוויות ישרות, מעוין = צלעות שוות, ריבוע = שניהם.',items:shuffle([
+    {q:'מה יש לכל ריבוע, שאין לכל מלבן?',o:['כל הצלעות שוות','כל הזוויות ישרות','2 זוגות צלעות מקבילות','סימטריה סיבובית'],a:0,why:'גם במלבן כל הזוויות ישרות. מה שמיוחד לריבוע: כל הצלעות שוות.'},
+    {q:'מה יש לכל ריבוע, שאין לכל מעוין?',o:['כל הצלעות שוות','כל הזוויות ישרות','זוויות נגדיות שוות','צלעות מקבילות'],a:1,why:'גם במעוין כל הצלעות שוות. מה שמיוחד לריבוע: כל הזוויות ישרות.'},
+    {q:'מה יש לכל מלבן, שאין לכל מקבילית?',o:['צלעות נגדיות שוות','כל הזוויות ישרות','2 זוגות צלעות מקבילות','זוויות נגדיות שוות'],a:1,why:'כל השאר יש בכל מקבילית. החוק המיוחד של המלבן: זוויות ישרות.'},
+    {q:'מה יש לכל מעוין, שאין לכל מקבילית?',o:['כל הזוויות ישרות','כל הצלעות שוות','זוויות נגדיות שוות','סימטריה סיבובית'],a:1,why:'החוק המיוחד של המעוין: כל הצלעות שוות.'},
+    {q:'מה משותף לכל ארבעת המרובעים?',o:['2 זוגות צלעות מקבילות','כל הצלעות שוות','כל הזוויות ישרות','רק זוג אחד של צלעות מקבילות'],a:0,why:'כולם מקביליות, ולכן לכולם 2 זוגות של צלעות מקבילות.'},
+    {q:'מה ההבדל בין מלבן למעוין?',o:['במלבן הזוויות ישרות, במעוין הצלעות שוות','אין הבדל','במעוין הזוויות ישרות, במלבן הצלעות שוות','למלבן אין צלעות מקבילות'],a:0,why:'מלבן = זוויות ישרות. מעוין = צלעות שוות. ריבוע = שניהם.'}])};
+  const terms={'מקבילות':'קווים שלא נפגשים אף פעם, כמו פסי רכבת','מקבילית':'מרובע עם 2 זוגות של צלעות מקבילות','נגדיות':'זו מול זו (לא אחת ליד השנייה)','זווית ישרה':'זווית של 90°, כמו פינה של דף','זוויות ישרות':'זוויות של 90°, כמו פינות של דף','סימטריה סיבובית':'מסובבים חצי סיבוב והצורה נראית אותו דבר','מעוין':'מקבילית שכל הצלעות שלה שוות','מלבן':'מקבילית שכל הזוויות שלה ישרות'};
+  return {id:'m-geo-quads',kind:'fixed',track:'geo',lang:'he',name:'מקבילית, מלבן, מעוין וריבוע',en:'',topic:'גיאומטריה · החוקים של כל מרובע וההבדלים ביניהם',howto:geoHowto(),howtoTitle:'📏 החוקים של המרובעים',terms,words:[],games:[mi,tf,srt,diff],mistakes:[],source:'',created:'1'}}
 function mathFixedIslands(){
   const P=mixPool();const byVal=x=>x.n+'/'+x.d;
   // G0: which fraction is bigger than 1
@@ -2280,7 +2331,7 @@ function mathFixedIslands(){
   const howto=`<p><b>משבר למספר מעורב:</b> מחלקים את המונה במכנה. התוצאה היא מספר השלמים, והשארית נשארת מעל אותו מכנה.</p><p>דוגמה: ${fx('11/4 ← 11÷4 = 2 ושארית 3 ← 2 3/4')}</p>
     <p><b>ממספר מעורב לשבר:</b> כופלים את השלם במכנה ומוסיפים את המונה. המכנה לא משתנה.</p><p>דוגמה: ${fx('2 3/4 ← 2×4+3 = 11 ← 11/4')}</p>`;
   return [{id:'m-mixed',kind:'fixed',track:'fractions',name:'שבר ומספר מעורב',en:'',topic:'כיתה ה׳ · הופכים שבר למספר מעורב ובחזרה · תמיד פתוח, עם תרגילים חדשים בכל פעם',howto,
-    words:[],games:[g0,g1,g2,g3,g4],mistakes:[],source:'',created:'0'}];
+    words:[],games:[g0,g1,g2,g3,g4],mistakes:[],source:'',created:'0'},geoIsland()];
 }
 
 /* ============ YUVAL MATH: a guided path to the test (מבחן 18.11) ============ */
