@@ -30,6 +30,8 @@ If you add or remove a world on purpose, update `EXPECT` in tools/smoke.js in th
 - Conversation lessons (Talking Kids summaries etc.): lesson `source: 'שיחה'` → own track '🗣️ שיחה באנגלית' (all profiles).
 - Parent report app: role `viewer` (server `VIEW_KEY` on a child entry; now only shaili). Read-only: client treats it as parent-like (no writes) and shows only `viewParent` via `viewerTopHTML`. 21:00 daily push to viewer devices (`dailyReminder` → `pushSentV:`), text from server `viewerToday_` via sw.js `todayInfo`.
 
+- **Card limit (parent's rule, 26/11): every new island has at most 3–4 cards**, with a big focus box on top (`howto`) listing 1/2/3 what to practice from the last lesson. Use `words:[]` + `terms` (tap-to-translate still works) and `simple:true` to avoid automatic word/read-aloud cards. Exception: exam-retake islands.
+
 ## Architecture (short)
 - index.html: the whole client. sw.js: network-first cache + push notifications. status.json: update flag/version.
 - Backend: Google Apps Script web app (not in this repo; it holds the keys). Lesson content = JSON files in Drive.
