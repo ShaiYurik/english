@@ -1,5 +1,6 @@
 # Changes
 
+- v78 (2026-11-27): Yuval (`YUV()`): no memory game (pairs stations hidden) and no automatic read-aloud of answers/corrections after answering (only when she taps 🔊).
 - v77 (2026-11-27): subject world: all islands of a subject are open at once (one track per island), exam lessons (`source:'מבחן'`) last with 📝; exam card handles practice exams without `orig`. Yuval: new practice exam `yuval-tanakh-exam` (40+25+20+15).
 - v76 (2026-11-27): subjects get their own world tab (`subj`, label = subject names, e.g. "📜 תנ״ך") for every child except Shai-Li; it loads the same data as `en` (no `w` param, same NS) and shows only subject tracks; subject lessons no longer appear on the English map. World tabs wrap on narrow screens.
 - v75 (2026-11-27): subject tracks for every child (not only Shai-Li): a lesson with `subject` other than English/Hebrew (e.g. 'תנ"ך') gets its own track on the map with the subject icon, queue (one open island). Yuval: new תנ״ך track, 3 islands from her notebook (שמואל א׳ א–ג).

@@ -533,7 +533,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'&&WORLD!=='subj'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'&&WORLD!=='subj'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='77';
+const APP_VERSION='78';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1038,6 +1038,7 @@ function zoomStatusHTML(z){const n=(z.recs||[]).length;if(!n&&!zoomIsland(z))ret
   const isl=zoomIsland(z);const tr=(S.transcripts||[]).some(t=>t.includes(z.date));
   const st=isl?`<span class="pill ok">🏝 נפתח אי: ${esc(isl.name)}</span>`:tr?'<span class="pill">📝 תומלל · האי בהכנה</span>':'<span class="pill warn">⏳ ממתין לעיבוד</span>';
   return `<div class="zstat">${n?`<span>🎙 הוקלטו כ־${n*5} דקות (${n} חלקים)</span>`:''}${st}</div>`}
+const YUV=()=>((S.profile&&S.profile.child)||CHILD)==='yuvik';  // יובל: בלי משחק זיכרון ובלי הקראה אוטומטית של תשובות (בקשת ההורה 27/11)
 function stationsOf(i){
   const st=[];const b=S.progress.best[i.id]||{};const w=i.words||[];
   const pct=k=>b[k]!=null?b[k]+'%':'';
@@ -1046,7 +1047,7 @@ function stationsOf(i){
   if(w.length)st.push({k:'learn',ic:I.cards,t:'כרטיסיות מילים',d:`${w.length} מילים עם הקראה`,m:b.learn?'נלמד':''});
   if(w.filter(x=>spellable(x.en)).length>=3)st.push({k:'spell',ic:I.spell,t:'בונים מילה',d:'שומעים ובונים את המילה מאותיות',m:pct('spell'),scored:1});
   if(w.length>=4)st.push({k:'quiz',ic:I.quiz,t:'משחק מילים',d:'תרגום והאזנה',m:pct('quiz'),scored:1});
-  (i.games||[]).forEach((g,n)=>{const rs=((S.progress.rounds||{})[i.id]||{})[n];st.push({k:'g'+n,ic:GAME_IC[g.kind]||I.quiz,t:g.title||'תרגיל',d:g.desc||GAME_DESC[g.kind]||'',m:rs&&rs.fresh?'🔄 סבב חדש':pct('g'+n),scored:1})});
+  (i.games||[]).forEach((g,n)=>{if(g.kind==='pairs'&&YUV())return;const rs=((S.progress.rounds||{})[i.id]||{})[n];st.push({k:'g'+n,ic:GAME_IC[g.kind]||I.quiz,t:g.title||'תרגיל',d:g.desc||GAME_DESC[g.kind]||'',m:rs&&rs.fresh?'🔄 סבב חדש':pct('g'+n),scored:1})});
 
   if(i.lang!=='he'&&!i.simple&&readItems(i).length)st.push({k:'readaloud',ic:I.mouth,t:'קוראת בקול',d:readSR()?'הטלפון מקשיב ומסמן כל מילה':'קוראים ומשווים להקראה',m:pct('readaloud'),scored:1});
   if(i.mistakes&&i.mistakes.length)st.push({k:'fix',ic:I.fix,t:'מתקנים טעויות',d:'משפטים מהשיעור: איך אומרים נכון?',m:pct('fix'),scored:1});
@@ -2174,7 +2175,7 @@ document.addEventListener('click',e=>{
       if(q.a.length>1){if(sc.picked.includes(k)){sc.picked=sc.picked.filter(x=>x!==k);render();break}sc.picked.push(k);if(sc.picked.length<q.a.length){render();break}}
       else sc.picked=[k];
       sc.answered=true;sc.wasOk=q.a.every(x=>sc.picked.includes(x));
-      if(sc.wasOk){sc.correct++;sfx.ok();if(q.gap&&q.say)setTimeout(()=>say(q.say),350)}else{sfx.bad();sc.missed.push(q.ans||q.o[q.a[0]])}
+      if(sc.wasOk){sc.correct++;sfx.ok();if(q.gap&&q.say&&!YUV())setTimeout(()=>say(q.say),350)}else{sfx.bad();sc.missed.push(q.ans||q.o[q.a[0]])}
       render();break;}
     case 'optSay':{const q=sc.items[sc.idx];if(!q||!('speechSynthesis' in window))break;hush();const segs=[];{const qt=q.pic?'':q.gap?String(q.q).replace('___','...'):(q.say||q.q||'');if(qt)segs.push(qt)}const base=segs.length;
       q.o.forEach((o,k)=>{if(!sc.answered&&sc.hintAt===sc.idx&&(sc.elim||[]).includes(k))return;segs.push('תשובה '+((segs.length-base)/2+1)+'.');segs.push(String(o))});speakSegs(segs);break;}
@@ -2189,7 +2190,7 @@ document.addEventListener('click',e=>{
       if(h.elim){const wrong=q.o.map((o,k)=>k).filter(k=>!q.a.includes(k));sc.elim=shuffle(wrong).slice(0,2)}sfx.tap&&sfx.tap();render();break;}
     case 'tfAns':{if(sc.answered)break;const q=sc.items[sc.idx];sc.pick=el.dataset.v==='1';sc.answered=true;sc.wasOk=sc.pick===q.t;
       if(sc.wasOk){sc.correct++;sfx.ok()}else{sfx.bad();sc.missed.push(q.s)}
-      render();if(q.fix)setTimeout(()=>say(q.fix),400);break;}
+      render();if(q.fix&&!YUV())setTimeout(()=>say(q.fix),400);break;}
     case 'sortAns':{if(sc.answered)break;const q=sc.items[sc.idx];const g=+el.dataset.g;
       if(g!==q.gi&&sc.tryAt!==sc.idx){sc.tryAt=sc.idx;sc.wrong1=g;sfx.bad();sc.missed.push(q.w);render();break}   // טעות ראשונה: נסי שוב
       const second=sc.tryAt===sc.idx;sc.pick=g;sc.answered=true;sc.wasOk=g===q.gi;
@@ -2293,7 +2294,7 @@ document.addEventListener('click',e=>{
     case 'learnPrev':if(sc.idx>0){sc.idx--;sfx.flip();render();say(islandById(sc.id).words[sc.idx].en)}break;
     case 'answer':{if(sc.answered)break;const q=sc.qs[sc.idx];sc.picked=q.opts[+el.dataset.k];sc.answered=true;
       if(sc.picked===q.ans){sc.correct++;sfx.ok()}else{sc.missed.push(q.word);sfx.bad()}
-      render();if((q.t==='gap'||q.t==='fix')&&sc.picked===q.ans)setTimeout(()=>say(q.say),400);break;}
+      render();if((q.t==='gap'||q.t==='fix')&&sc.picked===q.ans&&!YUV())setTimeout(()=>say(q.say),400);break;}
     case 'nextQ':{sc.answered=false;sc.picked=null;
       if(sc.idx<sc.qs.length-1){sc.idx++;render();const q=sc.qs[sc.idx];if(q.autoSay)setTimeout(()=>say(q.say),300)}
       else{const kind=sc.name==='quiz'?'quiz':sc.name;finishActivity(kind,{quiz:'משחק מילים',sounds:'מה שמעת?',fix:'מתקנים טעויות'}[kind],sc.correct,sc.qs.length,sc.missed)}break;}
