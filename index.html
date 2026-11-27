@@ -532,7 +532,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='73';
+const APP_VERSION='74';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -958,7 +958,7 @@ let _trk=null;
 function tracks(){
   if(_trk)return _trk;
   const all=allIslands();const book=all.filter(i=>i.kind==='book');
-  if(WORLD==='math'&&isYM()){_trk=[];return _trk}
+  if(WORLD==='math'&&isYM()){const list=ymxIslands(),active=list.find(i=>!isDone(i))||list[list.length-1];_trk=[{k:'ymx',t:'חשבון: מספרים מכוונים',ic:'🔢',flag:'#7fd0ff',none:'כל איי החשבון נכבשו! 🎉',active,done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))}];return _trk}
   if(WORLD==='math'){_trk=MATH_TRACKS.map(t=>{const isl=mathFixedIslands().find(x=>x.track===t.k);return {...t,fixed:1,active:isl,done:[],started:[],queue:[],none:''}});return _trk}
   if(LANG()==='ar'){const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));const F=arFixedIslands();
     const T=[{k:'letters',t:'אותיות',ic:'🔤',flag:'#f2a93b',fixed:1,list:[F[0]]},{k:'numbers',t:'מספרים',ic:'🔢',flag:'#2f8a63',fixed:1,list:[F[1]]},{k:'class',t:'מהכיתה',ic:'🏫',flag:'#d8572a',none:'כל נווי המדבר נכבשו!',empty:'יופיע כשיעלה צילום מהכיתה',list:all.filter(i=>i.kind==='lesson').sort(byC)}];
@@ -1075,11 +1075,11 @@ function render(){
   else{
     const sc=S.screen;
     const map={readtext:viewReadText,game:viewGame,spell:viewSpell,karaoke:viewKaraoke,read2:viewRead2,island:()=>viewIsland(sc.id),learn:viewLearn,quiz:viewQuiz,sounds:viewQuiz,fix:viewQuiz,readaloud:viewRead,unseen:viewUnseen,result:viewResult,ym:viewYM,ymStage:viewYMStage,ymEnd:viewYMEnd};
-    v.innerHTML=(isYM()&&(sc.name==='map'||sc.name==='island'&&!String(sc.id||'').startsWith('ymx-')||!map[sc.name])?viewYMMap:map[sc.name]||viewMap)();
+    v.innerHTML=(map[sc.name]||viewMap)();
   }
   if(S.confirm&&S.tab==='map')v.insertAdjacentHTML('beforeend',confirmHTML());
   if(S.ref&&LANG()==='ar')v.insertAdjacentHTML('beforeend',refHTML());
-  if(S.tab==='map'&&!S.confirm&&isYM()&&(S.screen.name==='map'||S.screen.name==='ymEnd')){ymCheckBoat();if(!S.ymModal)ymParentBoat();if(S.ymModal)v.insertAdjacentHTML('beforeend',ymModalHTML())}
+  if(false){ymCheckBoat();if(!S.ymModal)ymParentBoat();if(S.ymModal)v.insertAdjacentHTML('beforeend',ymModalHTML())}
   if(S.tab==='map'&&!S.confirm&&(S.screen.name==='map'||S.screen.name==='result')){checkFleet();if(S.boatModal)v.insertAdjacentHTML('beforeend',boatModalHTML());checkMall();if(S.mallModal&&!S.boatModal)v.insertAdjacentHTML('beforeend',mallModalHTML());checkDance();if(S.danceModal&&!S.boatModal&&!S.mallModal)v.insertAdjacentHTML('beforeend',danceModalHTML())}
   updateMeter();refreshRecUI();setSync();armBack();
   if(S.tab==='map'&&S.screen.name==='map'){const c=document.querySelector('.isl.cur');if(c&&!S._scrolledMap){S._scrolledMap=true;c.scrollIntoView({block:'center'})}}else S._scrolledMap=false;
@@ -1144,6 +1144,7 @@ function viewMap(){
   const dnC=THEME()==='dance'&&SHL()&&!isParent();const T=dnC?[...T0,{k:'teaser',teaser:true,t:'',ic:'',active:null,done:[],started:[],queue:[]}]:T0;
   const W=360;let H,pos;
   if(dnC){const G=122;H=Math.max(300,70+T.length*G);pos=T.map((_,k)=>({x:k%2?112:248,y:H-82-k*G}))}
+  else if(T.length===1){H=230;pos=[{x:180,y:120}]}
   else{H=T.length===2?330:T.length<=3?470:180+(T.length-1)*150;pos=T.length===2?[{x:240,y:240},{x:120,y:95}]:T.length<=3?[{x:248,y:385},{x:110,y:235},{x:250,y:95}]:T.map((_,k)=>({x:k%2?110:250,y:H-85-k*150}))}
   const depths=Array.from({length:7},(_,k)=>[[40,320,180,30,330,200][k%6],k*70+40,String(5+(k*7)%27)]).map(([x,y,t])=>`<text x="${x}" y="${y}" font-size="10" fill="#5f84a0" font-family="Assistant" font-style="italic">${t}</text>`).join('');
   const tn=THEME()==='tennis',ds=THEME()==='desert',bk=THEME()==='shop',dn=THEME()==='dance';const BK=['👗','👠','👜','🧥','👟','🕶️','👒','💍'],DN=['💃','🩰','🎶','🪩','🎤','🎀','👯','⭐'];
@@ -1214,7 +1215,7 @@ function viewMap(){
     ${archive}
     <p class="maphint">${T.some(t=>t.active||t.done.length)?SHL()?'לכל מקצוע יש מסלול משלו, ואפשר לרקוד כמה ריקודים במקביל. ריקוד שמסיימים ב־85% ומעלה נותן בגד חדש 💃':(classSlots()>1?'אפשר לשחק בשני מגרשים במקביל. כשמנצחים באחד':'בכל מסלול יש אי אחד פעיל. כשכובשים אותו')+' (70% ברוב התחנות) נפתח הבא בתור.':(SHL()?(S.pendingPhotos?'הריקוד הראשון שלך בהכנה ⏳ כשהוא מוכן הוא יופיע כאן 💃':'עוד אין ריקודים. כשתצלמי חומר בלשונית "צילום" (בכל מקצוע), הריקוד הראשון שלך יופיע כאן 💃'):'עוד אין איים. כשאבא יעלה חומר מהכיתה, האי הראשון יופיע כאן.')}</p>`;
 }
-function trackLabel(i){if(SHL()&&i.kind!=='daily'){const g=subjOf(i);return ((SUBJ_IC[g]||['🎶'])[0])+' '+g}const t=TRACKS.find(x=>x.k===trackOf(i))||MATH_TRACKS.find(x=>x.k===trackOf(i))||(trackOf(i)==='daily'?{ic:'📖',t:'סיפור יומי'}:null);return t?t.ic+' '+t.t:''}
+function trackLabel(i){if(SHL()&&i.kind!=='daily'){const g=subjOf(i);return ((SUBJ_IC[g]||['🎶'])[0])+' '+g}const t=TRACKS.find(x=>x.k===trackOf(i))||MATH_TRACKS.find(x=>x.k===trackOf(i))||(trackOf(i)==='daily'?{ic:'📖',t:'סיפור יומי'}:trackOf(i)==='ymx'?{ic:'🔢',t:'מספרים מכוונים'}:null);return t?t.ic+' '+t.t:''}
 function viewMapLegacy(){
   const isl=allIslands();const n=isl.length;
   const W=360,H=Math.max(500,n*96+110);
@@ -3072,7 +3073,7 @@ function navTo(t,force){
   if(!force&&inProgress(S.screen)){S.confirm=t;render();return}
   S.confirm=null;stopAll();
   if(t.act==='home'){S.screen={name:'map'};S.tab='map'}
-  else if(t.act==='ymStage'||t.act==='island'&&isYM()){S.tab='map';S.screen=t.act==='ymStage'&&t.id&&ymStage(t.id)?{name:'ymStage',id:t.id}:{name:'map'}}
+  else if(t.act==='ymStage'){S.tab='map';S.screen=t.act==='ymStage'&&t.id&&ymStage(t.id)?{name:'ymStage',id:t.id}:{name:'map'}}
   else if(t.act==='island'){const id=t.id||S.screen.id;S.tab='map';S.screen=id?{name:'island',id}:{name:'map'};markSeen(id)}
   render();scrollTo({top:0});
 }
