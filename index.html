@@ -534,7 +534,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'&&WORLD!=='subj'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'&&WORLD!=='subj'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='79';
+const APP_VERSION='80';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -773,7 +773,7 @@ function mergeProgress(p,loc){if(!loc)return;
   if(loc.mall&&p.mall&&p.mall!==loc.mall){const A=p.mall,B=loc.mall;A.earn=mx(A.earn,B.earn);A.intro=A.intro||B.intro;
     const cp=new Map((A.cps||[]).map(c=>[c.iid,c]));(B.cps||[]).forEach(c=>{const o=cp.get(c.iid);if(!o)cp.set(c.iid,c);else if(c.used)o.used=1});A.cps=[...cp.values()];
     const key=b=>b.id+'|'+b.at;const bs=new Map((A.buys||[]).map(b=>[key(b),b]));(B.buys||[]).forEach(b=>{if(!bs.has(key(b)))bs.set(key(b),b)});A.buys=[...bs.values()]}
-  ['boatLevel','fleetIntro','caravanIntro','danceLv','danceIntro','portN'].forEach(k=>{if(loc[k]!=null&&typeof loc[k]==='number')p[k]=mx(p[k],loc[k]);else if(loc[k]&&!p[k])p[k]=loc[k]})}
+  ['boatLevel','fleetIntro','caravanIntro','danceLv','danceIntro','portN','useMin','fleetStep'].forEach(k=>{if(loc[k]!=null&&typeof loc[k]==='number')p[k]=mx(p[k],loc[k]);else if(loc[k]&&!p[k])p[k]=loc[k]})}
 function applyState(st,fromServer){
   if(!st)return;
   const pend=k=>fromServer&&outbox[NS()+'state:'+k];
@@ -847,6 +847,7 @@ setInterval(()=>{
   S.activeSec++;
   const m=Math.floor(S.activeSec/60);
   if(m!==S.session.minutes){
+    {const d=m-(S.session.minutes||0);if(d>0&&d<=2)addUseMin(d)}
     S.session.minutes=m;saveSession();
     updateMeter();
   }
@@ -3050,27 +3051,40 @@ function mallModalHTML(){const M=S.mallModal;if(!M)return '';const s=mallState()
   if(M.tab==='closet'){const b=s.m.buys;return wrap(head+tabs+(b.length?`<div class="closet">${b.map(x=>{const it=MALL_ITEMS.find(y=>y.id===x.id);const st=it&&MALL_STORES.find(z=>z.id===it.st);return it?`<div>${it.e}<small>${esc(it.he)}</small><small style="direction:ltr">${esc(st.n)}</small></div>`:''}).join('')}</div><p style="text-align:center">${b.length} פריטים · שווי ₪${b.reduce((n,x)=>n+(x.cash||0)+(x.cp||0),0)}</p>`:'<p>הארון עוד ריק. בואי נקנה משהו 🛍️</p>')+close)}
   return wrap(head+tabs+`<div class="stores">${MALL_STORES.map(st=>{const c=s.cps.filter(x=>x.st===st.id).length;return `<button class="store" style="--sc:${st.c}" data-act="mallStore" data-id="${st.id}"><div class="aw"></div><span class="sn" style="color:${st.c}">${esc(st.n)}</span><span class="sx">${c?`🎟️ קופון ₪${COUPON}`:'4 פריטים'}</span></button>`}).join('')}</div>`+close)}
 function isGreat(i){const st=stationsOf(i).filter(x=>x.scored);if(!st.length)return false;const b=S.progress.best[i.id]||{};if(st.some(x=>b[x.k]==null))return false;return st.reduce((n,x)=>n+b[x.k],0)/st.length>=85}
+const fmtMin=m=>m<60?m+' דק׳':Math.floor(m/60)+' שע׳'+(m%60?' ו־'+(m%60)+' דק׳':'');
 const fleetOn=()=>(THEME()==='sea'||THEME()==='desert')&&!!S.profile&&WORLD!=='math';
-function fleetState(){const F=FLEETS();const q=allIslands().filter(i=>i.kind!=='daily').filter(isGreat).length;const lv=Math.min(F.length-1,Math.floor(q/5));return {q,lv,next:lv>=F.length-1?0:5-(q%5),inStep:q%5}}
-function fleetCardHTML(){if(!fleetOn())return '';const f=fleetState();const F=FLEETS();const b=F[f.lv];
-  return `<button class="fleetcard" data-act="fleet">${vehSVG(f.lv,72)}<span class="ft"><b>${esc(fullName(b))} <small style="direction:ltr;display:inline-block">${esc(b.en)}</small></b><span>${f.lv>=F.length-1?(THEME()==='desert'?'הגעת לרכב המטורף ביותר! 🏆':'הגעת לספינה הגדולה ביותר! 🏆'):`עוד <b>${f.next}</b> ${f.next===1?(THEME()==='desert'?'נווה מדבר מצוין':'אי מצוין'):(THEME()==='desert'?'נווי מדבר מצוינים':'איים מצוינים')} לשדרוג`}</span><span class="fdots">${[0,1,2,3,4].map(k=>`<i class="${k<f.inStep?'on':''}"></i>`).join('')}</span></span><span class="flv">${f.lv+1}/20</span></button>`}
-function checkFleet(){if(!fleetOn()||isParent()||!S.loaded)return;const p=S.progress;const f=fleetState();
-  const fk=THEME()==='desert'?'caravanIntro':'fleetIntro';if(!p[fk]&&!S.boatModal){S.boatModal={kind:'intro'};return}
-  if((p.boatLevel||0)<f.lv&&!S.boatModal){S.boatModal={kind:'up',lv:f.lv};p.boatLevel=f.lv;saveState('progress');setTimeout(()=>{sfx.horn();setTimeout(()=>sfx.win(),700)},200)}}
+/* צי: מתקדמים לפי זמן תרגול כולל באפליקציה (לא מתאפס). כל 10 דקות = שדרוג: 4 פריטי ציוד ואז כלי שייט חדש. התחלה בכלי השלישי (בקשת ההורה 27/11) */
+const FLEET_START=2,STEP_MIN=10,GEAR={sea:['🚩 דגל','🎨 צבע מבריק','🧭 מצפן','🔭 משקפת'],desert:['🎀 אוכף צבעוני','💧 מימייה','🧭 מצפן','🔭 משקפת']};
+const useKey=()=>'useMin:'+((S.profile&&S.profile.child)||CHILD);
+function useMin(){return Math.max(+LS.get(useKey(),0)||0,+(S.progress&&S.progress.useMin)||0)}
+function addUseMin(d){if(isParent()||!S.progress)return;const before=useMin();const v=before+d;LS.set(useKey(),v);S.progress.useMin=v;const b=S.progress.fleetBase;if(b!=null&&Math.floor((v-b)/STEP_MIN)>Math.floor((before-b)/STEP_MIN))saveState('progress');else if(v%5===0)saveState('progress')}
+function fleetState(){const F=FLEETS();const P=S.progress||{};const um=useMin();const base=P.fleetBase!=null?P.fleetBase:um;const done=Math.max(0,um-base);
+  const total=FLEET_START*5+Math.floor(done/STEP_MIN);const lv=Math.min(F.length-1,Math.floor(total/5));const inStep=lv>=F.length-1?4:total%5;
+  return {lv,inStep,total,toNext:STEP_MIN-(done%STEP_MIN),gear:(GEAR[THEME()==='desert'?'desert':'sea']).slice(0,inStep)}}
+function fleetCardHTML(){if(!fleetOn())return '';const f=fleetState();const F=FLEETS();const b=F[f.lv];const ds=THEME()==='desert';const last=f.lv>=F.length-1;
+  return `<button class="fleetcard" data-act="fleet">${vehSVG(f.lv,72)}<span class="ft"><b>${esc(fullName(b))} <small style="direction:ltr;display:inline-block">${esc(b.en)}</small></b><span>${last&&f.inStep>=4?(ds?'הגעת לרכב המטורף ביותר! 🏆':'הגעת לספינה הגדולה ביותר! 🏆'):`עוד <b>${f.toNext}</b> דק׳ תרגול ${f.inStep===4?(ds?'לכלי רכיבה חדש':'לכלי שייט חדש'):'לשדרוג הבא'}`}</span>${f.gear.length?`<small>ציוד: ${f.gear.map(g=>g.split(' ')[0]).join(' ')}</small>`:''}<span class="fdots">${[0,1,2,3,4].map(k=>`<i class="${k<f.inStep?'on':''}"></i>`).join('')}</span></span><span class="flv">${f.lv+1}/20</span></button>`}
+function checkFleet(){if(!fleetOn()||isParent()||!S.loaded)return;const p=S.progress;
+  if(p.fleetBase==null){p.fleetBase=useMin();saveState('progress')}
+  const f=fleetState();
+  const fk=THEME()==='desert'?'caravanIntro':'fleetIntro';if(!p[fk]&&!S.boatModal){S.boatModal={kind:'intro'};p.fleetStep=f.total;p.boatLevel=f.lv;return}
+  if(S.boatModal)return;
+  if(p.fleetStep==null||p.fleetStep<f.total){const newBoat=(p.boatLevel||0)<f.lv;p.fleetStep=f.total;p.boatLevel=Math.max(p.boatLevel||0,f.lv);saveState('progress');
+    S.boatModal=newBoat?{kind:'up',lv:f.lv}:{kind:'gear',lv:f.lv,g:f.gear[f.gear.length-1]};setTimeout(()=>{sfx.horn();setTimeout(()=>sfx.win(),700)},200)}}
 function boatModalHTML(){const m=S.boatModal;if(!m)return '';
   if(m.kind==='intro'&&THEME()==='desert')return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="bpop">${desertSVG(0,200)}</div><h3>${kidName()} והגמל הצעיר</h3>
     <p>${kidName()} נחתה בלב המדבר הגדול. בצל עץ דקל חיכה לה גמל צעיר וסקרן, עם דבשת אחת ועיניים גדולות.</p>
-    <p>מתוך אוהל גדול יצא שייח' אל־כַּלִמָאת, שייח' המילים. "כל <b>5 נווי מדבר</b> שתסיימי <b>מצוין</b>, כל התחנות ב־85% ומעלה," הוא אמר, "ואתן לך כלי רכיבה חזק יותר."</p>
+    <p>מתוך אוהל גדול יצא שייח' אל־כַּלִמָאת, שייח' המילים. "כל <b>10 דקות</b> שתתרגלי באפליקציה," הוא אמר, "אתן לך שדרוג: ציוד חדש, ואחרי 4 פריטים כלי רכיבה חזק יותר. ומה שהרווחת נשאר שלך לתמיד."</p>
     <p>20 כלים מחכים לך, מגמל צעיר ועד <b>רכב שטח מפלצתי</b>. ובכל רגע אפשר לפתוח את טבלת האותיות והמספרים בכפתור 🔤 למעלה. מוכנה לרכוב?</p>
     <div class="btns"><button class="btn brass" data-act="bmClose">יאללה, רוכבים! 🐪</button><button class="btn ghost" data-act="fleet">לראות את כל השיירה</button></div></div></div>`;
   if(m.kind==='intro')return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="bpop">${boatSVG(0,200)}</div><h3>${kidName()} והרפסודה הקטנה</h3>
     <p>ביום סוער אחד נסחפה ${kidName()} אל חוף של אי קטן. כל מה שנשאר לה זה רפסודה: כמה בולי עץ, חבל אחד ומפרש מחולצה ישנה.</p>
-    <p>על הרציף חיכה לה הקפטן הזקן של הנמל, Captain Words. "יש לי הצעה בשבילך," הוא חייך. "על כל <b>5 איים</b> שתסיימי <b>מצוין</b>, כל התחנות ב־85% ומעלה, אתן לך כלי שייט גדול יותר."</p>
+    <p>על הרציף חיכה לה הקפטן הזקן של הנמל, Captain Words. "יש לי הצעה בשבילך," הוא חייך. "על כל <b>10 דקות</b> שתתרגלי באפליקציה אתן לך שדרוג: ציוד חדש לסירה, ואחרי 4 פריטים כלי שייט גדול יותר. ומה שהרווחת נשאר שלך לתמיד."</p>
     <p>20 כלי שייט מחכים בנמל, מרפסודה ועד ספינת התענוגות הענקית <b class="en">Queen of English</b>. מוכנה להפליג?</p>
     <div class="btns"><button class="btn brass" data-act="bmClose">יאללה, מפליגים! ⛵</button><button class="btn ghost" data-act="fleet">לראות את כל הצי</button></div></div></div>`;
   if(m.kind==='up'){const b=FLEETS()[m.lv];const ds=THEME()==='desert';return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="confetti">🎉✨🎊</div><div class="bpop">${vehSVG(m.lv,220)}</div><h3>שדרוג! ${ds?'כלי רכיבה':'כלי שייט'} חדש: ${esc(fullName(b))}</h3><p style="margin:0;color:var(--ink2);text-align:center;direction:ltr">${esc(b.en)} · ${m.lv+1}/20</p><p>${ds?"שייח' אל־כלמאת":'Captain Words'}: "${esc(b.story)}"</p><div class="btns"><button class="btn brass" data-act="bmClose">ממשיכים להפליג!</button></div></div></div>`}
-  if(m.kind==='fleet'){const f=fleetState();const ds=THEME()==='desert';return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox fleetbox"><h3>${ds?'השיירה':'הצי'} של ${kidName()} · ${f.lv+1}/20</h3><p class="sub" style="margin:0">כל 5 ${ds?'נווי מדבר':'איים'} מצוינים (כל התחנות, ממוצע 85%+) משדרגים את ${ds?'כלי הרכיבה':'כלי השייט'}.</p>
-    <div class="fleetgrid">${FLEETS().map((b,k)=>`<div class="fitem ${k<=f.lv?'own':'lock'} ${k===f.lv?'cur':''}">${vehSVG(k,96)}<b>${k<=f.lv||k===f.lv+1?esc(b.n):'?'}</b>${k<=f.lv||k===f.lv+1?`<small>"${esc(b.nick)}"</small>`:''}<small>${k*5} איים</small></div>`).join('')}</div>
+  if(m.kind==='gear'){const b=FLEETS()[m.lv];return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox"><div class="confetti">🎉✨🎊</div><div class="bpop">${vehSVG(m.lv,180)}</div><h3>שדרוג! קיבלת ${esc(m.g||'')}</h3><p style="text-align:center">עוד 10 דקות תרגול טובות, ו${esc(fullName(b))} מקבל${THEME()==='desert'?'':'ת'} עוד ציוד. אחרי 4 פריטים מחכה לך ${THEME()==='desert'?'כלי רכיבה':'כלי שייט'} חדש!</p><div class="btns"><button class="btn brass" data-act="bmClose">יש! ממשיכים ⛵</button><button class="btn ghost" data-act="fleet">לראות את כל הצי</button></div></div></div>`}
+  if(m.kind==='fleet'){const f=fleetState();const ds=THEME()==='desert';return `<div class="cfwrap bm" role="dialog" aria-modal="true"><div class="cfbox boatbox fleetbox"><h3>${ds?'השיירה':'הצי'} של ${kidName()} · ${f.lv+1}/20</h3><p class="sub" style="margin:0">כל 10 דקות תרגול = שדרוג. 4 פריטי ציוד, ואז ${ds?'כלי רכיבה':'כלי שייט'} חדש. ההתקדמות לא מתאפסת.</p>
+    <div class="fleetgrid">${FLEETS().map((b,k)=>`<div class="fitem ${k<=f.lv?'own':'lock'} ${k===f.lv?'cur':''}">${vehSVG(k,96)}<b>${k<=f.lv||k===f.lv+1?esc(b.n):'?'}</b>${k<=f.lv||k===f.lv+1?`<small>"${esc(b.nick)}"</small>`:''}<small>${k<=f.lv?'✓ שלך':'עוד '+fmtMin(((k*5)-f.total)*STEP_MIN-(STEP_MIN-f.toNext))}</small></div>`).join('')}</div>
     <div class="btns"><button class="btn brass" data-act="bmClose">סגירה</button></div></div></div>`}
   return ''}
 

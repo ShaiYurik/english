@@ -1,5 +1,6 @@
 # Changes
 
+- v80 (2026-11-27): fleet (sea/desert) now advances by total practice time, never resets: `progress.useMin` (+ LS `useMin:<child>`, max-merged), every 10 minutes = a step (4 gear items, then a new vessel; gear modal + new-vessel modal). Start at vessel 3 (`FLEET_START=2`, `progress.fleetBase` = minutes at switch-over). Texts updated.
 - v79 (2026-11-27): floating "⏹ עצירת הקראה" button on practice screens whenever speech is playing (all children); tapping the "question + answers" read button again also stops it.
 - v78 (2026-11-27): Yuval (`YUV()`): no memory game (pairs stations hidden) and no automatic read-aloud of answers/corrections after answering (only when she taps 🔊).
 - v77 (2026-11-27): subject world: all islands of a subject are open at once (one track per island), exam lessons (`source:'מבחן'`) last with 📝; exam card handles practice exams without `orig`. Yuval: new practice exam `yuval-tanakh-exam` (40+25+20+15).
