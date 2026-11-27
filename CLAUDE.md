@@ -26,6 +26,7 @@ If you add or remove a world on purpose, update `EXPECT` in tools/smoke.js in th
 
 - Lesson options: `howto` (HTML rules box) + `howtoTitle`, `simple:true` (no auto read-aloud stations), `source:'אנסין'` + `order` = queued unseens track. Yuval (from 25/11): old English islands archived in Drive (subfolder 'ארכיון'); new: Present Simple + 11 queued unseens.
 - Exam retake islands: lesson `source:'מבחן'`, `exam:{orig:<class score>}`, each game `pts` (sum 100) → grade card. Items can have `why2` (shown when she taps 'לא הבנתי'). Tap-to-translate uses `dict-en-he.json` (add words there when new texts need them).
+- Subjects for any child (v75): a lesson with `subject` (not English/Hebrew) → own track per subject in the child's `en` world, same Hebrew-island features as Shai-Li (summary read-aloud, hints, `terms`, highlighter). Yuval: track 'תנ"ך' (lessons `yuval-tanakh-N`).
 - Gil: everything outside the English world is Hebrew, incl. speech (math islands `lang:'he'`).
 - Conversation lessons (Talking Kids summaries etc.): lesson `source: 'שיחה'` → own track '🗣️ שיחה באנגלית' (all profiles).
 - Parent report app: role `viewer` (server `VIEW_KEY` on a child entry; now only shaili). Read-only: client treats it as parent-like (no writes) and shows only `viewParent` via `viewerTopHTML`. 21:00 daily push to viewer devices (`dailyReminder` → `pushSentV:`), text from server `viewerToday_` via sw.js `todayInfo`.
