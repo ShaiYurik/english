@@ -72,6 +72,7 @@
 :root[data-lang="ar"] .read,:root[data-lang="ar"] .opt.en,:root[data-lang="ar"] .qblock .q{direction:rtl;text-align:right}
 :root[data-lang="ar"] .flash .word{font-size:64px}
 .tr{color:var(--ink2);font-size:18px;margin-top:-4px}
+.worldsw{flex-wrap:wrap;row-gap:4px;max-width:calc(100vw - 150px)}.worldsw button{padding:2px 9px}
 .worldsw .refbtn{background:var(--chart);color:var(--ink);border-color:var(--chart)}
 .refgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .refcell{border:0;background:var(--chart2);border-radius:10px;padding:6px 2px;display:grid;justify-items:center;gap:0;font:inherit;color:var(--ink)}
@@ -529,10 +530,10 @@ addEventListener('hashchange',()=>{if(readKey()){S.badKey=false;loadAll()}});
 
 let CHILD=LS.get('child','');
 let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
-const WP=()=>WORLD!=='en'&&WORLD!=='math'?WORLD:undefined;
-const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
+const WP=()=>WORLD!=='en'&&WORLD!=='math'&&WORLD!=='subj'?WORLD:undefined;
+const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'&&WORLD!=='subj'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='75';
+const APP_VERSION='76';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -726,10 +727,10 @@ const WORDS={sea:{day:'המסע היומי',done:'הגעת לנמל היום. ',
   dance:{day:'האימון של היום',done:'סיימת את האימון היום! ',goal:'האימון נגמר אחרי {G} משימות. ',newT:'כוריאוגרפיה חדשה הגיעה!',go:'לרקוד 💃',late:'יאללה 💃',arch:'🏆 ריקודים שסיימת',back:'חזרה לסטודיו',win:'איזה ריקוד מושלם!',full:'הופעה מושלמת!',flags:'💃🎶💃',tab:'סטודיו',loading:'מדליקים את הזרקורים…',waits:'מחכה לך',isl:'הריקוד'},
   shop:{day:'הקניות של היום',done:'סל הקניות מלא היום! ',goal:'הסל מתמלא אחרי {G} משימות. ',newT:'קולקציה חדשה הגיעה!',go:'לקניון 🛍️',late:'יאללה 🛍️',arch:'🏆 חנויות שסיימת',back:'חזרה לקניון',win:'וואו, איזה לוק!',full:'סל מלא, קנייה מושלמת!',flags:'🛍️👗🛍️',tab:'קניון',loading:'פותחים את הקניון…',waits:'מחכה לך',isl:'החנות'},
   tennis:{day:'האימון היומי',done:'סיימת את האימון היום! ',goal:'האימון היומי נגמר אחרי {G} משימות. ',newT:'מגרש חדש מחכה לך!',go:'לעלות למגרש 🎾',late:'יאללה 🎾',arch:'🏆 משחקים שניצחת',back:'חזרה למגרשים',win:'ניצחת במשחק!',full:'ניצחון מושלם! Game, set, match!',flags:'🎾🏆🎾',tab:'מגרשים',loading:'מכינים את המגרש…',waits:'מחכה לך',isl:'המגרש'}};
-const TW=k=>{const v=WORDS[THEME()][k];return WORLD==='math'&&typeof v==='string'?v.replace(/\s*Game, set, match!/,' 🎾'):v};
+const TW=k=>{const v=WORDS[THEME()][k];return (WORLD==='math'||WORLD==='subj')&&typeof v==='string'?v.replace(/\s*Game, set, match!/,' 🎾'):v};
 const EBW={sea:{log:"Ship's Log",radio:'Radio Room',hunt:'Treasure Hunt',cap:"Captain's Log",anc:'⚓'},tennis:{log:'Match Schedule',radio:'Commentary Box',hunt:'Ball Hunt',cap:"Coach's Notes",anc:'🎾'},dance:{log:'Dance Diary',radio:'Music Room',hunt:'Step Hunt',cap:"Coach's Notes",anc:'💃'},shop:{log:'Style Diary',radio:'Mall Radio',hunt:'Bargain Hunt',cap:'Stylist Notes',anc:'🛍️'},desert:{log:'Caravan Log',radio:'Radio Tent',hunt:'Treasure Hunt',cap:"Caravan Master's Log",anc:'🐪'}};
 const EBH={log:'לוח המשחקים',radio:'תא השדרן',hunt:'ציד',cap:'הערות המאמן'};
-const EB=k=>WORLD==='math'&&k!=='anc'?EBH[k]:(EBW[THEME()]||EBW.sea)[k];
+const EB=k=>(WORLD==='math'||WORLD==='subj')&&k!=='anc'?EBH[k]:(EBW[THEME()]||EBW.sea)[k];
 const feat=k=>!S.profile||!S.profile.features||S.profile.features[k]!==false;
 const kidName=()=>S.profile&&S.profile.name?S.profile.name:'';
 function applyProfile(){
@@ -746,7 +747,8 @@ function applyProfile(){
   const mt2=document.querySelector('.tab[data-tab="map"] .lbl');if(mt2)mt2.textContent=TW('tab');
 }
 function resetChildState(){Object.assign(S,{progress:{unlocked:1,best:{},xp:0},session:newSession(),sessions:[],classWords:[],zoom:[],lessons:[],pendingPhotos:0,scheduleState:null,transcripts:[],screen:{name:'map'},calDay:null,editLesson:null,shots:[]});_trk=null}
-function worldsOf(){const w=(S.profile&&S.profile.worlds)||[{id:'en',label:'אנגלית'}];return ['gil','yuvik'].includes((S.profile&&S.profile.child)||CHILD)&&!w.some(x=>x.id==='math')?[...w,{id:'math',label:'חשבון'}]:w}
+function subjNames(){const me=(S.profile&&S.profile.child)||CHILD;if(me==='shaili')return [];const k='subjs:'+me;if(WORLD!=='ar'&&S.loaded){const a=[...new Set((S.lessons||[]).filter(l=>l&&l.subject&&!/אנגלית|english|עברית/i.test(l.subject)).map(l=>l.subject))];LS.set(k,a);return a}return LS.get(k,[])}
+function worldsOf(){let w=(S.profile&&S.profile.worlds)||[{id:'en',label:'אנגלית'}];if(['gil','yuvik'].includes((S.profile&&S.profile.child)||CHILD)&&!w.some(x=>x.id==='math'))w=[...w,{id:'math',label:'חשבון'}];const sn=subjNames();if(sn.length&&!w.some(x=>x.id==='subj'))w=[...w,{id:'subj',label:sn.join(' · ').replace(/"/g,'״')}];return w}
 function switchWorld(w){if(w===WORLD)return;WORLD=w;LS.set('world:'+(CHILD||'yuvik'),w);if(S.profile)S.profile={...S.profile,world:w};resetChildState();applyProfile();S.loaded=false;render();loadAll()}
 function switchChild(id){if(!isParent()||id===CHILD)return;CHILD=id;LS.set('child',id);WORLD='en';LS.set('world:'+id,'en');const ch=(S.children||[]).find(c=>c.id===id);S.profile={child:id,name:ch?ch.name:id,grade:ch?ch.grade:'',world:'en',worlds:[{id:'en',label:'אנגלית'}],features:{zoom:id==='yuvik',cal:true,camera:true,readtext:true}};LS.set('profile',S.profile);resetChildState();applyProfile();S.loaded=false;render();loadAll()}
 function setRole(r){
@@ -813,7 +815,7 @@ async function loadAll(){
   try{const j=await apiGet();if(tok!==S._loadTok||at0!==CHILD+'|'+WORLD)return;S.online=true;setRole(j.role);
     if(j.profile){const was=CHILD;S.profile=j.profile;S.children=j.children||null;LS.set('profile',j.profile);if(j.children)LS.set('children',j.children);
       if(!CHILD||j.role!=='parent'){const ch=CHILD!==j.profile.child;CHILD=j.profile.child;LS.set('child',CHILD);if(ch)WORLD=LS.get('world:'+CHILD,'en')}
-      if(j.profile.world&&j.profile.world!==WORLD&&WORLD!=='math'){WORLD=j.profile.world}
+      if(j.profile.world&&j.profile.world!==WORLD&&WORLD!=='math'&&WORLD!=='subj'){WORLD=j.profile.world}
       if(was&&was!==CHILD)resetChildState();applyProfile()}
     applyState(j.state,true);cache();render()}
   catch(e){if(tok!==S._loadTok)return;console.warn(e);S.online=false;S.lastErr=CONN.lastErr||String(e&&e.message||e).slice(0,120);if(/bad key/.test(e&&e.message))S.badKey=true;render();
@@ -830,7 +832,7 @@ function setSync(){
   if(S.online===false){d.className='sync off';t.innerHTML='<button class="syncbtn" data-act="retry">⚠️ אין חיבור לשרת · לנסות שוב</button>';return}
   if(pend||upBusy){d.className='sync wait';t.textContent='שומר בדרייב…';return}
   d.className='sync ok';t.textContent=isParent()?'הכל שמור · מצב הורה':'הכל שמור';
-  const ws=$('#worldSwitch');if(ws){const wl=S.profile&&S.profile.child===CHILD&&S.online!==false&&worldsOf().length>1?worldsOf():null;ws.hidden=!wl;if(wl)ws.innerHTML=wl.map(x=>`<button data-act="world" data-id="${esc(x.id)}" aria-pressed="${x.id===WORLD}">${x.id==='ar'?'🏜️':x.id==='math'?'🔢':'🌊'} ${esc(x.label)}</button>`).join('')+(LANG()==='ar'?'<button data-act="ref" class="refbtn">🔤 א־ב</button>':'')}
+  const ws=$('#worldSwitch');if(ws){const wl=S.profile&&S.profile.child===CHILD&&S.online!==false&&worldsOf().length>1?worldsOf():null;ws.hidden=!wl;if(wl)ws.innerHTML=wl.map(x=>`<button data-act="world" data-id="${esc(x.id)}" aria-pressed="${x.id===WORLD}">${x.id==='ar'?'🏜️':x.id==='math'?'🔢':x.id==='subj'?((SUBJ_IC[subjNames()[0]]||['📘'])[0]):'🌊'} ${esc(x.label)}</button>`).join('')+(LANG()==='ar'?'<button data-act="ref" class="refbtn">🔤 א־ב</button>':'')}
   const sw=$('#kidSwitch');if(sw){const kids=isParent()&&S.children&&S.children.length>1?S.children:null;sw.hidden=!kids;if(kids)sw.innerHTML=kids.map(c=>`<button data-act="kid" data-id="${esc(c.id)}" aria-pressed="${c.id===CHILD}">${esc(c.name)}</button>`).join('')}
 }
 
@@ -935,6 +937,8 @@ function allIslands(){
   if(S.classWords.length>=4)list.push({id:'cove',kind:'class',name:'מפרץ המטמון',en:'Treasure Cove',topic:'מילים מהכיתה',words:S.classWords.map(w=>({en:w.en,he:w.he,ex:w.ex||''}))});
   dailyIslands().forEach(x=>list.push(x));
   (S.lessons||[]).forEach(l=>{if(!l||!l.id||Array.isArray(l.islands)||l.schedule||l.roundsFor||l.dailyStory)return;list.push({id:'L-'+l.id,kind:'lesson',name:l.name||'אי חדש',en:l.en||'',topic:l.topic||(l.source==='זום'?'משיעור הזום':'מחומר שצילמת'),words:(l.words||[]).filter(w=>w&&w.en&&w.he),story:l.story&&l.story.qs&&l.story.qs.length?l.story:null,stories:Array.isArray(l.stories)?l.stories.filter(x=>x&&x.qs&&x.qs.length&&(x.text||x.paras)):[],lang:l.lang==='he'||(l.subject&&!/אנגלית|english/i.test(l.subject))?'he':undefined,subject:l.subject||'',terms:l.terms&&typeof l.terms==='object'?l.terms:{},mistakes:l.mistakes||[],source:l.source||'',games:Array.isArray(l.games)?l.games:[],text:l.text&&Array.isArray(l.text.paras)?l.text:null,dialogues:l.dialogues||[],zoomId:l.zoomId||'',zoomDate:l.zoomDate||'',howto:typeof l.howto==='string'?l.howto:'',howtoTitle:l.howtoTitle||'',order:+l.order||0,simple:!!l.simple,exam:l.exam&&typeof l.exam==='object'?l.exam:null,created:l.created||''})});
+  if(WORLD==='subj')return list.filter(isSubjL);
+  if(!SHL())return list.filter(i=>!isSubjL(i));
   return list;
 }
 /* ---- סיפור יומי: קטע אחד ביום. הקטע הבא נפתח ביום שאחרי שקראו את הקטע הקודם ---- */
@@ -963,6 +967,7 @@ function tracks(){
   if(LANG()==='ar'){const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));const F=arFixedIslands();
     const T=[{k:'letters',t:'אותיות',ic:'🔤',flag:'#f2a93b',fixed:1,list:[F[0]]},{k:'numbers',t:'מספרים',ic:'🔢',flag:'#2f8a63',fixed:1,list:[F[1]]},{k:'class',t:'מהכיתה',ic:'🏫',flag:'#d8572a',none:'כל נווי המדבר נכבשו!',empty:'יופיע כשיעלה צילום מהכיתה',list:all.filter(i=>i.kind==='lesson').sort(byC)}];
     _trk=T.map(t=>{const list=t.list;const active=t.fixed?list[0]:list.find(i=>!isDone(i))||null;const done=t.fixed?[]:list.filter(isDone);const started=t.fixed?[]:list.filter(i=>i!==active&&!isDone(i)&&S.progress.best[i.id]);const queue=t.fixed?[]:list.filter(i=>i!==active&&!isDone(i)&&!S.progress.best[i.id]);return {...t,active,done,started,queue,none:list.length?t.none:t.empty}});return _trk}
+  if(WORLD==='subj'){_trk=[];subjTrk(all);return _trk}
   if(SHL()){_trk=subjectTracks(all);const dc=dailyCurrent();if(dc)_trk.push({k:'daily',t:'סיפור יומי',ic:'📖',flag:'#f0c35e',active:dc.isl,done:[],started:[],queue:[],quiet:true,dailyDone:dc.doneToday,dailyLast:dc.last,none:''});return _trk}
   if(!book.length&&!all.some(i=>i.kind==='lesson')&&(!S.profile||S.profile.child==='yuvik')){_trk=null;return null}
   const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));
@@ -981,7 +986,8 @@ function tracks(){
   if(lists.exam.length){const list=lists.exam,active=list.find(i=>!isDone(i))||list[list.length-1];_trk.push({k:'exam',t:'מבחן חוזר',ic:'📝',flag:'#f2a93b',none:'',active,done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})}
   if(lists.talk.length){const list=lists.talk,active=list.find(i=>!isDone(i))||list[list.length-1];_trk.push({k:'talk',t:'שיחה באנגלית',ic:'🗣️',flag:'#e0569b',none:'כל שיעורי השיחה נכבשו!',active,done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})}
   // מקצועות עיוניים (תנ״ך, היסטוריה…) לכל ילד: מסלול לכל מקצוע, כמו אצל שי־לי
-  {const G={};all.filter(isSubjL).sort(byC).forEach(i=>{(G[i.subject]=G[i.subject]||[]).push(i)});Object.keys(G).forEach((g,gi)=>{const list=G[g],active=list.find(i=>!isDone(i))||list[list.length-1];const [ic,flag]=SUBJ_IC[g]||['📘','#e8c46a'];_trk.push({k:'subj'+gi,t:g,ic,flag,none:'כל האיים ב'+g+' נכבשו!',active,replay:isDone(active),done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})})}
+  subjTrk(all);
+  if(0){const G={};all.filter(isSubjL).sort(byC).forEach(i=>{(G[i.subject]=G[i.subject]||[]).push(i)});Object.keys(G).forEach((g,gi)=>{const list=G[g],active=list.find(i=>!isDone(i))||list[list.length-1];const [ic,flag]=SUBJ_IC[g]||['📘','#e8c46a'];_trk.push({k:'subj'+gi,t:g,ic,flag,none:'כל האיים ב'+g+' נכבשו!',active,replay:isDone(active),done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})})}
   if(lists.he.length){const list=lists.he,active=list.find(i=>!isDone(i))||list[list.length-1];_trk.push({k:'he',t:'עברית',ic:'📝',flag:'#3a6fd8',none:'כל האיים בעברית נכבשו!',active,done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})}
   if(classSlots()>1){const ci=_trk.findIndex(t=>t.k==='class');if(ci>=0){const c=_trk[ci];const open=lists.class.filter(i=>!isDone(i));const a2=open[1]||null,rest=open.slice(2);
     const L1={...c,queue:rest.filter(i=>!S.progress.best[i.id]),started:rest.filter(i=>S.progress.best[i.id])};
@@ -994,6 +1000,7 @@ function tracks(){
   const dc=dailyCurrent();if(dc)_trk.push({k:'daily',t:'סיפור יומי',ic:'📖',flag:'#f0c35e',active:dc.isl,done:[],started:[],queue:[],quiet:true,dailyDone:dc.doneToday,dailyLast:dc.last,none:''});
   return _trk;
 }
+function subjTrk(all){const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));const G={};all.filter(isSubjL).sort(byC).forEach(i=>{(G[i.subject]=G[i.subject]||[]).push(i)});Object.keys(G).forEach((g,gi)=>{const list=G[g],active=list.find(i=>!isDone(i))||list[list.length-1];const [ic,flag]=SUBJ_IC[g]||['📘','#e8c46a'];_trk.push({k:'subj'+gi,t:g,ic,flag,none:'כל האיים ב'+g+' נכבשו!',active,replay:isDone(active),done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})})}
 /* ---- שי־לי: מסלול לכל מקצוע לפי הנושא שהועלה, ועד שני ריקודים פתוחים בכל מקצוע ---- */
 const SUBJ_IC={'אנגלית':['🇬🇧','#ff6fb5'],'עברית':['📝','#b98cff'],'חשבון':['🔢','#ffcf4a'],'מתמטיקה':['🔢','#ffcf4a'],'מדעים':['🔬','#4fd1c5'],'היסטוריה':['🏛️','#f2a93b'],'תנ"ך':['📜','#e8c46a'],'גאוגרפיה':['🌍','#5ab0ff'],'מולדת':['🗺️','#5ab0ff'],'ערבית':['🌙','#ff8a65'],'ספרות':['📚','#ff9fd0'],'אזרחות':['⚖️','#7fb7ff']};
 const SUBJ_LIST=['אנגלית','עברית','חשבון','מדעים','היסטוריה','תנ"ך','גאוגרפיה','ספרות'];
