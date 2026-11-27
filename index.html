@@ -72,6 +72,7 @@
 :root[data-lang="ar"] .read,:root[data-lang="ar"] .opt.en,:root[data-lang="ar"] .qblock .q{direction:rtl;text-align:right}
 :root[data-lang="ar"] .flash .word{font-size:64px}
 .tr{color:var(--ink2);font-size:18px;margin-top:-4px}
+.stopsay{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));z-index:60;border:0;border-radius:999px;padding:10px 20px;font:inherit;font-weight:800;font-size:16px;background:#e2553b;color:#fff;box-shadow:0 6px 18px -6px rgba(0,0,0,.6)}
 .worldsw{flex-wrap:wrap;row-gap:4px;max-width:calc(100vw - 150px)}.worldsw button{padding:2px 9px}
 .worldsw .refbtn{background:var(--chart);color:var(--ink);border-color:var(--chart)}
 .refgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -533,7 +534,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'&&WORLD!=='subj'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'&&WORLD!=='subj'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='78';
+const APP_VERSION='79';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -875,7 +876,9 @@ function say(text,rate=.85){
   speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=TTS_LANG();u.rate=rate;{const vv=vox();if(vv)u.voice=vv}speechSynthesis.speak(u);
 }
 let paceRun=0;
-const hush=()=>{paceRun++;try{speechSynthesis.cancel()}catch(e){}};
+const hush=()=>{paceRun++;try{speechSynthesis.cancel()}catch(e){};const b=document.getElementById('stopSay');if(b)b.hidden=true};
+// כפתור "עצירת הקראה" צף: מופיע בזמן הקראה במסכי התרגול, ולחיצה עוצרת מיד
+setInterval(()=>{try{const b=document.getElementById('stopSay');if(!b)return;const on='speechSynthesis' in window&&(speechSynthesis.speaking||speechSynthesis.pending)&&S.screen&&S.screen.name==='game';if(b.hidden===!!on)b.hidden=!on}catch(e){}},250);
 const SPEEDS={n:{label:'רגיל',rate:.85},s:{label:'לאט',rate:.6},x:{label:'סופר איטי',rate:.5,wbw:true,gap:550}};
 const SPEED_ORDER=['n','s','x'];
 function utter(t,rate){const u=new SpeechSynthesisUtterance(t);u.lang=TTS_LANG();u.rate=rate;{const vv=vox();if(vv)u.voice=vv}return u}
@@ -2177,7 +2180,7 @@ document.addEventListener('click',e=>{
       sc.answered=true;sc.wasOk=q.a.every(x=>sc.picked.includes(x));
       if(sc.wasOk){sc.correct++;sfx.ok();if(q.gap&&q.say&&!YUV())setTimeout(()=>say(q.say),350)}else{sfx.bad();sc.missed.push(q.ans||q.o[q.a[0]])}
       render();break;}
-    case 'optSay':{const q=sc.items[sc.idx];if(!q||!('speechSynthesis' in window))break;hush();const segs=[];{const qt=q.pic?'':q.gap?String(q.q).replace('___','...'):(q.say||q.q||'');if(qt)segs.push(qt)}const base=segs.length;
+    case 'optSay':{const q=sc.items[sc.idx];if(!q||!('speechSynthesis' in window))break;if(speechSynthesis.speaking||speechSynthesis.pending){hush();break}hush();const segs=[];{const qt=q.pic?'':q.gap?String(q.q).replace('___','...'):(q.say||q.q||'');if(qt)segs.push(qt)}const base=segs.length;
       q.o.forEach((o,k)=>{if(!sc.answered&&sc.hintAt===sc.idx&&(sc.elim||[]).includes(k))return;segs.push('תשובה '+((segs.length-base)/2+1)+'.');segs.push(String(o))});speakSegs(segs);break;}
     case 'fbYes':{sc.und=sc.und||{};sc.und[sc.idx]=sc.und[sc.idx]==='n'?'y2':'y';render();break;}
     case 'fbNo':{sc.und=sc.und||{};sc.und[sc.idx]='n';(sc.notUnd=sc.notUnd||[]).push(sc.idx);render();setTimeout(()=>{const a=document.querySelector('.fbalt');if(a)a.scrollIntoView({behavior:'smooth',block:'center'})},60);break;}
@@ -3154,5 +3157,6 @@ checkStatus();
 render();
 loadAll();
 </script>
+<button class="stopsay" id="stopSay" data-act="stopSay" hidden>⏹ עצירת הקראה</button>
 </body>
 </html>
