@@ -533,7 +533,7 @@ let WORLD=LS.get('world:'+(CHILD||'yuvik'),'en');
 const WP=()=>WORLD!=='en'&&WORLD!=='math'&&WORLD!=='subj'?WORLD:undefined;
 const NS=()=>(CHILD&&CHILD!=='yuvik'?CHILD+':':'')+(WORLD!=='en'&&WORLD!=='math'&&WORLD!=='subj'?WORLD+':':'');  // חשבון חולק את הנתונים של אנגלית
 const cacheKey=()=>NS()?'cache:'+NS():'cache';
-const APP_VERSION='76';
+const APP_VERSION='77';
 /* ---- עדכון אפליקציה: status.json באתר. updating=true מציג הודעה; version חדש = רענון כשלא באמצע תרגיל ---- */
 let UPD={updating:false,ver:null,pendingReload:false};
 async function checkStatus(){if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('status.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
@@ -1000,7 +1000,9 @@ function tracks(){
   const dc=dailyCurrent();if(dc)_trk.push({k:'daily',t:'סיפור יומי',ic:'📖',flag:'#f0c35e',active:dc.isl,done:[],started:[],queue:[],quiet:true,dailyDone:dc.doneToday,dailyLast:dc.last,none:''});
   return _trk;
 }
-function subjTrk(all){const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));const G={};all.filter(isSubjL).sort(byC).forEach(i=>{(G[i.subject]=G[i.subject]||[]).push(i)});Object.keys(G).forEach((g,gi)=>{const list=G[g],active=list.find(i=>!isDone(i))||list[list.length-1];const [ic,flag]=SUBJ_IC[g]||['📘','#e8c46a'];_trk.push({k:'subj'+gi,t:g,ic,flag,none:'כל האיים ב'+g+' נכבשו!',active,replay:isDone(active),done:list.filter(i=>isDone(i)&&i!==active),started:[],queue:list.filter(i=>i!==active&&!isDone(i))})})}
+function subjTrk(all){const byC=(a,b)=>String(a.created||'').localeCompare(String(b.created||''));const L=all.filter(isSubjL).sort(byC);const ex=L.filter(i=>i.source==='מבחן'),rest=L.filter(i=>i.source!=='מבחן');
+  // כל האיים של המקצוע פתוחים יחד (כל אי במסלול משלו); המבחן בסוף
+  [...rest,...ex].forEach((i,k)=>{const g=i.subject,isEx=i.source==='מבחן';const [ic,flag]=isEx?['📝','#f2a93b']:(SUBJ_IC[g]||['📘','#e8c46a']);_trk.push({k:'subj'+k,t:isEx?'מבחן '+g.replace(/"/g,'״'):g.replace(/"/g,'״'),ic,flag,none:'',active:i,replay:isDone(i),done:[],started:[],queue:[]})})}
 /* ---- שי־לי: מסלול לכל מקצוע לפי הנושא שהועלה, ועד שני ריקודים פתוחים בכל מקצוע ---- */
 const SUBJ_IC={'אנגלית':['🇬🇧','#ff6fb5'],'עברית':['📝','#b98cff'],'חשבון':['🔢','#ffcf4a'],'מתמטיקה':['🔢','#ffcf4a'],'מדעים':['🔬','#4fd1c5'],'היסטוריה':['🏛️','#f2a93b'],'תנ"ך':['📜','#e8c46a'],'גאוגרפיה':['🌍','#5ab0ff'],'מולדת':['🗺️','#5ab0ff'],'ערבית':['🌙','#ff8a65'],'ספרות':['📚','#ff9fd0'],'אזרחות':['⚖️','#7fb7ff']};
 const SUBJ_LIST=['אנגלית','עברית','חשבון','מדעים','היסטוריה','תנ"ך','גאוגרפיה','ספרות'];
@@ -1492,7 +1494,7 @@ function fbBox(sc,i,q,kind){if(!sc.answered)return '<div class="fb"></div>';
 function examScore(i){const b=S.progress.best[i.id]||{};let tot=0,got=0,done=0;(i.games||[]).forEach((g,n)=>{const p=+g.pts||0;if(!p)return;tot+=p;const v=b['g'+n];if(v!=null){done++;got+=p*v/100}});return {got:Math.round(got),tot,done,parts:(i.games||[]).filter(g=>+g.pts).length}}
 function examCardHTML(i){const e=examScore(i),o=i.exam.orig;const all=e.done===e.parts;
   return `<section class="card examc"><div class="exrow"><div class="exbig ${all&&e.got>=o?'up':''}"><small>${all?'הציון שלך עכשיו':'הציון עד עכשיו'}</small><b>${e.got}</b><small>מתוך ${e.tot}</small></div>${o!=null?`<div class="exold"><small>במבחן בכיתה</small><b>${o}</b></div>`:''}</div>
-  <p class="sub">${all?(e.got>o?`🎉 עלית ב־${e.got-o} נקודות לעומת המבחן!`:'אפשר לנסות שוב כל חלק ולשפר את הציון.'):`ענית על ${e.done} מתוך ${e.parts} חלקים. כל חלק שתסיימי מוסיף לציון.`}</p></section>`}
+  <p class="sub">${all&&o==null?`🎉 סיימת את כל המבחן! הציון שלך: ${e.got}`:all?(e.got>o?`🎉 עלית ב־${e.got-o} נקודות לעומת המבחן!`:'אפשר לנסות שוב כל חלק ולשפר את הציון.'):`ענית על ${e.done} מתוך ${e.parts} חלקים. כל חלק שתסיימי מוסיף לציון.`}</p></section>`}
 function hintPara(i,txt){if(!i||!i.text||!i.text.paras||!i.text.paras.length)return '';const norm=w=>w.replace(/[^\u0590-\u05FFA-Za-z0-9]/g,'').toLowerCase();
   const ws=[...new Set(String(txt).split(/\s+/).map(norm).filter(w=>w.length>=3))];let best='',bs=0;
   i.text.paras.forEach(p=>{const P=p.toLowerCase();let sc=0;ws.forEach(w=>{if(P.includes(w))sc+=2;else if(/^[\u0590-\u05FF]/.test(w)&&w.length>=4&&P.includes(w.slice(1)))sc+=1});if(sc>bs){bs=sc;best=p}});return bs>=2?best:''}
